@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proto Spec Governance — v3 Final</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;590;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --w:420px;--h:760px;
+  --bg:#0a0b0e;--bg2:#12141a;--bg3:#1a1c24;
+  --bdr:rgba(255,255,255,0.06);--bdr2:rgba(255,255,255,0.10);--bdr3:rgba(255,255,255,0.15);
+  --t1:#f7f8f8;--t2:#c8cdd6;--t3:#8a8f98;--t4:#62666d;
+  --acc:#7170ff;--acc2:#828fff;--accb:rgba(113,112,255,0.12);
+  --ok:#10b981;--wr:#f59e0b;--er:#f87171;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
+  --r:5px;--r2:8px;--r3:12px;
+}
+body{
+  font-family:var(--sans);font-size:13px;
+  background:#08090c;color:var(--t1);
+  height:var(--h);width:var(--w);
+  display:flex;flex-direction:column;overflow:hidden;
+  border-radius:var(--r3);
+}
+
+/* ════════════════════════════════
+   TOP NAV
+═══════════════════════════════ */
+.top-nav{
+  height:44px;background:var(--bg2);
+  border-bottom:1px solid var(--bdr);
+  display:flex;align-items:center;
+  padding:0 10px;gap:6px;flex-shrink:0;
+}
+.top-nav-icon{
+  width:24px;height:24px;background:var(--acc);border-radius:4px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:600;color:#fff;letter-spacing:-0.3px;
+}
+.top-nav-title{font-size:13px;font-weight:590;flex:1}
+.nav-sep{width:1px;height:20px;background:var(--bdr);margin:0 4px}
+.nav-tab{
+  display:flex;align-items:center;gap:5px;
+  padding:5px 10px;border-radius:var(--r);
+  font-size:12px;font-weight:500;color:var(--t4);
+  cursor:pointer;border:1px solid transparent;
+  transition:all .15s;user-select:none;
+}
+.nav-tab:hover{color:var(--t2);background:var(--bg3)}
+.nav-tab.active{color:var(--acc);background:var(--accb);border-color:rgba(113,112,255,0.25)}
+.nav-tab svg{width:14px;height:14px}
+.nav-tab-badge{
+  font-size:9px;font-weight:700;
+  background:var(--bg);padding:1px 5px;border-radius:8px;
+  color:var(--t4);
+}
+.nav-tab.active .nav-tab-badge{background:var(--acc);color:#fff}
+.nav-status{
+  display:flex;align-items:center;gap:5px;
+  padding:3px 10px;background:var(--bg3);
+  border:1px solid var(--bdr);border-radius:20px;
+  font-size:11px;color:var(--t3);
+}
+.nav-status-dot{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 5px var(--ok);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.nav-btn{
+  width:28px;height:28px;border:none;background:transparent;border-radius:var(--r);
+  color:var(--t4);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .15s,color .15s;position:relative;
+}
+.nav-btn:hover{background:var(--bg3);color:var(--t1)}
+
+/* ════════════════════════════════
+   MAIN LAYOUT (3-zone)
+═══════════════════════════════ */
+.main-layout{
+  flex:1;overflow:hidden;
+  display:flex;flex-direction:column;
+}
+.content-area{
+  flex:1;overflow:hidden;
+  display:flex;
+}
+
+/* ─── LEFT: Spec Tree ─── */
+.spec-tree{
+  width:160px;flex-shrink:0;
+  background:var(--bg2);
+  border-right:1px solid var(--bdr);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.tree-header{
+  padding:8px 10px;
+  border-bottom:1px solid var(--bdr);
+  display:flex;align-items:center;gap:6px;
+  flex-shrink:0;
+}
+.tree-title{font-size:11px;font-weight:590;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;flex:1}
+.tree-action{
+  font-size:11px;color:var(--t4);cursor:pointer;padding:2px 6px;
+  border-radius:3px;transition:all .15s;
+}
+.tree-action:hover{color:var(--acc);background:var(--accb)}
+.tree-body{
+  flex:1;overflow-y:auto;padding:4px 0;
+}
+.tree-node{display:flex;flex-direction:column}
+.tree-item{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 10px;cursor:pointer;
+  border-left:2px solid transparent;
+  transition:all .12s;
+  user-select:none;
+}
+.tree-item:hover{background:var(--bg3)}
+.tree-item.active{background:var(--accb);border-left-color:var(--acc)}
+.tree-item.active .tree-item-name{color:var(--acc)}
+.tree-item-expand{
+  width:16px;height:16px;display:flex;align-items:center;justify-content:center;
+  color:var(--t4);font-size:9px;flex-shrink:0;
+  transition:transform .15s;
+}
+.tree-item-expand.open{transform:rotate(90deg)}
+.tree-item-expand.empty{visibility:hidden}
+.tree-item-icon{
+  width:16px;height:16px;border-radius:3px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;flex-shrink:0;
+}
+.icon-l2{background:#2a2b3d;color:#a5a8ff}
+.icon-l3{background:#2d3025;color:#b5d98e}
+.icon-l4{background:#2d2a25;color:#d9b88e}
+.icon-l5{background:#3d2525;color:#d98e8e}
+.tree-item-name{font-size:11.5px;color:var(--t2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tree-item.active .tree-item-name{font-weight:500}
+.tree-children{padding-left:14px;display:none}
+.tree-children.open{display:block}
+
+/* Tree filter bar */
+.tree-filter{
+  padding:6px 8px;border-bottom:1px solid var(--bdr);flex-shrink:0;
+}
+.tree-filter-input{
+  width:100%;background:var(--bg3);border:1px solid var(--bdr);
+  border-radius:var(--r);color:var(--t1);
+  font-family:var(--sans);font-size:11.5px;
+  padding:5px 8px;outline:none;
+  transition:border-color .15s;
+}
+.tree-filter-input:focus{border-color:var(--acc)}
+.tree-filter-input::placeholder{color:var(--t4)}
+
+/* ─── RIGHT: Core Interaction ─── */
+.core-area{
+  flex:1;overflow:hidden;
+  display:flex;flex-direction:column;
+}
+
+/* Page preview canvas */
+.page-canvas{
+  flex:1;overflow:hidden;
+  background:#fff;position:relative;
+}
+.page-canvas-inner{
+  width:100%;height:100%;
+  background:linear-gradient(135deg,#1a1a2e,#16213e);
+  padding:16px;display:flex;flex-direction:column;gap:10px;
+  position:relative;
+}
+/* Mock page elements */
+.mock-header{
+  display:flex;align-items:center;gap:10px;
+  padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.06);
+}
+.mock-logo{width:32px;height:32px;background:rgba(255,255,255,.1);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.mock-nav{flex:1;display:flex;gap:8px}
+.mock-nav-item{height:8px;background:rgba(255,255,255,.06);border-radius:2px;width:50px}
+.mock-avatar{width:28px;height:28px;background:rgba(255,255,255,.08);border-radius:50%}
+.mock-body{flex:1;display:grid;grid-template-columns:180px 1fr;gap:10px}
+.mock-sidebar{
+  background:rgba(255,255,255,.04);border-radius:6px;
+  padding:10px;display:flex;flex-direction:column;gap:6px;
+}
+.mock-sidebar-item{height:28px;background:rgba(255,255,255,.05);border-radius:4px;display:flex;align-items:center;gap:6px;padding:0 8px}
+.mock-sidebar-dot{width:10px;height:10px;background:rgba(255,255,255,.1);border-radius:2px}
+.mock-sidebar-bar{flex:1;height:6px;background:rgba(255,255,255,.06);border-radius:2px}
+.mock-main{
+  background:rgba(255,255,255,.04);border-radius:6px;
+  padding:14px;display:flex;flex-direction:column;gap:10px;
+}
+.mock-main-title{height:14px;background:rgba(255,255,255,.07);border-radius:2px;width:40%}
+.mock-main-text{height:6px;background:rgba(255,255,255,.05);border-radius:2px}
+.mock-card{height:60px;background:rgba(255,255,255,.05);border-radius:4px}
+.mock-footer{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+  padding-top:10px;border-top:1px solid rgba(255,255,255,.06);
+}
+.mock-foot-item{height:40px;background:rgba(255,255,255,.04);border-radius:4px}
+
+/* Spec tag overlays */
+.bind-tags-overlay{position:absolute;inset:0;pointer-events:none}
+.bind-tag{
+  position:absolute;pointer-events:all;
+  cursor:pointer;border:1.5px dashed transparent;
+  border-radius:3px;transition:all .2s;
+}
+.bind-tag:hover{border-color:var(--acc);background:rgba(113,112,255,.08)}
+.bind-tag.selected{border:2px solid var(--acc);background:rgba(113,112,255,.12)}
+.bind-tag-label{
+  position:absolute;top:-18px;left:0;
+  background:var(--acc);color:#fff;
+  font-size:8px;font-weight:600;
+  padding:1px 5px;border-radius:3px 3px 0 0;
+  white-space:nowrap;max-width:100px;overflow:hidden;text-overflow:ellipsis;
+}
+.bind-tag-badge{
+  position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);
+  background:var(--bg2);border:1px solid var(--bdr);
+  border-radius:3px;padding:1px 5px;
+  font-size:8px;color:var(--t3);white-space:nowrap;
+}
+.bind-tag.selected .bind-tag-badge{background:var(--accb);border-color:var(--acc);color:var(--acc)}
+
+/* Canvas toolbar */
+.canvas-toolbar{
+  position:absolute;top:8px;right:8px;
+  display:flex;gap:4px;
+}
+.canvas-tool{
+  width:28px;height:28px;
+  background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.1);
+  border-radius:var(--r);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:13px;
+  transition:all .15s;
+}
+.canvas-tool:hover{background:rgba(0,0,0,.9);border-color:rgba(255,255,255,.3)}
+.canvas-tool.active{background:var(--acc);border-color:var(--acc)}
+
+/* Canvas spec chain */
+.canvas-chain{
+  position:absolute;top:8px;left:8px;
+  display:flex;align-items:center;gap:4px;
+  background:rgba(0,0,0,.7);border-radius:20px;
+  padding:4px 10px;
+}
+.chain-item{font-size:10px;color:var(--t3);cursor:pointer;transition:color .12s}
+.chain-item:hover{color:var(--t1)}
+.chain-sep{color:var(--t4);font-size:9px}
+
+/* Canvas interaction hint */
+.canvas-hint{
+  position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.8);color:#fff;
+  padding:6px 14px;border-radius:20px;
+  font-size:11px;display:flex;align-items:center;gap:6px;
+  pointer-events:none;white-space:nowrap;
+}
+.canvas-hint svg{width:14px;height:14px}
+
+/* Canvas interaction panel */
+.canvas-ip{
+  position:absolute;bottom:10px;right:10px;
+  width:200px;background:var(--bg2);
+  border:1px solid var(--bdr2);border-radius:var(--r2);
+  box-shadow:0 8px 24px rgba(0,0,0,.5);
+  overflow:hidden;display:none;
+}
+.canvas-ip.open{display:block}
+.canvas-ip-header{
+  padding:8px 12px;border-bottom:1px solid var(--bdr);
+  font-size:11.5px;font-weight:590;display:flex;align-items:center;gap:8px;
+}
+.canvas-ip-header-dot{width:8px;height:8px;border-radius:50%;background:var(--acc)}
+.canvas-ip-body{padding:8px 12px;display:flex;flex-direction:column;gap:6px}
+.canvas-ip-row{display:flex;align-items:center;gap:8px}
+.canvas-ip-label{font-size:10.5px;color:var(--t3);width:36px;flex-shrink:0}
+.canvas-ip-val{font-size:11px;color:var(--t1);font-family:var(--mono);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.canvas-ip-actions{display:flex;gap:6px;margin-top:2px}
+.canvas-ip-btn{
+  flex:1;padding:5px;background:var(--bg);border:1px solid var(--bdr);
+  border-radius:var(--r);font-size:10.5px;color:var(--t3);cursor:pointer;text-align:center;
+  transition:all .12s;
+}
+.canvas-ip-btn:hover{color:var(--t1);border-color:var(--t4)}
+.canvas-ip-btn.primary{background:var(--accb);border-color:var(--acc);color:var(--acc)}
+.canvas-ip-btn.primary:hover{background:var(--acc);color:#fff}
+
+/* ─── BOTTOM: Toolbar + Settings ─── */
+.bottom-bar{
+  flex-shrink:0;
+  background:var(--bg2);
+  border-top:1px solid var(--bdr);
+  display:flex;flex-direction:column;
+}
+.bottom-toolbar{
+  display:flex;align-items:center;gap:4px;
+  padding:6px 10px;
+  border-bottom:1px solid var(--bdr);flex-shrink:0;
+}
+.toolbar-group{display:flex;align-items:center;gap:3px}
+.toolbar-btn{
+  display:flex;align-items:center;gap:5px;
+  padding:4px 9px;background:transparent;
+  border:1px solid transparent;border-radius:var(--r);
+  font-family:var(--sans);font-size:11.5px;font-weight:500;
+  color:var(--t3);cursor:pointer;
+  transition:all .12s;white-space:nowrap;
+}
+.toolbar-btn:hover{background:var(--bg3);color:var(--t1);border-color:var(--bdr)}
+.toolbar-btn.active{background:var(--accb);color:var(--acc);border-color:rgba(113,112,255,.3)}
+.toolbar-btn svg{width:13px;height:13px}
+.toolbar-sep{width:1px;height:16px;background:var(--bdr);margin:0 4px}
+.toolbar-spacer{flex:1}
+
+/* Pane split selector */
+.split-selector{
+  display:flex;align-items:center;gap:3px;
+  background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);
+  padding:2px;
+}
+.split-btn{
+  width:26px;height:22px;border:none;background:transparent;
+  border-radius:3px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--t4);transition:all .12s;
+}
+.split-btn:hover{color:var(--t2)}
+.split-btn.active{background:var(--acc);color:#fff}
+.split-icon{display:grid;gap:1px;width:12px;height:10px}
+.split-icon span{background:currentColor;border-radius:1px;opacity:.5}
+.split-icon.all span{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+
+/* Shortcuts hint bar */
+.shortcuts-hint{
+  display:flex;align-items:center;gap:8px;
+  padding:4px 10px;
+  font-size:10.5px;color:var(--t4);
+  overflow-x:auto;
+}
+.shortcuts-hint::-webkit-scrollbar{height:2px}
+.shortcuts-hint::-webkit-scrollbar-thumb{background:var(--bdr)}
+.shortcut-chip{
+  display:flex;align-items:center;gap:4px;
+  white-space:nowrap;padding:2px 0;
+}
+.shortcut-chip kbd{
+  font-family:var(--mono);font-size:9px;
+  background:var(--bg3);border:1px solid var(--bdr2);
+  border-bottom-width:2px;border-radius:3px;
+  padding:1px 4px;color:var(--t3);
+}
+
+/* Settings row */
+.settings-row{
+  display:flex;align-items:center;gap:8px;
+  padding:5px 10px;
+  border-top:1px solid var(--bdr);
+}
+.settings-label{font-size:11px;color:var(--t3);white-space:nowrap}
+.settings-val{
+  display:flex;align-items:center;gap:6px;
+  margin-left:auto;
+}
+.settings-badge{
+  padding:2px 8px;background:var(--accb);
+  border:1px solid rgba(113,112,255,.25);
+  border-radius:20px;font-size:10.5px;color:var(--acc);cursor:pointer;
+  transition:all .12s;
+}
+.settings-badge:hover{background:var(--acc);color:#fff}
+.settings-toggle{
+  width:28px;height:16px;background:var(--bg3);
+  border:1px solid var(--bdr);border-radius:8px;
+  position:relative;cursor:pointer;
+  transition:background .2s;
+}
+.settings-toggle.on{background:var(--acc);border-color:var(--acc)}
+.settings-toggle::after{
+  content:'';position:absolute;
+  width:10px;height:10px;background:#fff;
+  border-radius:50%;top:2px;left:2px;
+  transition:transform .2s;
+}
+.settings-toggle.on::after{transform:translateX(12px)}
+
+/* ════════════════════════════════
+   TOAST
+═══════════════════════════════ */
+#toasts{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:5px;z-index:9999;pointer-events:none}
+.toast{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 14px;background:var(--bg2);
+  border:1px solid var(--bdr2);border-radius:var(--r);
+  font-size:12px;color:var(--t1);
+  box-shadow:0 4px 16px rgba(0,0,0,.5);
+  animation:ti .2s ease,to .2s ease 2.2s forwards;
+  white-space:nowrap;
+}
+.toast.ok{border-color:rgba(16,185,129,.4)}.toast.ok .ti{color:var(--ok)}
+.toast.er{border-color:rgba(248,113,113,.4)}.toast.er .ti{color:var(--er)}
+@keyframes ti{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes to{from{opacity:1}to{opacity:0}}
+
+/* ════════════════════════════════
+   CONTEXT MENU
+═══════════════════════════════ */
+#ctx-menu{
+  position:fixed;min-width:170px;
+  background:var(--bg2);border:1px solid var(--bdr2);
+  border-radius:var(--r2);box-shadow:0 8px 24px rgba(0,0,0,.5);
+  z-index:900;display:none;padding:4px;
+}
+#ctx-menu.open{display:block}
+.ctx-item{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 10px;border-radius:3px;
+  cursor:pointer;font-size:12px;color:var(--t2);
+  transition:background .1s;
+}
+.ctx-item:hover{background:var(--bg3)}
+.ctx-item.danger{color:var(--er)}
+.ctx-item svg{width:13px;height:13px;color:var(--t4);flex-shrink:0}
+.ctx-label{flex:1}
+.ctx-kbd{
+  font-family:var(--mono);font-size:9px;
+  background:var(--bg);border:1px solid var(--bdr);border-radius:3px;
+  padding:1px 5px;color:var(--t4);
+}
+.ctx-sep{height:1px;background:var(--bdr);margin:3px 0}
+
+/* ════════════════════════════════
+   MODAL: SPEC BINDING
+═══════════════════════════════ */
+#bind-modal{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.7);backdrop-filter:blur(4px);
+  display:none;align-items:center;justify-content:center;
+  z-index:800;padding:20px;
+}
+#bind-modal.open{display:flex}
+.modal-box{
+  width:340px;background:var(--bg2);
+  border:1px solid var(--bdr2);border-radius:var(--r3);
+  box-shadow:0 0 0 1px rgba(0,0,0,.8),0 24px 48px rgba(0,0,0,.6);
+  overflow:hidden;
+}
+.modal-hdr{
+  padding:14px 16px;border-bottom:1px solid var(--bdr);
+  display:flex;align-items:center;gap:10px;
+}
+.modal-icon{
+  width:32px;height:32px;border-radius:var(--r);
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+}
+.modal-title{font-size:14px;font-weight:590}
+.modal-sub{font-size:11px;color:var(--t3);margin-top:2px}
+.modal-body{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.modal-row{}
+.modal-label{font-size:11px;color:var(--t3);margin-bottom:4px;display:block}
+.modal-input{
+  width:100%;background:var(--bg);border:1px solid var(--bdr);
+  border-radius:var(--r);color:var(--t1);
+  font-family:var(--sans);font-size:13px;
+  padding:7px 12px;outline:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+.modal-input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(113,112,255,.1)}
+.modal-select{
+  width:100%;background:var(--bg);border:1px solid var(--bdr);
+  border-radius:var(--r);color:var(--t1);
+  font-family:var(--sans);font-size:12px;
+  padding:7px 12px;outline:none;cursor:pointer;
+}
+.modal-preview{
+  background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r);
+  padding:10px;font-family:var(--mono);font-size:10.5px;
+  color:var(--t3);line-height:1.7;white-space:pre;
+}
+.modal-preview .k{color:#7dd3fc}.modal-preview .v{color:#86efac}.modal-preview .p{color:var(--t4)}
+.modal-foot{
+  display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--bdr);
+}
+.btn-primary{
+  flex:1;padding:8px 16px;background:var(--acc);border:none;border-radius:var(--r);
+  color:#fff;font-family:var(--sans);font-size:12.5px;font-weight:590;
+  cursor:pointer;transition:background .15s;
+}
+.btn-primary:hover{background:var(--acc2)}
+.btn-ghost{
+  padding:8px 16px;background:transparent;border:1px solid var(--bdr2);border-radius:var(--r);
+  color:var(--t3);font-family:var(--sans);font-size:12.5px;
+  cursor:pointer;transition:all .15s;
+}
+.btn-ghost:hover{border-color:var(--t4);color:var(--t2)}
+
+/* ════════════════════════════════
+   SCROLLBARS
+═══════════════════════════════ */
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- ─── TOASTS ─── -->
+<div id="toasts"></div>
+
+<!-- ─── CONTEXT MENU ─── -->
+<div id="ctx-menu">
+  <div class="ctx-item" onclick="ctxAction('view')">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8s2.5-5 6-5 6 5 6 5-2.5 5-6 5-6-5-6-5z"/><circle cx="8" cy="8" r="1.5"/></svg>
+    <span class="ctx-label">查看 Spec</span>
+    <span class="ctx-kbd">↵</span>
+  </div>
+  <div class="ctx-item" onclick="ctxAction('edit')">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2l3 3-8 8H3v-3l8-8z"/></svg>
+    <span class="ctx-label">编辑 Spec</span>
+    <span class="ctx-kbd">E</span>
+  </div>
+  <div class="ctx-item" onclick="ctxAction('generate')">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M2 8h12"/></svg>
+    <span class="ctx-label">生成子 Spec</span>
+    <span class="ctx-kbd">G</span>
+  </div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="ctxAction('copy')">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="9" height="9" rx="1"/><path d="M12 4V3a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h1"/></svg>
+    <span class="ctx-label">复制 Selector</span>
+  </div>
+  <div class="ctx-item" onclick="ctxAction('ann')">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M2 8h12"/></svg>
+    <span class="ctx-label">添加标注</span>
+    <span class="ctx-kbd">A</span>
+  </div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item danger" onclick="ctxAction('delete')">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5h10M6 5V3h4v2M5 5v7a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V5"/></svg>
+    <span class="ctx-label">删除</span>
+    <span class="ctx-kbd">⌫</span>
+  </div>
+</div>
+
+<!-- ─── BIND MODAL ─── -->
+<div id="bind-modal">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div class="modal-icon" style="background:#2a2b3d;color:#a5a8ff">📄</div>
+      <div>
+        <div class="modal-title">绑定新 Spec</div>
+        <div class="modal-sub">将新 Spec 绑定到当前选中的页面区域</div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-row">
+        <label class="modal-label">Spec 名称</label>
+        <input class="modal-input" id="modal-name" placeholder="例如: card-list" oninput="updateModalPreview()" />
+      </div>
+      <div class="modal-row">
+        <label class="modal-label">层级</label>
+        <select class="modal-select" id="modal-layer" onchange="updateModalPreview()" style="width:100%;background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r);color:var(--t1);font-family:var(--sans);font-size:12px;padding:7px 12px;outline:none;cursor:pointer">
+          <option value="L2">L2 — 页面 (page)</option>
+          <option value="L3" selected>L3 — 组件 (component)</option>
+          <option value="L4">L4 — 行为 (behavior)</option>
+          <option value="L5">L5 — 样式 (style)</option>
+        </select>
+      </div>
+      <div class="modal-row">
+        <label class="modal-label">父级 Spec</label>
+        <select class="modal-select" id="modal-parent" style="width:100%;background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r);color:var(--t1);font-family:var(--sans);font-size:12px;padding:7px 12px;outline:none;cursor:pointer">
+          <option value="page-shell">page-shell (L2)</option>
+          <option value="main-content">main-content (L3)</option>
+          <option value="sidebar-nav">sidebar-nav (L3)</option>
+          <option value="—">无 (根级)</option>
+        </select>
+      </div>
+      <div class="modal-row">
+        <label class="modal-label">页面选择器</label>
+        <input class="modal-input" id="modal-selector" value=".main-content" style="font-family:var(--mono);font-size:11.5px" oninput="updateModalPreview()" />
+      </div>
+      <div class="modal-preview" id="modal-preview"><span class="k">name</span><span class="p">: </span><span class="v">"card-list"</span>
+<span class="k">layer</span><span class="p">: </span><span class="v">"L3"</span>
+<span class="k">parent</span><span class="p">: </span><span class="v">"main-content"</span>
+<span class="k">selector</span><span class="p">: </span><span class="v">".main-content"</span></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeModal()">取消</button>
+      <button class="btn-primary" onclick="doBind()">绑定 Spec</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+   TOP NAV
+═══════════════════════════════ -->
+<div class="top-nav">
+  <div class="top-nav-icon">PS</div>
+  <div class="top-nav-title">Proto Spec</div>
+  <div class="nav-sep"></div>
+
+  <!-- Main tabs -->
+  <div class="nav-tab active" id="tab-wizard" onclick="switchTab('wizard')">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h4v4H3zM9 3h4v4H9zM3 9h4v4H3zM9 9h2v4H9z"/></svg>
+    引导流
+  </div>
+  <div class="nav-tab" id="tab-canvas" onclick="switchTab('canvas')">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M8 5v6"/></svg>
+    交互画布
+  </div>
+  <div class="nav-tab" id="tab-tree" onclick="switchTab('tree')">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="4" cy="4" r="1.5"/><circle cx="12" cy="4" r="1.5"/><circle cx="4" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><path d="M4 6v4M12 6v4M6 4h4M6 12h4"/></svg>
+    Spec 树
+    <span class="nav-tab-badge">14</span>
+  </div>
+  <div class="nav-tab" id="tab-settings" onclick="switchTab('settings')">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2M3.5 3.5l1.5 1.5M11 11l1.5 1.5M3.5 12.5l1.5-1.5M11 5l1.5-1.5"/></svg>
+    设置
+  </div>
+
+  <div class="nav-sep"></div>
+  <div class="nav-status">
+    <div class="nav-status-dot"></div>
+    Agent 就绪
+  </div>
+  <button class="nav-btn" title="新建项目" onclick="toast('新建项目…', 'ok')">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M2 8h12"/></svg>
+  </button>
+</div>
+
+<!-- ════════════════════════════════
+   MAIN LAYOUT
+═══════════════════════════════ -->
+<div class="main-layout">
+
+  <!-- WIZARD VIEW -->
+  <div class="view" id="view-wizard">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;gap:24px;text-align:center">
+      <div style="width:72px;height:72px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:var(--r3);display:flex;align-items:center;justify-content:center;font-size:32px">✦</div>
+      <div>
+        <h2 style="font-size:18px;font-weight:590;margin-bottom:8px">你想做什么应用？</h2>
+        <p style="font-size:13px;color:var(--t3);line-height:1.6;max-width:280px">描述你的想法，Agent 会引导你澄清主题、竞品和 UI 风格，直到你确认一个满意的页面骨架。</p>
+      </div>
+      <div style="width:100%;max-width:240px;display:flex;flex-direction:column;gap:8px">
+        <button class="btn-primary" onclick="startGrill()" style="padding:10px 20px;background:var(--acc);border:none;border-radius:var(--r);color:#fff;font-family:var(--sans);font-size:13px;font-weight:590;cursor:pointer;width:100%;transition:background .15s">开始描述 →</button>
+        <button class="btn-ghost" onclick="toast('从骨架模板开始', 'info')" style="padding:9px 20px;background:transparent;border:1px solid var(--bdr2);border-radius:var(--r);color:var(--t3);font-family:var(--sans);font-size:13px;cursor:pointer;width:100%;transition:all .15s">从骨架模板开始</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px">
+        <span style="font-size:11px;color:var(--t4);background:var(--bg2);border:1px solid var(--bdr);padding:3px 10px;border-radius:20px;cursor:pointer" onclick="quickStart('dashboard')">📊 数据看板</span>
+        <span style="font-size:11px;color:var(--t4);background:var(--bg2);border:1px solid var(--bdr);padding:3px 10px;border-radius:20px;cursor:pointer" onclick="quickStart('saas')">🚀 SaaS</span>
+        <span style="font-size:11px;color:var(--t4);background:var(--bg2);border:1px solid var(--bdr);padding:3px 10px;border-radius:20px;cursor:pointer" onclick="quickStart('tool')">🛠 效率工具</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CANVAS VIEW -->
+  <div class="view" id="view-canvas">
+    <div class="page-canvas">
+      <div class="page-canvas-inner">
+
+        <!-- Header -->
+        <div class="mock-header">
+          <div class="mock-logo">✦</div>
+          <div class="mock-nav">
+            <div class="mock-nav-item"></div>
+            <div class="mock-nav-item" style="width:60px"></div>
+            <div class="mock-nav-item" style="width:40px"></div>
+          </div>
+          <div class="mock-avatar"></div>
+        </div>
+
+        <!-- Body -->
+        <div class="mock-body">
+          <div class="mock-sidebar">
+            <div style="height:8px;background:rgba(255,255,255,.08);border-radius:2px;width:55%"></div>
+            <div class="mock-sidebar-item"><div class="mock-sidebar-dot" style="background:rgba(113,112,255,.3)"></div><div class="mock-sidebar-bar"></div></div>
+            <div class="mock-sidebar-item"><div class="mock-sidebar-dot"></div><div class="mock-sidebar-bar"></div></div>
+            <div class="mock-sidebar-item"><div class="mock-sidebar-dot"></div><div class="mock-sidebar-bar"></div></div>
+            <div class="mock-sidebar-item"><div class="mock-sidebar-dot"></div><div class="mock-sidebar-bar"></div></div>
+          </div>
+          <div class="mock-main">
+            <div class="mock-main-title"></div>
+            <div class="mock-main-text" style="width:85%"></div>
+            <div class="mock-main-text" style="width:70%"></div>
+            <div class="mock-card"></div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mock-footer">
+          <div class="mock-foot-item"></div>
+          <div class="mock-foot-item"></div>
+          <div class="mock-foot-item"></div>
+        </div>
+
+      </div><!-- /page-canvas-inner -->
+
+      <!-- Spec tag overlays -->
+      <div class="bind-tags-overlay">
+        <div class="bind-tag selected" id="tag-0" style="left:16px;top:16px;width:calc(100% - 32px);height:52px" onclick="selectTag(0)">
+          <div class="bind-tag-label">L2-page-header</div>
+          <div class="bind-tag-badge">page</div>
+        </div>
+        <div class="bind-tag" id="tag-1" style="left:16px;top:76px;width:180px;height:calc(100% - 172px)" onclick="selectTag(1)">
+          <div class="bind-tag-label">L3-sidebar-nav</div>
+          <div class="bind-tag-badge">component</div>
+        </div>
+        <div class="bind-tag" id="tag-2" style="left:206px;top:76px;width:calc(100% - 222px);height:100px" onclick="selectTag(2)">
+          <div class="bind-tag-label">L3-main-content</div>
+          <div class="bind-tag-badge">component</div>
+        </div>
+        <div class="bind-tag" id="tag-3" style="left:206px;top:184px;width:calc(100% - 222px);height:calc(100% - 200px)" onclick="selectTag(3)">
+          <div class="bind-tag-label">L4-card-list</div>
+          <div class="bind-tag-badge">behavior</div>
+        </div>
+        <div class="bind-tag" id="tag-4" style="left:16px;bottom:16px;width:calc(100% - 32px);height:52px" onclick="selectTag(4)">
+          <div class="bind-tag-label">L2-footer-nav</div>
+          <div class="bind-tag-badge">page</div>
+        </div>
+      </div>
+
+      <!-- Canvas toolbar -->
+      <div class="canvas-toolbar">
+        <div class="canvas-tool" id="ann-toggle" onclick="toggleAnnotations()" title="标注显示/隐藏">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M2 8h12"/></svg>
+        </div>
+        <div class="canvas-tool" onclick="toast('缩放: 100%', 'info')" title="缩放">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4"/><path d="M10 10l3 3M7 4v6M4 7h6"/></svg>
+        </div>
+        <div class="canvas-tool" onclick="toast('预览模式', 'info')" title="全屏预览">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg>
+        </div>
+      </div>
+
+      <!-- Spec chain -->
+      <div class="canvas-chain">
+        <span class="chain-item" style="color:var(--t1)">sidebar-nav</span>
+        <span class="chain-sep">›</span>
+        <span class="chain-item">menu-item</span>
+        <span class="chain-sep">›</span>
+        <span class="chain-item">icon-btn</span>
+      </div>
+
+      <!-- Hint -->
+      <div class="canvas-hint" id="canvas-hint">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v6l3 2"/></svg>
+        点击标签选中 Spec，或在树中浏览
+      </div>
+
+      <!-- Interaction panel -->
+      <div class="canvas-ip" id="canvas-ip">
+        <div class="canvas-ip-header">
+          <div class="canvas-ip-header-dot"></div>
+          <span id="ip-name">sidebar-nav</span>
+          <span style="margin-left:auto;font-size:9px;background:var(--accb);color:var(--acc);padding:1px 6px;border-radius:8px">L3</span>
+        </div>
+        <div class="canvas-ip-body">
+          <div class="canvas-ip-row">
+            <div class="canvas-ip-label">路径</div>
+            <div class="canvas-ip-val">specs/L3/sidebar-nav.yaml</div>
+          </div>
+          <div class="canvas-ip-row">
+            <div class="canvas-ip-label">父级</div>
+            <div class="canvas-ip-val">page-shell (L2)</div>
+          </div>
+          <div class="canvas-ip-row">
+            <div class="canvas-ip-label">选择器</div>
+            <div class="canvas-ip-val">nav.sidebar</div>
+          </div>
+          <div class="canvas-ip-row">
+            <div class="canvas-ip-label">子级</div>
+            <div class="canvas-ip-val">menu-item, logo (2)</div>
+          </div>
+          <div class="canvas-ip-actions">
+            <button class="canvas-ip-btn" onclick="viewSpec()">查看</button>
+            <button class="canvas-ip-btn primary" onclick="genSpec()">生成子 Spec</button>
+          </div>
+        </div>
+      </div>
+    </div><!-- /page-canvas -->
+  </div><!-- /view-canvas -->
+
+  <!-- TREE VIEW -->
+  <div class="view" id="view-tree">
+    <div class="content-area">
+      <!-- Left: Spec Tree -->
+      <div class="spec-tree">
+        <div class="tree-header">
+          <span class="tree-title">Spec 树</span>
+          <span class="tree-action" onclick="toast('展开全部', 'info')">展开</span>
+        </div>
+        <div class="tree-filter">
+          <input class="tree-filter-input" placeholder="搜索 Spec…" oninput="filterTree(this.value)" />
+        </div>
+        <div class="tree-body" id="spec-tree-body">
+          <!-- L2: page -->
+          <div class="tree-node">
+            <div class="tree-item active" onclick="treeSelect(this,'page-shell')" oncontextmenu="showCtx(event,'page-shell')">
+              <div class="tree-item-expand open">▶</div>
+              <div class="tree-item-icon icon-l2">P</div>
+              <span class="tree-item-name">page-shell</span>
+            </div>
+            <div class="tree-children open">
+              <!-- L3: components -->
+              <div class="tree-node">
+                <div class="tree-item" onclick="treeSelect(this,'sidebar-nav')" oncontextmenu="showCtx(event,'sidebar-nav')">
+                  <div class="tree-item-expand open">▶</div>
+                  <div class="tree-item-icon icon-l3">C</div>
+                  <span class="tree-item-name">sidebar-nav</span>
+                </div>
+                <div class="tree-children open">
+                  <div class="tree-item" onclick="treeSelect(this,'menu-item')" oncontextmenu="showCtx(event,'menu-item')">
+                    <div class="tree-item-expand empty">▶</div>
+                    <div class="tree-item-icon icon-l4">B</div>
+                    <span class="tree-item-name">menu-item</span>
+                  </div>
+                  <div class="tree-item" onclick="treeSelect(this,'logo')" oncontextmenu="showCtx(event,'logo')">
+                    <div class="tree-item-expand empty">▶</div>
+                    <div class="tree-item-icon icon-l5">S</div>
+                    <span class="tree-item-name">logo</span>
+                  </div>
+                </div>
+              </div>
+              <div class="tree-node">
+                <div class="tree-item" onclick="treeSelect(this,'main-content')" oncontextmenu="showCtx(event,'main-content')">
+                  <div class="tree-item-expand open">▶</div>
+                  <div class="tree-item-icon icon-l3">C</div>
+                  <span class="tree-item-name">main-content</span>
+                </div>
+                <div class="tree-children open">
+                  <div class="tree-item" onclick="treeSelect(this,'card-list')" oncontextmenu="showCtx(event,'card-list')">
+                    <div class="tree-item-expand empty">▶</div>
+                    <div class="tree-item-icon icon-l4">B</div>
+                    <span class="tree-item-name">card-list</span>
+                  </div>
+                  <div class="tree-item" onclick="treeSelect(this,'search-bar')" oncontextmenu="showCtx(event,'search-bar')">
+                    <div class="tree-item-expand empty">▶</div>
+                    <div class="tree-item-icon icon-l4">B</div>
+                    <span class="tree-item-name">search-bar</span>
+                  </div>
+                </div>
+              </div>
+              <div class="tree-node">
+                <div class="tree-item" onclick="treeSelect(this,'footer-nav')" oncontextmenu="showCtx(event,'footer-nav')">
+                  <div class="tree-item-expand empty">▶</div>
+                  <div class="tree-item-icon icon-l3">C</div>
+                  <span class="tree-item-name">footer-nav</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- L2: login -->
+          <div class="tree-node">
+            <div class="tree-item" onclick="treeSelect(this,'page-login')" oncontextmenu="showCtx(event,'page-login')">
+              <div class="tree-item-expand">▶</div>
+              <div class="tree-item-icon icon-l2">P</div>
+              <span class="tree-item-name">page-login</span>
+            </div>
+          </div>
+        </div><!-- /tree-body -->
+      </div><!-- /spec-tree -->
+
+      <!-- Right: Core interaction area (Spec detail / binding) -->
+      <div class="core-area">
+        <!-- Spec detail view -->
+        <div id="spec-detail" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+          <div style="padding:10px 14px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:10px;flex-shrink:0">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:28px;height:28px;border-radius:5px;background:#2d3025;display:flex;align-items:center;justify-content:center;font-size:13px;color:#b5d98e;font-weight:600">C</div>
+              <div>
+                <div style="font-size:13px;font-weight:590" id="detail-name">sidebar-nav</div>
+                <div style="font-size:10.5px;color:var(--t4);margin-top:1px">L3 · component · 2 个子级</div>
+              </div>
+            </div>
+            <div style="margin-left:auto;display:flex;gap:6px">
+              <button class="btn-ghost" onclick="toast('Spec 已复制', 'ok')" style="padding:5px 12px;background:transparent;border:1px solid var(--bdr2);border-radius:var(--r);color:var(--t3);font-family:var(--sans);font-size:11.5px;cursor:pointer">复制</button>
+              <button class="btn-primary" onclick="openModal()" style="padding:5px 12px;background:var(--acc);border:none;border-radius:var(--r);color:#fff;font-family:var(--sans);font-size:11.5px;font-weight:590;cursor:pointer">+ 绑定子 Spec</button>
+            </div>
+          </div>
+          <div style="flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:6px">
+            <div style="font-size:10.5px;font-weight:590;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">YAML 预览</div>
+            <div style="background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r);padding:12px;font-family:var(--mono);font-size:10.5px;line-height:1.8;color:var(--t2);white-space:pre"><span style="color:#7dd3fc">name</span><span style="color:var(--t4)">: </span><span style="color:#86efac">"sidebar-nav"</span>
+<span style="color:#7dd3fc">parent</span><span style="color:var(--t4)">: </span><span style="color:#86efac">"page-shell"</span>
+<span style="color:#7dd3fc">layer</span><span style="color:var(--t4)">: </span><span style="color:#86efac">"L3"</span>
+<span style="color:#7dd3fc">type</span><span style="color:var(--t4)">: </span><span style="color:#86efac">"component"</span>
+<span style="color:#7dd3fc">selector</span><span style="color:var(--t4)">: </span><span style="color:#86efac">"nav.sidebar"</span>
+
+<span style="color:#7dd3fc">children</span><span style="color:var(--t4)">:</span>
+<span style="color:var(--t4)">  - </span><span style="color:#86efac">"menu-item"</span>
+<span style="color:var(--t4)">  - </span><span style="color:#86efac">"logo"</span>
+
+<span style="color:#7dd3fc">behavior</span><span style="color:var(--t4)">:</span>
+<span style="color:#7dd3fc">  collapse</span><span style="color:var(--t4)">:</span>
+<span style="color:#7dd3fc">    trigger</span><span style="color:var(--t4)">: </span><span style="color:#86efac">"click"</span>
+<span style="color:#7dd3fc">    width</span><span style="color:var(--t4)">: </span><span style="color:#86efac">"200px → 56px"</span>
+
+<span style="color:#7dd3fc">variants</span><span style="color:var(--t4)">:</span>
+<span style="color:#7dd3fc">  icon-only</span><span style="color:var(--t4)">: </span><span style="color:#c792ea;font-style:italic"># 影响同级 L4-menu-item</span>
+<span style="color:#7dd3fc">  expanded</span><span style="color:var(--t4)">: </span><span style="color:#c792ea;font-style:italic"># 不影响同级</span></div>
+
+            <div style="font-size:10.5px;font-weight:590;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin:8px 0 4px">影响范围</div>
+            <div style="background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;align-items:center;gap:8px;font-size:11.5px">
+                <span style="color:var(--ok)">✓</span>
+                <span style="color:var(--t2)">同级 Spec 互不影响</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:11.5px">
+                <span style="color:var(--ok)">✓</span>
+                <span style="color:var(--t2)">上级 L2 → 下级 L3 感知变更</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:11.5px">
+                <span style="color:var(--wr)">△</span>
+                <span style="color:var(--t2)">下级 L4 变更需确认上级</span>
+              </div>
+            </div>
+          </div>
+        </div><!-- /spec-detail -->
+      </div><!-- /core-area -->
+    </div><!-- /content-area -->
+  </div><!-- /view-tree -->
+
+  <!-- SETTINGS VIEW -->
+  <div class="view" id="view-settings">
+    <div style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:16px">
+      <!-- LLM Config -->
+      <div>
+        <div style="font-size:10.5px;font-weight:590;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">LLM 配置</div>
+        <div style="background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r2);padding:12px;display:flex;flex-direction:column;gap:10px">
+          <div>
+            <div style="font-size:11.5px;color:var(--t3);margin-bottom:5px">模型</div>
+            <select style="width:100%;background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r);color:var(--t1);font-family:var(--sans);font-size:12px;padding:7px 10px;outline:none;cursor:pointer">
+              <option>MiniMax-Text-01</option>
+              <option>Claude-3.5-Sonnet</option>
+              <option>GPT-4o</option>
+            </select>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+              <div style="font-size:11.5px;color:var(--t3)">Temperature</div>
+              <div style="font-size:11px;color:var(--t3)">0.7</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <input type="range" min="0" max="100" value="70" style="flex:1;accent-color:var(--acc)" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Export Format -->
+      <div>
+        <div style="font-size:10.5px;font-weight:590;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">导出格式</div>
+        <div style="background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r2);padding:10px;display:flex;flex-direction:column;gap:4px">
+          <label style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--r);cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+            <input type="radio" name="fmt" checked style="accent-color:var(--acc)" />
+            <div><div style="font-size:12.5px;color:var(--t1)">YAML + frontmatter</div><div style="font-size:10.5px;color:var(--t4)">推荐 · 兼容 VibeX spec 体系</div></div>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--r);cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+            <input type="radio" name="fmt" style="accent-color:var(--acc)" />
+            <div><div style="font-size:12.5px;color:var(--t1)">Pure Markdown</div><div style="font-size:10.5px;color:var(--t4)">无 frontmatter，纯文档</div></div>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--r);cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+            <input type="radio" name="fmt" style="accent-color:var(--acc)" />
+            <div><div style="font-size:12.5px;color:var(--t1)">JSON</div><div style="font-size:10.5px;color:var(--t4)">机器可读，CI/CD 友好</div></div>
+          </label>
+        </div>
+      </div>
+      <!-- Templates -->
+      <div>
+        <div style="font-size:10.5px;font-weight:590;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">模板</div>
+        <div style="background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r2);padding:12px">
+          <select style="width:100%;background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r);color:var(--t1);font-family:var(--sans);font-size:12px;padding:7px 10px;outline:none;cursor:pointer;margin-bottom:10px">
+            <option>Linear.app</option>
+            <option>Vercel</option>
+            <option>Stripe</option>
+            <option>Cursor</option>
+          </select>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span style="padding:3px 10px;background:var(--accb);border:1px solid rgba(113,112,255,.3);border-radius:20px;font-size:10.5px;color:var(--acc);cursor:pointer" onclick="toast('新建模板…', 'info')">+ 新建模板</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /view-settings -->
+
+</div><!-- /main-layout -->
+
+<!-- ════════════════════════════════
+   BOTTOM BAR
+═══════════════════════════════ -->
+<div class="bottom-bar">
+
+  <!-- Toolbar row -->
+  <div class="bottom-toolbar">
+
+    <!-- Tool groups -->
+    <div class="toolbar-group">
+      <button class="toolbar-btn active" id="btn-annotate" onclick="toggleAnnotations()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M2 8h12"/></svg>
+        标注
+      </button>
+      <button class="toolbar-btn" onclick="openModal()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M8 6v4M6 8h4"/></svg>
+        绑定
+      </button>
+      <button class="toolbar-btn" onclick="genAll()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8l3 3 3-3M13 8l-3-3-3 3"/></svg>
+        生成
+      </button>
+    </div>
+
+    <div class="toolbar-sep"></div>
+
+    <!-- Pane split selector -->
+    <div style="display:flex;align-items:center;gap:4px">
+      <span style="font-size:10.5px;color:var(--t4)">分屏:</span>
+      <div class="split-selector">
+        <button class="split-btn active" onclick="setSplit(1, this)" title="单屏">
+          <svg width="10" height="10" viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8" rx="1" fill="currentColor"/></svg>
+        </button>
+        <button class="split-btn" onclick="setSplit(2, this)" title="双屏左右">
+          <svg width="14" height="10" viewBox="0 0 14 10"><rect x="1" y="1" width="4" height="8" rx="1" fill="currentColor" opacity=".5"/><rect x="7" y="1" width="6" height="8" rx="1" fill="currentColor"/></svg>
+        </button>
+        <button class="split-btn" onclick="setSplit(4, this)" title="四分屏">
+          <svg width="12" height="10" viewBox="0 0 12 10"><rect x="1" y="1" width="4.3" height="4" rx="1" fill="currentColor" opacity=".5"/><rect x="6.7" y="1" width="4.3" height="4" rx="1" fill="currentColor" opacity=".5"/><rect x="1" y="6" width="4.3" height="3" rx="1" fill="currentColor" opacity=".5"/><rect x="6.7" y="6" width="4.3" height="3" rx="1" fill="currentColor" opacity=".5"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="toolbar-sep"></div>
+
+    <!-- Mode toggles -->
+    <div class="toolbar-group">
+      <button class="toolbar-btn active" id="btn-intent" onclick="setMode('intent', this)">
+        🎯 意图探索
+      </button>
+      <button class="toolbar-btn" id="btn-listen" onclick="setMode('listen', this)">
+        👂 双向监听
+      </button>
+    </div>
+
+    <div class="toolbar-spacer"></div>
+
+    <!-- Right toolbar -->
+    <div class="toolbar-group">
+      <button class="toolbar-btn" onclick="showShortcuts()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="8" rx="1"/><path d="M5 8h1M8 8h1M11 8h1M5 6v4M11 6v4"/></svg>
+        快捷键
+      </button>
+      <button class="toolbar-btn" onclick="toast('导出中…', 'info')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 10v3a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-3M8 2v8M5 5l3 3 3-3"/></svg>
+        导出
+      </button>
+    </div>
+  </div>
+
+  <!-- Shortcuts hint row -->
+  <div class="shortcuts-hint">
+    <span style="color:var(--t3);margin-right:4px">⌨</span>
+    <div class="shortcut-chip"><kbd>⌘K</kbd><span>命令面板</span></div>
+    <div class="shortcut-chip"><kbd>⌘Z</kbd><span>撤销</span></div>
+    <div class="shortcut-chip"><kbd>G</kbd><span>生成 Spec</span></div>
+    <div class="shortcut-chip"><kbd>A</kbd><span>添加标注</span></div>
+    <div class="shortcut-chip"><kbd>⌘B</kbd><span>绑定 Spec</span></div>
+    <div class="shortcut-chip"><kbd>⌘1-4</kbd><span>分屏</span></div>
+    <div class="shortcut-chip"><kbd>?</kbd><span>快捷键</span></div>
+  </div>
+
+  <!-- Settings row -->
+  <div class="settings-row">
+    <span class="settings-label">Agent</span>
+    <div class="settings-val">
+      <div class="settings-toggle on" onclick="this.classList.toggle('on')"></div>
+      <span style="font-size:11px;color:var(--t3);margin-left:6px">MiniMax</span>
+    </div>
+    <span class="settings-label" style="margin-left:12px">流式</span>
+    <div class="settings-val">
+      <div class="settings-toggle on" onclick="this.classList.toggle('on')"></div>
+    </div>
+    <span class="settings-label" style="margin-left:12px">主题</span>
+    <div class="settings-val">
+      <span class="settings-badge" onclick="toast('主题切换', 'info')">深色</span>
+    </div>
+  </div>
+
+</div><!-- /bottom-bar -->
+
+<script>
+/* ─── TOAST ─── */
+function toast(msg, type='ok') {
+  const c = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  const icons = {ok:'✓',er:'✕',info:'ℹ'};
+  t.innerHTML = `<span class="ti" style="font-size:13px">${icons[type]||'ℹ'}</span>${msg}`;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 2600);
+}
+
+/* ─── TAB SWITCHING ─── */
+let activeTab = 'wizard';
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab)?.classList.add('active');
+  document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+  const view = document.getElementById('view-' + tab);
+  if (view) {
+    view.style.display = 'flex';
+    view.style.flexDirection = 'column';
+    view.style.flex = '1';
+    view.style.overflow = 'hidden';
+  }
+  if (tab === 'canvas' || tab === 'tree') {
+    document.querySelector('.main-layout').style.display = 'flex';
+  } else {
+    document.querySelector('.main-layout').style.display = 'none';
+  }
+  toast('切换到: ' + {wizard:'引导流',canvas:'交互画布',tree:'Spec 树',settings:'设置'}[tab], 'info');
+}
+
+/* ─── GRILL-ME WIZARD ─── */
+function startGrill() { toast('启动 grill-me 澄清流程…', 'info') }
+function quickStart(type) {
+  const map = {dashboard:'📊 数据看板',saas:'🚀 SaaS 产品',tool:'🛠 效率工具'};
+  toast('快速开始: ' + (map[type]||type), 'ok');
+}
+
+/* ─── ANNOTATIONS ─── */
+let annVisible = true;
+function toggleAnnotations() {
+  annVisible = !annVisible;
+  document.querySelectorAll('.bind-tag').forEach(t => t.style.display = annVisible ? '' : 'none');
+  document.getElementById('btn-annotate')?.classList.toggle('active', annVisible);
+  document.getElementById('ann-toggle')?.classList.toggle('active', annVisible);
+  toast(annVisible ? '标注已显示' : '标注已隐藏', 'info');
+}
+
+/* ─── TAG SELECTION ─── */
+const tagNames = ['L2-page-header','L3-sidebar-nav','L3-main-content','L4-card-list','L2-footer-nav'];
+const tagLayers = ['page','component','component','behavior','page'];
+const tagPaths = ['specs/L2/page-header.yaml','specs/L3/sidebar-nav.yaml','specs/L3/main-content.yaml','specs/L4/card-list.yaml','specs/L2/footer-nav.yaml'];
+function selectTag(n) {
+  document.querySelectorAll('.bind-tag').forEach(t => t.classList.remove('selected'));
+  document.getElementById('tag-' + n)?.classList.add('selected');
+  const ip = document.getElementById('canvas-ip');
+  ip.classList.add('open');
+  document.getElementById('ip-name').textContent = tagNames[n];
+  toast('选中: ' + tagNames[n] + ' (' + tagLayers[n] + ')', 'info');
+  // Also highlight in tree
+  const treeNames = ['page-header','sidebar-nav','main-content','card-list','footer-nav'];
+  document.querySelectorAll('.tree-item').forEach(item => {
+    item.classList.toggle('active', item.querySelector('.tree-item-name').textContent === treeNames[n]);
+  });
+}
+
+/* ─── TREE ─── */
+function treeSelect(el, name) {
+  document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('detail-name').textContent = name;
+  toast('选中 Spec: ' + name, 'info');
+  // Open parent if collapsed
+  el.closest('.tree-children')?.classList.add('open');
+  el.querySelector('.tree-item-expand')?.classList.add('open');
+}
+function filterTree(q) {
+  if (!q) {
+    document.querySelectorAll('.tree-item').forEach(i => i.style.display = '');
+    return;
+  }
+  document.querySelectorAll('.tree-item').forEach(i => {
+    i.style.display = i.querySelector('.tree-item-name').textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+
+/* ─── CONTEXT MENU ─── */
+const ctxMenu = document.getElementById('ctx-menu');
+let ctxTarget = '';
+function showCtx(e, name) {
+  e.preventDefault();
+  ctxTarget = name;
+  ctxMenu.style.left = Math.min(e.clientX, window.innerWidth - 190) + 'px';
+  ctxMenu.style.top = Math.min(e.clientY, window.innerHeight - 240) + 'px';
+  ctxMenu.classList.add('open');
+}
+document.addEventListener('click', () => ctxMenu.classList.remove('open'));
+function ctxAction(action) {
+  ctxMenu.classList.remove('open');
+  const map = {view:'查看',edit:'编辑',generate:'生成子 Spec',copy:'复制 Selector',ann:'添加标注',delete:'删除'};
+  toast(map[action] + ': ' + ctxTarget, action === 'delete' ? 'er' : 'ok');
+}
+
+/* ─── MODAL ─── */
+function openModal() {
+  document.getElementById('bind-modal').classList.add('open');
+  updateModalPreview();
+}
+function closeModal() {
+  document.getElementById('bind-modal').classList.remove('open');
+}
+document.getElementById('bind-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('bind-modal')) closeModal();
+});
+function updateModalPreview() {
+  const n = document.getElementById('modal-name').value || 'unnamed';
+  const l = document.getElementById('modal-layer').value;
+  const p = document.getElementById('modal-parent').value;
+  const s = document.getElementById('modal-selector').value || '.selector';
+  document.getElementById('modal-preview').innerHTML =
+    `<span class="k">name</span><span class="p">: </span><span class="v">"${n}"</span>\n<span class="k">layer</span><span class="p">: </span><span class="v">"${l}"</span>\n<span class="k">parent</span><span class="p">: </span><span class="v">"${p}"</span>\n<span class="k">selector</span><span class="p">: </span><span class="v">"${s}"</span>`;
+}
+function doBind() {
+  const n = document.getElementById('modal-name').value;
+  if (!n) { toast('请输入 Spec 名称', 'er'); return; }
+  closeModal();
+  toast('已绑定: ' + n, 'ok');
+}
+
+/* ─── SPEC ACTIONS ─── */
+function viewSpec() {
+  switchTab('tree');
+  toast('跳转到 Spec 树', 'info');
+}
+function genSpec() {
+  toast('正在生成子 Spec…', 'info');
+  setTimeout(() => toast('子 Spec 生成完成 ✓', 'ok'), 1500);
+}
+function genAll() {
+  toast('正在生成全部 Spec…', 'info');
+  setTimeout(() => toast('Spec 生成完成 ✓', 'ok'), 2000);
+}
+
+/* ─── BOTTOM BAR ACTIONS ─── */
+function setSplit(n, btn) {
+  btn.parentElement.querySelectorAll('.split-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  toast(n === 1 ? '单屏模式' : n === 2 ? '双屏左右' : '四分屏', 'info');
+}
+function setMode(mode, btn) {
+  document.querySelectorAll('.toolbar-btn').forEach(b => {
+    if (b.textContent.includes('意图探索') || b.textContent.includes('双向监听')) b.classList.remove('active');
+  });
+  btn.classList.add('active');
+  toast(mode === 'intent' ? '意图探索模式' : '双向监听模式', 'info');
+}
+function showShortcuts() {
+  toast('⌘K 命令面板 | ⌘Z 撤销 | G 生成 | A 标注 | ⌘B 绑定 | ⌘1-4 分屏 | ? 帮助', 'info');
+}
+
+/* ─── KEYBOARD SHORTCUTS ─── */
+document.addEventListener('keydown', e => {
+  const cmd = e.metaKey || e.ctrlKey;
+  if (cmd && e.key === 'k') { e.preventDefault(); toast('命令面板…', 'info') }
+  if (cmd && e.key === 'z') { e.preventDefault(); toast('撤销', 'info') }
+  if (!cmd && e.key === 'g' && !e.target.matches('input,textarea')) { e.preventDefault(); genSpec() }
+  if (!cmd && e.key === 'a' && !e.target.matches('input,textarea')) { e.preventDefault(); openModal() }
+  if (cmd && e.key === 'b') { e.preventDefault(); openModal() }
+  if (e.key === '?' && !e.target.matches('input,textarea')) showShortcuts();
+  if (e.key === 'Escape') { closeModal(); ctxMenu.classList.remove('open'); }
+  if (cmd && e.key === '1') setSplit(1, document.querySelectorAll('.split-btn')[0]);
+  if (cmd && e.key === '2') setSplit(2, document.querySelectorAll('.split-btn')[1]);
+  if (cmd && e.key === '3') setSplit(4, document.querySelectorAll('.split-btn')[2]);
+});
+
+/* ─── INIT ─── */
+switchTab('wizard');
+</script>
+</body>
+</html>
