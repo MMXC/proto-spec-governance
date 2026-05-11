@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proto Spec Governance — Spec-Binding 交互原型</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;590;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --w:420px;--h:760px;
+  --bg:#0f1011;--bg2:#16171a;--bg3:#1c1d20;
+  --bdr:rgba(255,255,255,0.06);--bdr2:rgba(255,255,255,0.10);
+  --t1:#f7f8f8;--t2:#c8cdd6;--t3:#8a8f98;--t4:#62666d;
+  --acc:#7170ff;--acc2:#828fff;--accb:rgba(113,112,255,0.12);
+  --ok:#10b981;--wr:#f59e0b;--er:#f87171;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
+  --r:6px;--r2:10px;--r3:14px;
+}
+body{
+  font-family:var(--sans);font-size:13px;
+  background:#08080a;color:var(--t1);
+  height:var(--h);width:var(--w);
+  display:flex;flex-direction:column;overflow:hidden;
+  border-radius:var(--r3);
+}
+/* ─── HEADER ─── */
+.hdr{
+  height:44px;background:var(--bg2);
+  border-bottom:1px solid var(--bdr);
+  display:flex;align-items:center;gap:8px;padding:0 12px;flex-shrink:0;
+}
+.hdr-icon{
+  width:24px;height:24px;background:var(--acc);border-radius:4px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:600;color:#fff;letter-spacing:-0.3px;
+}
+.hdr-title{font-size:13px;font-weight:590;flex:1}
+.hdr-pill{
+  display:flex;align-items:center;gap:5px;
+  padding:3px 10px;background:var(--bg3);
+  border:1px solid var(--bdr);border-radius:20px;
+  font-size:11px;color:var(--t3);
+}
+.hdr-pill-dot{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 5px var(--ok)}
+.hdr-pill-pulse{animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.hdr-btn{
+  width:28px;height:28px;border:none;background:transparent;border-radius:4px;
+  color:var(--t4);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .15s,color .15s;
+}
+.hdr-btn:hover{background:var(--bdr);color:var(--t1)}
+/* ─── FLOW STEPS ─── */
+.flow-steps{
+  display:flex;align-items:center;gap:0;
+  background:var(--bg);border-bottom:1px solid var(--bdr);
+  padding:0 12px;flex-shrink:0;
+}
+.step{
+  display:flex;align-items:center;gap:6px;
+  padding:8px 0;
+  font-size:12px;color:var(--t4);cursor:pointer;
+  border-bottom:2px solid transparent;
+  transition:color .15s,border-color .15s;
+  white-space:nowrap;
+}
+.step:hover{color:var(--t2)}
+.step.active{color:var(--acc);border-bottom-color:var(--acc);font-weight:590}
+.step.done{color:var(--ok)}
+.step-num{
+  width:18px;height:18px;border-radius:50%;
+  background:var(--bg3);border:1px solid var(--bdr2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:600;flex-shrink:0;
+  transition:all .2s;
+}
+.step.active .step-num{background:var(--acc);border-color:var(--acc);color:#fff}
+.step.done .step-num{background:var(--ok);border-color:var(--ok);color:#fff}
+.step-sep{flex:1;height:1px;background:var(--bdr);margin:0 8px}
+/* ─── BODY ─── */
+.body{flex:1;overflow:hidden;position:relative}
+.view{position:absolute;inset:0;overflow-y:auto;display:none;flex-direction:column}
+.view.active{display:flex}
+/* ─── TOAST ─── */
+#toasts{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;z-index:9999;pointer-events:none}
+.toast{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 14px;background:var(--bg2);
+  border:1px solid var(--bdr2);border-radius:var(--r);
+  font-size:12.5px;color:var(--t1);
+  box-shadow:0 4px 16px rgba(0,0,0,.5);
+  animation:tin .2s ease, tout .2s ease 2s forwards;
+}
+.toast.ok{border-color:rgba(16,185,129,.4)}.toast.ok .ti{color:var(--ok)}
+.toast.er{border-color:rgba(248,113,113,.4)}.toast.er .ti{color:var(--er)}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes tout{from{opacity:1}to{opacity:0}}
+/* ══════════════════════════════════
+   VIEW 0: EMPTY / START
+══════════════════════════════════ */
+.v-empty{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:20px;padding:40px 32px;text-align:center;
+}
+.v-empty-icon{
+  width:72px;height:72px;
+  background:var(--bg2);border:1px solid var(--bdr2);border-radius:var(--r3);
+  display:flex;align-items:center;justify-content:center;font-size:32px;
+}
+.v-empty h2{font-size:18px;font-weight:590;color:var(--t1)}
+.v-empty p{font-size:13px;color:var(--t3);line-height:1.6;max-width:280px}
+.v-empty-cta{
+  display:flex;flex-direction:column;gap:8px;width:100%;max-width:240px;
+}
+.btn-primary{
+  padding:10px 20px;background:var(--acc);border:none;border-radius:var(--r);
+  color:#fff;font-family:var(--sans);font-size:13px;font-weight:590;
+  cursor:pointer;transition:background .15s,transform .1s;width:100%;
+}
+.btn-primary:hover{background:var(--acc2)}
+.btn-primary:active{transform:scale(.97)}
+.btn-ghost{
+  padding:9px 20px;background:transparent;border:1px solid var(--bdr2);border-radius:var(--r);
+  color:var(--t3);font-family:var(--sans);font-size:13px;
+  cursor:pointer;transition:all .15s;width:100%;
+}
+.btn-ghost:hover{border-color:var(--t4);color:var(--t2)}
+/* ══════════════════════════════════
+   VIEW 1: GRILL-ME WIZARD
+══════════════════════════════════ */
+.v-grill{padding:0;flex:1;overflow:hidden;display:flex;flex-direction:column}
+.grill-progress{
+  display:flex;align-items:center;gap:6px;
+  padding:10px 16px;background:var(--bg);
+  border-bottom:1px solid var(--bdr);flex-shrink:0;
+}
+.grill-progress-track{
+  flex:1;height:3px;background:var(--bdr);border-radius:2px;overflow:hidden;
+}
+.grill-progress-fill{
+  height:100%;background:var(--acc);border-radius:2px;
+  transition:width .4s ease;
+}
+.grill-progress-label{font-size:11px;color:var(--t4);white-space:nowrap}
+.grill-body{
+  flex:1;overflow-y:auto;padding:20px 16px;
+  display:flex;flex-direction:column;gap:16px;
+}
+.grill-q{
+  font-size:15px;font-weight:590;color:var(--t1);line-height:1.4;
+}
+.grill-subq{font-size:12.5px;color:var(--t3);margin-top:4px;line-height:1.5}
+.grill-options{display:flex;flex-direction:column;gap:8px}
+.grill-opt{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;background:var(--bg2);
+  border:1px solid var(--bdr);border-radius:var(--r2);
+  cursor:pointer;transition:all .15s;text-align:left;width:100%;
+}
+.grill-opt:hover{background:var(--bg3);border-color:var(--acc);transform:translateX(2px)}
+.grill-opt.selected{background:var(--accb);border-color:var(--acc)}
+.grill-opt-icon{
+  width:36px;height:36px;background:var(--bg);border:1px solid var(--bdr2);border-radius:var(--r);
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;
+}
+.grill-opt.selected .grill-opt-icon{border-color:var(--acc);background:var(--accb)}
+.grill-opt-text{flex:1}
+.grill-opt-title{font-size:13px;color:var(--t1);font-weight:500}
+.grill-opt-desc{font-size:11.5px;color:var(--t3);margin-top:2px}
+.grill-opt-check{
+  width:20px;height:20px;border-radius:50%;border:2px solid var(--bdr2);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:all .15s;
+}
+.grill-opt.selected .grill-opt-check{background:var(--acc);border-color:var(--acc)}
+.grill-opt.selected .grill-opt-check::after{
+  content:'✓';font-size:11px;color:#fff;font-weight:600;
+}
+.grill-textarea-wrap{
+  position:relative;
+}
+.grill-textarea{
+  width:100%;background:var(--bg2);border:1px solid var(--bdr);
+  border-radius:var(--r2);color:var(--t1);
+  font-family:var(--sans);font-size:14px;
+  padding:12px 14px;resize:none;outline:none;
+  min-height:80px;max-height:160px;line-height:1.5;
+  transition:border-color .15s,box-shadow .15s;
+}
+.grill-textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(113,112,255,.1)}
+.grill-textarea::placeholder{color:var(--t4)}
+.grill-textarea-counter{
+  position:absolute;bottom:8px;right:10px;
+  font-size:10px;color:var(--t4);
+}
+.grill-nav{
+  display:flex;gap:8px;padding:12px 16px;
+  border-top:1px solid var(--bdr);background:var(--bg);flex-shrink:0;
+}
+.grill-nav .btn-ghost{flex:0 0 auto;width:auto;padding:8px 16px}
+.grill-nav .btn-primary{flex:1}
+/* ══════════════════════════════════
+   VIEW 2: SKELETON GENERATOR
+══════════════════════════════════ */
+.v-skeleton{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.skel-header{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--bdr);flex-shrink:0;
+}
+.skel-header-title{font-size:13px;font-weight:590;flex:1}
+.skel-count{
+  font-size:11px;color:var(--t3);
+  padding:2px 8px;background:var(--bg2);border:1px solid var(--bdr);border-radius:20px;
+}
+.skel-grid{
+  flex:1;overflow-y:auto;padding:12px;
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start;
+}
+.skel-card{
+  background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r2);
+  overflow:hidden;cursor:pointer;transition:all .15s;
+  display:flex;flex-direction:column;
+}
+.skel-card:hover{border-color:var(--t4);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.skel-card.selected{border-color:var(--acc);box-shadow:0 0 0 2px rgba(113,112,255,.3)}
+.skel-preview{
+  height:160px;background:var(--bg);display:flex;flex-direction:column;padding:12px;gap:8px;position:relative;overflow:hidden;
+}
+.skel-sel-badge{
+  position:absolute;top:8px;right:8px;
+  width:24px;height:24px;background:var(--acc);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:#fff;font-weight:600;opacity:0;transition:opacity .15s;
+}
+.skel-card.selected .skel-sel-badge{opacity:1}
+.skel-page{
+  flex:1;border-radius:4px;overflow:hidden;
+  border:1px solid var(--bdr);position:relative;
+}
+/* Skeleton visual styles */
+.skel-page.type-A{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%)}
+.skel-page.type-B{background:linear-gradient(135deg,#1e1e2a 0%,#2a1a3a 100%)}
+.skel-page.type-C{background:linear-gradient(135deg,#1a2a1e 0%,#1a3a2a 100%)}
+.skel-page.type-D{background:linear-gradient(135deg,#2a1a1a 0%,#3a1a1a 100%)}
+.skel-page-inner{
+  position:absolute;inset:0;padding:10px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.skel-bar{height:8px;background:rgba(255,255,255,.06);border-radius:2px}
+.skel-bar.w50{width:50%}.skel-bar.w70{width:70%}.skel-bar.w40{width:40%}
+.skel-bar.h14{height:14px}.skel-bar.h10{height:10px}
+.skel-rect{height:40px;background:rgba(255,255,255,.04);border-radius:3px}
+.skel-rect.sm{height:28px}
+.skel-card-footer{
+  padding:10px 12px;border-top:1px solid var(--bdr);
+  display:flex;align-items:center;gap:6px;
+}
+.skel-card-name{
+  font-size:12px;color:var(--t2);flex:1;font-weight:500;
+}
+.skel-card-tag{
+  font-size:10px;color:var(--t4);
+  padding:2px 6px;background:var(--bg);border-radius:10px;
+}
+.skel-nav{
+  display:flex;gap:8px;padding:10px 14px;
+  border-top:1px solid var(--bdr);background:var(--bg);flex-shrink:0;
+}
+.skel-nav .btn-ghost{width:auto;flex:0 0 auto;padding:8px 16px}
+.skel-nav .btn-primary{flex:1}
+.skel-regen{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:8px;background:var(--bg);border-radius:var(--r);
+  color:var(--t3);font-size:12px;cursor:pointer;transition:color .15s;
+}
+.skel-regen:hover{color:var(--t1)}
+.skel-regen svg{width:14px;height:14px}
+/* ══════════════════════════════════
+   VIEW 3: SPEC BINDING
+══════════════════════════════════ */
+.v-binding{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.binding-layout{fustify-content:flex-start;flex:1;overflow:hidden;display:flex;flex-direction:column}
+.bind-page{
+  flex:1;position:relative;overflow:hidden;
+  background:var(--bg);border-bottom:1px solid var(--bdr);
+}
+.bind-page-iframe{
+  width:100%;height:100%;border:none;
+  background:#fff;
+}
+/* Binding tag overlays on the page */
+.bind-tags{
+  position:absolute;inset:0;pointer-events:none;
+}
+.bind-tag{
+  position:absolute;pointer-events:all;
+  cursor:pointer;
+  transition:all .2s;
+}
+.bind-tag-rect{
+  border:1.5px solid var(--acc);border-radius:3px;
+  background:rgba(113,112,255,.06);
+  min-width:40px;min-height:24px;
+  position:relative;
+}
+.bind-tag:hover .bind-tag-rect{
+  background:rgba(113,112,255,.15);
+  box-shadow:0 0 0 3px rgba(113,112,255,.2);
+}
+.bind-tag.active .bind-tag-rect{
+  border-width:2px;
+  background:rgba(113,112,255,.15);
+  box-shadow:0 0 0 3px rgba(113,112,255,.35);
+}
+.bind-tag-label{
+  position:absolute;top:-22px;left:0;
+  background:var(--acc);color:#fff;
+  font-size:9px;font-weight:600;
+  padding:2px 6px;border-radius:3px 3px 0 0;
+  white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;
+}
+.bind-tag-badge{
+  position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);
+  background:var(--bg2);border:1px solid var(--bdr);
+  border-radius:3px;padding:1px 5px;
+  font-size:9px;color:var(--t3);white-space:nowrap;
+}
+.bind-tag.active .bind-tag-badge{
+  background:var(--accb);border-color:var(--acc);color:var(--acc);
+}
+.bind-spec-panel{
+  height:280px;flex-shrink:0;display:flex;flex-direction:column;
+  border-top:1px solid var(--bdr);
+}
+.bind-spec-tabs{
+  display:flex;background:var(--bg);border-bottom:1px solid var(--bdr);flex-shrink:0;
+}
+.bind-tab{
+  flex:1;padding:8px 0;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  font-size:12px;font-weight:500;color:var(--t4);
+  border-bottom:2px solid transparent;cursor:pointer;
+  transition:all .15s;
+}
+.bind-tab:hover{color:var(--t2)}
+.bind-tab.active{color:var(--acc);border-bottom-color:var(--acc);font-weight:590}
+.bind-tab-layer{
+  font-size:9px;font-weight:700;
+  background:var(--bg3);padding:1px 5px;border-radius:3px;
+}
+.bind-tab.active .bind-tab-layer{background:var(--acc);color:#fff}
+.bind-tab-count{
+  font-size:9px;background:var(--bg3);padding:1px 5px;border-radius:10px;
+}
+.bind-tab.active .bind-tab-count{background:var(--accb);color:var(--acc)}
+.bind-spec-body{
+  flex:1;overflow-y:auto;padding:10px 12px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.bind-spec-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;background:var(--bg2);
+  border:1px solid var(--bdr);border-radius:var(--r);
+  cursor:pointer;transition:all .15s;
+}
+.bind-spec-item:hover{border-color:var(--t4);background:var(--bg3)}
+.bind-spec-item.active{border-color:var(--acc);background:var(--accb)}
+.bind-spec-icon{
+  width:32px;height:32px;border-radius:var(--r);
+  display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;
+}
+.bind-spec-icon.page{background:#2a2b3d;color:#a5a8ff}
+.bind-spec-icon.feat{background:#2d3025;color:#b5d98e}
+.bind-spec-icon.comp{background:#2d2a25;color:#d9b88e}
+.bind-spec-icon.behav{background:#3d2525;color:#d98e8e}
+.bind-spec-info{flex:1;min-width:0}
+.bind-spec-name{font-size:13px;color:var(--t1);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bind-spec-path{font-size:10.5px;color:var(--t3);margin-top:2px;font-family:var(--mono)}
+.bind-spec-arrow{
+  width:20px;height:20px;border-radius:50%;
+  background:var(--bg);border:1px solid var(--bdr);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--t4);font-size:10px;flex-shrink:0;transition:all .15s;
+}
+.bind-spec-item:hover .bind-spec-arrow{color:var(--acc);border-color:var(--acc)}
+/* Binding modal */
+#bind-modal{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.7);backdrop-filter:blur(4px);
+  display:none;align-items:center;justify-content:center;
+  z-index:500;padding:20px;
+}
+#bind-modal.open{display:flex}
+.bind-modal-box{
+  width:360px;background:var(--bg2);
+  border:1px solid var(--bdr2);border-radius:var(--r3);
+  box-shadow:0 0 0 1px rgba(0,0,0,.8),0 24px 48px rgba(0,0,0,.6);
+  overflow:hidden;
+}
+.bind-modal-hdr{
+  padding:14px 16px;border-bottom:1px solid var(--bdr);
+  display:flex;align-items:center;gap:10px;
+}
+.bind-modal-icon{
+  width:32px;height:32px;border-radius:var(--r);
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+}
+.bind-modal-title{font-size:14px;font-weight:590}
+.bind-modal-sub{font-size:11px;color:var(--t3);margin-top:2px}
+.bind-modal-body{padding:14px 16px}
+.bind-modal-row{
+  margin-bottom:12px;
+}
+.bind-modal-label{font-size:11.5px;color:var(--t3);margin-bottom:5px;display:block}
+.bind-modal-input{
+  width:100%;background:var(--bg);border:1px solid var(--bdr);
+  border-radius:var(--r);color:var(--t1);
+  font-family:var(--sans);font-size:13px;
+  padding:8px 12px;outline:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+.bind-modal-input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(113,112,255,.1)}
+.bind-modal-preview{
+  background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r);
+  padding:10px;font-family:var(--mono);font-size:11px;color:var(--t3);
+  line-height:1.6;margin-top:8px;
+}
+.bind-modal-preview .k{color:#7dd3fc}.bind-modal-preview .v{color:#86efac}
+.bind-modal-preview .p{color:var(--t4)}
+.bind-modal-foot{
+  display:flex;gap:8px;padding:12px 16px;
+  border-top:1px solid var(--bdr);
+}
+.bind-modal-foot .btn-ghost{flex:0 0 auto;width:auto;padding:8px 16px}
+.bind-modal-foot .btn-primary{flex:1}
+/* ══════════════════════════════════
+   VIEW 4: SPEC EDITOR
+══════════════════════════════════ */
+.v-editor{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.editor-layout{flex:1;overflow:hidden;display:flex}
+.editor-left{
+  flex:1;overflow:hidden;display:flex;flex-direction:column;
+  border-right:1px solid var(--bdr);
+}
+.editor-right{
+  width:200px;flex-shrink:0;overflow-y:auto;
+  padding:12px;background:var(--bg);
+  border-left:1px solid var(--bdr);
+}
+.editor-topbar{
+  display:flex;align-items:center;gap:6px;
+  padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--bdr);flex-shrink:0;
+}
+.editor-tab{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 12px;background:var(--bg2);
+  border:1px solid var(--bdr);border-radius:var(--r);
+  font-size:12px;color:var(--t2);cursor:pointer;
+  transition:all .15s;
+}
+.editor-tab.active{background:var(--accb);border-color:var(--acc);color:var(--acc)}
+.editor-tab-dot{width:6px;height:6px;border-radius:50%;background:var(--acc)}
+.editor-layers{
+  display:flex;gap:4px;flex-wrap:wrap;
+}
+.editor-layer-chip{
+  padding:3px 10px;background:var(--bg3);border:1px solid var(--bdr);
+  border-radius:20px;font-size:11px;color:var(--t3);cursor:pointer;
+  transition:all .15s;
+}
+.editor-layer-chip:hover{border-color:var(--t4);color:var(--t2)}
+.editor-layer-chip.active{background:var(--accb);border-color:var(--acc);color:var(--acc)}
+.editor-code{
+  flex:1;overflow-y:auto;padding:14px;
+  font-family:var(--mono);font-size:11.5px;line-height:1.7;
+  color:var(--t2);white-space:pre-wrap;
+}
+.editor-code .kw{color:#c792ea}.editor-code .s{color:#c3e88d}
+.editor-code .c{color:var(--t4);font-style:italic}
+.editor-code .k{color:#7dd3fc}.editor-code .v{color:#86efac}
+.editor-code .p{color:var(--t4)}
+.editor-code .a{color:var(--acc);font-weight:500}
+.editor-code .b{color:#f7f8f8;font-weight:600}
+.editor-savebar{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 12px;background:var(--bg);border-top:1px solid var(--bdr);flex-shrink:0;
+}
+.editor-save-info{font-size:11px;color:var(--t4);flex:1}
+.editor-save-status{font-size:11px;color:var(--ok);display:flex;align-items:center;gap:4px}
+.editor-save-dot{width:5px;height:5px;border-radius:50%;background:var(--ok)}
+/* Right panel: spec hierarchy */
+.spec-hier-title{
+  font-size:10.5px;font-weight:590;color:var(--t4);
+  text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;
+}
+.spec-hier-item{
+  padding:8px 10px;margin-bottom:4px;
+  background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);
+  cursor:pointer;transition:all .15s;
+}
+.spec-hier-item:hover{border-color:var(--t4)}
+.spec-hier-item.active{border-color:var(--acc);background:var(--accb)}
+.spec-hier-item.depth1{padding-left:16px}
+.spec-hier-item.depth2{padding-left:28px}
+.spec-hier-name{font-size:12.5px;color:var(--t2);font-weight:500}
+.spec-hier-item.active .spec-hier-name{color:var(--acc)}
+.spec-hier-type{font-size:10px;color:var(--t4);margin-top:2px;font-family:var(--mono)}
+.spec-hier-children{margin-top:4px;padding-left:8px;border-left:1px solid var(--bdr)}
+.spec-hier-child{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 8px;margin-bottom:3px;
+  border-radius:var(--r);cursor:pointer;transition:background .1s;
+}
+.spec-hier-child:hover{background:var(--bg3)}
+.spec-hier-child.active{background:var(--accb)}
+.spec-hier-dot{width:6px;height:6px;border-radius:50%;border:1px solid var(--bdr2)}
+.spec-hier-child.active .spec-hier-dot{background:var(--acc);border-color:var(--acc)}
+.spec-hier-child-name{font-size:11.5px;color:var(--t3);flex:1}
+.spec-hier-child.active .spec-hier-child-name{color:var(--acc)}
+/* ══════════════════════════════════
+   VIEW 5: INTERACTION PROTOTYPE
+══════════════════════════════════ */
+.v-prototype{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.proto-toolbar{
+  display:flex;align-items:center;gap:6px;
+  padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--bdr);flex-shrink:0;
+}
+.proto-mode-btn{
+  display:flex;align-items:center;gap:5px;
+  padding:5px 12px;background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);
+  font-size:12px;color:var(--t3);cursor:pointer;transition:all .15s;
+}
+.proto-mode-btn:hover{color:var(--t2);border-color:var(--t4)}
+.proto-mode-btn.active{background:var(--accb);border-color:var(--acc);color:var(--acc)}
+.proto-mode-icon{font-size:13px}
+.proto-sep{flex:1}
+.proto-spec-selector{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 10px;background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);
+  font-size:12px;color:var(--t2);cursor:pointer;
+}
+.proto-spec-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.proto-spec-dot.page{background:#a5a8ff}
+.proto-spec-dot.feat{background:#b5d98e}
+.proto-spec-dot.comp{background:#d9b88e}
+.proto-spec-dot.behav{background:#d98e8e}
+/* Proto canvas */
+.proto-canvas{
+  flex:1;position:relative;overflow:hidden;
+  background:#fff;
+}
+.proto-elem{
+  position:absolute;cursor:pointer;border:1.5px dashed transparent;
+  border-radius:3px;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:rgba(0,0,0,.4);font-family:var(--sans);
+}
+.proto-elem:hover{border-color:var(--acc)}
+.proto-elem.selected{border:2px solid var(--acc);background:rgba(113,112,255,.05)}
+.proto-elem.annotated::after{
+  content:attr(data-ann);
+  position:absolute;top:-18px;left:0;
+  background:var(--acc);color:#fff;
+  font-size:9px;padding:1px 5px;border-radius:3px 3px 0 0;
+  white-space:nowrap;
+}
+.proto-click-hint{
+  position:absolute;bottom:12px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.8);color:#fff;
+  padding:6px 14px;border-radius:20px;
+  font-size:11.5px;display:flex;align-items:center;gap:6px;
+  pointer-events:none;
+}
+.proto-click-hint svg{width:14px;height:14px}
+/* Proto interaction overlay */
+.proto-interaction-panel{
+  position:absolute;bottom:12px;right:12px;
+  width:220px;background:var(--bg2);
+  border:1px solid var(--bdr2);border-radius:var(--r2);
+  box-shadow:0 8px 24px rgba(0,0,0,.5);
+  overflow:hidden;display:none;
+}
+.proto-interaction-panel.active{display:block}
+.proto-ip-header{
+  padding:10px 12px;border-bottom:1px solid var(--bdr);
+  font-size:12px;font-weight:590;
+}
+.proto-ip-body{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.proto-ip-row{display:flex;align-items:center;gap:8px}
+.proto-ip-label{font-size:11px;color:var(--t3);width:40px;flex-shrink:0}
+.proto-ip-value{font-size:11.5px;color:var(--t1);font-family:var(--mono);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proto-ip-actions{display:flex;gap:6px;margin-top:4px}
+.proto-ip-btn{
+  flex:1;padding:6px;background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r);
+  font-size:11px;color:var(--t3);cursor:pointer;text-align:center;
+  transition:all .15s;
+}
+.proto-ip-btn:hover{color:var(--t1);border-color:var(--t4)}
+.proto-ip-btn.primary{background:var(--accb);border-color:var(--acc);color:var(--acc)}
+.proto-ip-btn.primary:hover{background:var(--acc)}
+.proto-ip-btn.primary:hover{color:#fff}
+/* Spec chain indicator */
+.proto-spec-chain{
+  position:absolute;top:8px;left:8px;
+  display:flex;align-items:center;gap:3px;
+  background:rgba(0,0,0,.7);border-radius:20px;padding:4px 10px;
+}
+.proto-chain-item{
+  font-size:10px;color:var(--t3);cursor:pointer;
+  transition:color .15s;
+}
+.proto-chain-item:hover{color:var(--t1)}
+.proto-chain-sep{color:var(--t4);font-size:9px}
+/* ══════════════════════════════════
+   SCROLLBAR & UTILS
+══════════════════════════════════ */
+.view::-webkit-scrollbar{width:4px}
+.view::-webkit-scrollbar-track{background:transparent}
+.view::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- ─── TOASTS ─── -->
+<div id="toasts"></div>
+
+<!-- ─── HEADER ─── -->
+<div class="hdr">
+  <div class="hdr-icon">PS</div>
+  <div class="hdr-title">Proto Spec</div>
+  <div class="hdr-pill">
+    <div class="hdr-pill-dot hdr-pill-pulse"></div>
+    <span>Agent 就绪</span>
+  </div>
+  <button class="hdr-btn" title="开始新项目" onclick="resetAll()">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M2 8h12"/></svg>
+  </button>
+</div>
+
+<!-- ─── FLOW STEPS ─── -->
+<div class="flow-steps">
+  <div class="step active" id="step-0" onclick="goStep(0)">
+    <div class="step-num">1</div>
+    <span>开始</span>
+  </div>
+  <div class="step-sep"></div>
+  <div class="step" id="step-1" onclick="goStep(1)">
+    <div class="step-num">2</div>
+    <span>澄清</span>
+  </div>
+  <div class="step-sep"></div>
+  <div class="step" id="step-2" onclick="goStep(2)">
+    <div class="step-num">3</div>
+    <span>骨架</span>
+  </div>
+  <div class="step-sep"></div>
+  <div class="step" id="step-3" onclick="goStep(3)">
+    <div class="step-num">4</div>
+    <span>绑定</span>
+  </div>
+  <div class="step-sep"></div>
+  <div class="step" id="step-4" onclick="goStep(4)">
+    <div class="step-num">5</div>
+    <span>Spec</span>
+  </div>
+  <div class="step-sep"></div>
+  <div class="step" id="step-5" onclick="goStep(5)">
+    <div class="step-num">6</div>
+    <span>原型</span>
+  </div>
+</div>
+
+<!-- ─── BODY / VIEWS ─── -->
+<div class="body">
+
+  <!-- VIEW 0: EMPTY START -->
+  <div class="view v-empty active" id="view-0">
+    <div class="v-empty-icon">✦</div>
+    <h2>你想做什么应用？</h2>
+    <p>描述你的想法，Agent 会引导你澄清主题、竞品和 UI 风格，直到你确认一个满意的页面骨架。</p>
+    <div class="v-empty-cta">
+      <button class="btn-primary" onclick="goStep(1)">开始描述 →</button>
+      <button class="btn-ghost" onclick="goStep(2)">从骨架模板开始</button>
+    </div>
+  </div>
+
+  <!-- VIEW 1: GRILL-ME WIZARD -->
+  <div class="view v-grill" id="view-1">
+    <div class="grill-progress">
+      <div class="grill-progress-track">
+        <div class="grill-progress-fill" id="grill-fill" style="width:25%"></div>
+      </div>
+      <div class="grill-progress-label" id="grill-label">第 1 步 / 共 4 步</div>
+    </div>
+    <div class="grill-body">
+      <!-- Q1 -->
+      <div id="grill-q1">
+        <div class="grill-q">你想做什么类型的应用？</div>
+        <div class="grill-subq">比如：To-Do 工具、博客平台、数据看板、AI 助手…</div>
+        <div class="grill-options" style="margin-top:14px">
+          <button class="grill-opt" onclick="selectOpt(this,'type','dashboard')">
+            <div class="grill-opt-icon">📊</div>
+            <div class="grill-opt-text">
+              <div class="grill-opt-title">数据看板 / Dashboard</div>
+              <div class="grill-opt-desc">数据可视化、指标监控、管理后台</div>
+            </div>
+            <div class="grill-opt-check"></div>
+          </button>
+          <button class="grill-opt" onclick="selectOpt(this,'type','saas')">
+            <div class="grill-opt-icon">🚀</div>
+            <div class="grill-opt-text">
+              <div class="grill-opt-title">SaaS 产品</div>
+              <div class="grill-opt-desc">B2B/B2C 订阅服务、仪表盘、设置页</div>
+            </div>
+            <div class="grill-opt-check"></div>
+          </button>
+          <button class="grill-opt" onclick="selectOpt(this,'type','social')">
+            <div class="grill-opt-icon">💬</div>
+            <div class="grill-opt-text">
+              <div class="grill-opt-title">社交 / 内容平台</div>
+              <div class="grill-opt-desc">信息流、社区、创作工具</div>
+            </div>
+            <div class="grill-opt-check"></div>
+          </button>
+          <button class="grill-opt" onclick="selectOpt(this,'type','tool')">
+            <div class="grill-opt-icon">🛠</div>
+            <div class="grill-opt-text">
+              <div class="grill-opt-title">效率工具</div>
+              <div class="grill-opt-desc">编辑器、项目管理、笔记、代码工具</div>
+            </div>
+            <div class="grill-opt-check"></div>
+          </button>
+        </div>
+        <div class="grill-textarea-wrap" style="margin-top:12px">
+          <textarea class="grill-textarea" id="grill-custom" placeholder="或者直接描述你的想法…" rows="2"></textarea>
+          <div class="grill-textarea-counter" id="grill-counter">0</div>
+        </div>
+      </div>
+      <!-- Q2 -->
+      <div id="grill-q2" style="display:none">
+        <div class="grill-q">有没有参考产品？</div>
+        <div class="grill-subq">挑 1-2 个你喜欢的，作为 UI 风格参照。</div>
+        <div class="grill-options" style="margin-top:14px">
+          <button class="grill-opt" onclick="selectOpt(this,'ref','linear')">
+            <div class="grill-opt-icon" style="font-size:14px;background:#0f1011;border:none;color:#7170ff">L</div>
+            <div class="grill-opt-text"><div class="grill-opt-title">Linear</div><div class="grill-opt-desc">极简深色、快捷键驱动、速度感</div></div>
+            <div class="grill-opt-check"></div>
+          </button>
+          <button class="grill-opt" onclick="selectOpt(this,'ref','notion')">
+            <div class="grill-opt-icon" style="font-size:14px;background:#fff;color:#000">N</div>
+            <div class="grill-opt-text"><div class="grill-opt-title">Notion</div><div class="grill-opt-desc">白底卡片、模块化、创作感</div></div>
+            <div class="grill-opt-check"></div>
+          </button>
+          <button class="grill-opt" onclick="selectOpt(this,'ref','figma')">
+            <div class="grill-opt-icon" style="font-size:14px;background:#1e1e1e;color:#a259ff">F</div>
+            <div class="grill-opt-text"><div class="grill-opt-title">Figma</div><div class="grill-opt-desc">工具感、专业、功能密度高</div></div>
+            <div class="grill-opt-check"></div>
+          </button>
+          <button class="grill-opt" onclick="selectOpt(this,'ref','raycast')">
+            <div class="grill-opt-icon" style="font-size:14px;background:#0a0a0c;color:#7170ff">R</div>
+            <div class="grill-opt-text"><div class="grill-opt-title">Raycast</div><div class="grill-opt-desc">命令面板、暗色、极客感</div></div>
+            <div class="grill-opt-check"></div>
+          </button>
+          <button class="grill-opt" onclick="selectOpt(this,'ref','none')">
+            <div class="grill-opt-icon">✦</div>
+            <div class="grill-opt-text"><div class="grill-opt-title">无，信任 Agent 的判断</div><div class="grill-opt-desc">让 Agent 根据你的描述自行设计</div></div>
+            <div class="grill-opt-check"></div>
+          </button>
+        </div>
+      </div>
+      <!-- Q3 -->
+      <div id="grill-q3" style="display:none">
+        <div class="grill-q">你更看重什么？</div>
+        <div class="grill-subq">选出最重要的 1-2 个，指导整体设计方向。</div>
+        <div class="grill-options" style="margin-top:14px">
+          <button class="grill-opt" onclick="selectOpt(this,'pref','speed','multi')">
+            <div class="grill-opt-icon">⚡</div>
+            <div class="grill-opt-text"><div class="grill-opt-title">速度感</div><div class="grill-opt-desc">快捷键、命令面板、零摩擦操作</div></div>
+            <div class="grill-opt-check"></div>
+          </button>
+          <button class="grill-opt" onclick="selectOpt(this,'pref','clarity','multi')">
+            <div class="grill-opt-icon">👁</div>
+            <div class="grill-opt-text"><div class="grill-opt-title">清晰直观</div><div class="grill-opt-desc">一目了然、新手友好、信息不过载</div></div>
+            <div class="grill-opt-check"></div>
+          </button>
+          <button class="grill-opt" onclick="selectOpt(this,'pref','beauty','multi')">
+            <div class="grill-opt-icon">✨</div>
+            <div class="grill-opt-text"><div class="grill-opt-title">视觉精致</div><div class="grill-opt-desc">动效、渐变、细节打磨、品牌感</div></div>
+            <div class="grill-opt-check"></div>
+          </button>
+          <button class="grill-opt" onclick="selectOpt(this,'pref','density','multi')">
+            <div class="grill-opt-icon">⊞</div>
+            <div class="grill-opt-text"><div class="grill-opt-title">信息密度</div><div class="grill-opt-desc">专业工具感、数据丰富、面板多</div></div>
+            <div class="grill-opt-check"></div>
+          </button>
+        </div>
+      </div>
+      <!-- Q4: Summary -->
+      <div id="grill-q4" style="display:none">
+        <div class="grill-q">确认你的需求</div>
+        <div class="grill-subq">基于你的选择，我来生成 4 种骨架方案。</div>
+        <div class="grill-options" style="margin-top:14px">
+          <div style="background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r2);padding:14px;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:12px;color:var(--t3)">应用类型</span>
+              <span style="font-size:12px;color:var(--t1);font-weight:500;margin-left:auto" id="summary-type">—</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:12px;color:var(--t3)">UI 参照</span>
+              <span style="font-size:12px;color:var(--t1);font-weight:500;margin-left:auto" id="summary-ref">—</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:12px;color:var(--t3)">设计偏好</span>
+              <span style="font-size:12px;color:var(--t1);font-weight:500;margin-left:auto" id="summary-pref">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="grill-nav">
+      <button class="btn-ghost" id="grill-back" onclick="grillBack()">← 上一步</button>
+      <button class="btn-primary" id="grill-next" onclick="grillNext()">下一步 →</button>
+    </div>
+  </div>
+
+  <!-- VIEW 2: SKELETON GENERATOR -->
+  <div class="view v-skeleton" id="view-2">
+    <div class="skel-header">
+      <span class="skel-header-title">骨架方案</span>
+      <span class="skel-count">4 种方案</span>
+    </div>
+    <div class="skel-grid">
+      <!-- Card A -->
+      <div class="skel-card selected" id="skel-card-0" onclick="selectSkel(0)">
+        <div class="skel-preview">
+          <div class="skel-sel-badge">✓</div>
+          <div class="skel-page type-A">
+            <div class="skel-page-inner">
+              <div style="display:flex;gap:8px;margin-bottom:8px">
+                <div style="flex:1"><div class="skel-bar h14 w70"></div></div>
+                <div style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.08)"></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px;flex:1">
+                <div style="background:rgba(255,255,255,.04);border-radius:4px;padding:8px;display:flex;flex-direction:column;gap:4px">
+                  <div class="skel-bar w60 h10"></div>
+                  <div class="skel-bar h10 w80"></div>
+                  <div class="skel-bar w50 h10"></div>
+                </div>
+                <div style="background:rgba(255,255,255,.04);border-radius:4px;padding:8px;display:flex;flex-direction:column;gap:4px">
+                  <div class="skel-bar w90 h10"></div>
+                  <div class="skel-bar h10 w70"></div>
+                  <div class="skel-bar w80 h10"></div>
+                  <div class="skel-bar h10 w50"></div>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+                <div class="skel-rect sm" style="background:rgba(255,255,255,.06)"></div>
+                <div class="skel-rect sm" style="background:rgba(255,255,255,.06)"></div>
+                <div class="skel-rect sm" style="background:rgba(255,255,255,.06)"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="skel-card-footer">
+          <span class="skel-card-name">Dashboard Pro</span>
+          <span class="skel-card-tag">侧边栏</span>
+        </div>
+      </div>
+      <!-- Card B -->
+      <div class="skel-card" id="skel-card-1" onclick="selectSkel(1)">
+        <div class="skel-preview">
+          <div class="skel-sel-badge">✓</div>
+          <div class="skel-page type-B">
+            <div class="skel-page-inner">
+              <div style="height:48px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:8px;padding-bottom:8px">
+                <div style="width:28px;height:28px;border-radius:6px;background:rgba(255,255,255,.1)"></div>
+                <div class="skel-bar w30 h10" style="margin:0"></div>
+                <div style="flex:1"></div>
+                <div style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.08)"></div>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px;margin-top:8px">
+                <div class="skel-rect" style="flex:1;background:rgba(255,255,255,.04)"></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                  <div class="skel-rect sm" style="background:rgba(255,255,255,.05)"></div>
+                  <div class="skel-rect sm" style="background:rgba(255,255,255,.05)"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="skel-card-footer">
+          <span class="skel-card-name">Content Hub</span>
+          <span class="skel-card-tag">顶部导航</span>
+        </div>
+      </div>
+      <!-- Card C -->
+      <div class="skel-card" id="skel-card-2" onclick="selectSkel(2)">
+        <div class="skel-preview">
+          <div class="skel-sel-badge">✓</div>
+          <div class="skel-page type-C">
+            <div class="skel-page-inner">
+              <div class="skel-rect" style="flex:1;background:rgba(255,255,255,.04);border-radius:6px;display:flex;flex-direction:column;gap:8px;padding:12px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div class="skel-bar w40 h14"></div>
+                  <div style="flex:1"></div>
+                  <div style="width:64px;height:28px;border-radius:6px;background:rgba(255,255,255,.08)"></div>
+                </div>
+                <div class="skel-bar w70 h10"></div>
+                <div class="skel-bar w50 h10"></div>
+                <div style="flex:1"></div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px">
+                  <div style="height:40px;background:rgba(255,255,255,.06);border-radius:4px"></div>
+                  <div style="height:40px;background:rgba(255,255,255,.06);border-radius:4px"></div>
+                  <div style="height:40px;background:rgba(255,255,255,.06);border-radius:4px"></div>
+                  <div style="height:40px;background:rgba(255,255,255,.06);border-radius:4px"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="skel-card-footer">
+          <span class="skel-card-name">Feed Focus</span>
+          <span class="skel-card-tag">居中内容</span>
+        </div>
+      </div>
+      <!-- Card D -->
+      <div class="skel-card" id="skel-card-3" onclick="selectSkel(3)">
+        <div class="skel-preview">
+          <div class="skel-sel-badge">✓</div>
+          <div class="skel-page type-D">
+            <div class="skel-page-inner">
+              <div style="display:flex;height:100%;gap:8px">
+                <div style="width:56px;background:rgba(255,255,255,.04);border-radius:4px;display:flex;flex-direction:column;gap:6px;padding:8px;align-items:center">
+                  <div style="width:32px;height:32px;border-radius:6px;background:rgba(255,255,255,.1)"></div>
+                  <div style="width:24px;height:24px;border-radius:4px;background:rgba(255,255,255,.06)"></div>
+                  <div style="width:24px;height:24px;border-radius:4px;background:rgba(255,255,255,.06)"></div>
+                  <div style="width:24px;height:24px;border-radius:4px;background:rgba(255,255,255,.06)"></div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+                  <div class="skel-bar w60 h14"></div>
+                  <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                    <div style="background:rgba(255,255,255,.05);border-radius:4px"></div>
+                    <div style="background:rgba(255,255,255,.05);border-radius:4px"></div>
+                    <div style="background:rgba(255,255,255,.05);border-radius:4px"></div>
+                    <div style="background:rgba(255,255,255,.05);border-radius:4px"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="skel-card-footer">
+          <span class="skel-card-name">Tool Grid</span>
+          <span class="skel-card-tag">图标导航</span>
+        </div>
+      </div>
+    </div>
+    <div class="skel-nav">
+      <div class="skel-regen" onclick="regenSkeletons()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8a6 6 0 1 0 1.5-3.9M2 4v4h4"/></svg>
+        重新生成
+      </div>
+      <button class="btn-ghost" onclick="goStep(1)">← 上一步</button>
+      <button class="btn-primary" onclick="confirmSkeleton()">确认骨架 →</button>
+    </div>
+  </div>
+
+  <!-- VIEW 3: SPEC BINDING -->
+  <div class="view v-binding" id="view-3">
+    <div class="bind-page">
+      <!-- Mini page preview -->
+      <div style="position:absolute;inset:0;background:linear-gradient(135deg,#1a1a2e,#16213e);padding:16px;display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;gap:8px;align-items:center">
+          <div style="width:32px;height:32px;background:rgba(255,255,255,.1);border-radius:6px"></div>
+          <div style="flex:1;height:10px;background:rgba(255,255,255,.06);border-radius:2px"></div>
+          <div style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.08)"></div>
+        </div>
+        <div style="flex:1;display:grid;grid-template-columns:200px 1fr;gap:8px">
+          <div style="background:rgba(255,255,255,.04);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:6px">
+            <div style="height:8px;background:rgba(255,255,255,.08);border-radius:2px;width:70%"></div>
+            <div style="height:8px;background:rgba(255,255,255,.05);border-radius:2px"></div>
+            <div style="height:8px;background:rgba(255,255,255,.05);border-radius:2px"></div>
+          </div>
+          <div style="background:rgba(255,255,255,.04);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:8px">
+            <div style="height:16px;background:rgba(255,255,255,.08);border-radius:2px;width:60%"></div>
+            <div style="height:8px;background:rgba(255,255,255,.05);border-radius:2px;width:90%"></div>
+            <div style="height:8px;background:rgba(255,255,255,.05);border-radius:2px;width:75%"></div>
+            <div style="height:60px;background:rgba(255,255,255,.06);border-radius:4px"></div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+          <div style="height:48px;background:rgba(255,255,255,.05);border-radius:4px"></div>
+          <div style="height:48px;background:rgba(255,255,255,.05);border-radius:4px"></div>
+          <div style="height:48px;background:rgba(255,255,255,.05);border-radius:4px"></div>
+        </div>
+      </div>
+      <!-- Binding tags overlay -->
+      <div class="bind-tags">
+        <div class="bind-tag" id="bind-tag-0" onclick="selectBindTag(0)" style="left:16px;top:16px;width:calc(100% - 32px);height:48px">
+          <div class="bind-tag-rect" style="width:100%;height:100%"></div>
+          <div class="bind-tag-label">L2-page-header</div>
+          <div class="bind-tag-badge">页面级别</div>
+        </div>
+        <div class="bind-tag active" id="bind-tag-1" onclick="selectBindTag(1)" style="left:16px;top:72px;width:200px;height:calc(100% - 88px)">
+          <div class="bind-tag-rect" style="width:100%;height:100%"></div>
+          <div class="bind-tag-label">L3-sidebar-nav</div>
+          <div class="bind-tag-badge">组件</div>
+        </div>
+        <div class="bind-tag" id="bind-tag-2" onclick="selectBindTag(2)" style="left:224px;top:72px;width:calc(100% - 240px);height:80px">
+          <div class="bind-tag-rect" style="width:100%;height:100%"></div>
+          <div class="bind-tag-label">L3-main-content</div>
+          <div class="bind-tag-badge">组件</div>
+        </div>
+        <div class="bind-tag" id="bind-tag-3" onclick="selectBindTag(3)" style="left:224px;top:160px;width:calc(100% - 240px);height:calc(100% - 200px)">
+          <div class="bind-tag-rect" style="width:100%;height:100%"></div>
+          <div class="bind-tag-label">L4-card-list</div>
+          <div class="bind-tag-badge">行为</div>
+        </div>
+        <div class="bind-tag" id="bind-tag-4" onclick="selectBindTag(4)" style="left:16px;bottom:8px;width:calc(100% - 32px);height:56px">
+          <div class="bind-tag-rect" style="width:100%;height:100%"></div>
+          <div class="bind-tag-label">L2-footer-nav</div>
+          <div class="bind-tag-badge">页面级别</div>
+        </div>
+      </div>
+    </div>
+    <div class="bind-spec-panel">
+      <div class="bind-spec-tabs">
+        <div class="bind-tab active" onclick="switchBindTab(this,'page')">
+          <span class="bind-tab-layer">L2</span>
+          <span>页面</span>
+          <span class="bind-tab-count">2</span>
+        </div>
+        <div class="bind-tab" onclick="switchBindTab(this,'feat')">
+          <span class="bind-tab-layer">L3</span>
+          <span>组件</span>
+          <span class="bind-tab-count">4</span>
+        </div>
+        <div class="bind-tab" onclick="switchBindTab(this,'comp')">
+          <span class="bind-tab-layer">L4</span>
+          <span>行为</span>
+          <span class="bind-tab-count">6</span>
+        </div>
+        <div class="bind-tab" onclick="switchBindTab(this,'behav')">
+          <span class="bind-tab-layer">L5</span>
+          <span>样式</span>
+          <span class="bind-tab-count">—</span>
+        </div>
+      </div>
+      <div class="bind-spec-body" id="bind-spec-body">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--bdr);background:var(--bg);flex-shrink:0">
+      <button class="btn-ghost" style="width:auto;padding:8px 14px;flex:0 0 auto" onclick="goStep(2)">← 重选骨架</button>
+      <button class="btn-primary" style="flex:1" onclick="showBindModal()">+ 绑定新 Spec</button>
+      <button class="btn-ghost" style="width:auto;padding:8px 14px;flex:0 0 auto" onclick="goStep(4)">继续 →</button>
+    </div>
+  </div>
+
+  <!-- VIEW 4: SPEC EDITOR -->
+  <div class="view v-editor" id="view-4">
+    <div class="editor-layout">
+      <div class="editor-left">
+        <div class="editor-topbar">
+          <div class="editor-tab active" onclick="switchEditorTab(this)">
+            <div class="editor-tab-dot"></div>
+            L3-sidebar-nav.yaml
+          </div>
+          <div class="editor-tab" onclick="switchEditorTab(this)">
+            L3-main-content.yaml
+          </div>
+          <div class="editor-tab" onclick="switchEditorTab(this)">
+            L4-card-list.yaml
+          </div>
+          <div class="editor-sep" style="flex:1"></div>
+          <div class="editor-layers">
+            <div class="editor-layer-chip active">L2</div>
+            <div class="editor-layer-chip active">L3</div>
+            <div class="editor-layer-chip">L4</div>
+            <div class="editor-layer-chip">L5</div>
+          </div>
+        </div>
+        <div class="editor-code" id="editor-code"><span class="k">name</span><span class="p">: </span><span class="v">"sidebar-nav"</span>
+<span class="k">parent</span><span class="p">: </span><span class="v">"page-shell"</span>
+<span class="k">type</span><span class="p">: </span><span class="v">"navigation"</span>
+<span class="p"></span>
+<span class="k">children</span><span class="p">:</span>
+<span class="p">  - </span><span class="v">"sidebar-logo"</span>
+<span class="p">  - </span><span class="v">"sidebar-menu"</span>
+<span class="p">  - </span><span class="v">"sidebar-footer"</span>
+<span class="p"></span>
+<span class="k">io_contract</span><span class="p">:</span>
+<span class="p">  </span><span class="k">slots</span><span class="p">:</span>
+<span class="p">    </span><span class="k">logo</span><span class="p">:</span>
+<span class="p">      </span><span class="k">type</span><span class="p">: </span><span class="v">"element"</span>
+<span class="p">      </span><span class="k">selector</span><span class="p">: </span><span class="v">"nav .logo"</span>
+<span class="p">    </span><span class="k">menu</span><span class="p">:</span>
+<span class="p">      </span><span class="k">type</span><span class="p">: </span><span class="v">"element"</span>
+<span class="p">      </span><span class="k">selector</span><span class="p">: </span><span class="v">"nav ul"</span>
+<span class="p"></span>
+<span class="k">behavior</span><span class="p">:</span>
+<span class="p">  </span><span class="k">collapse</span><span class="p">:</span>
+<span class="p">    </span><span class="k">trigger</span><span class="p">: </span><span class="v">"hover | click"</span>
+<span class="p">    </span><span class="k">width</span><span class="p">: </span><span class="v">"200px → 56px"</span>
+<span class="p"></span>
+<span class="k">variants</span><span class="p">:</span>
+<span class="p">  </span><span class="k">icon-only</span><span class="p">: </span><span class="a"># 影响同级 L4-menu-item</span>
+<span class="p">  </span><span class="k">expanded</span><span class="p">: </span><span class="a"># 不影响同级</span></div>
+        </div>
+        <div class="editor-savebar">
+          <div class="editor-save-info">自动保存 · 已修改</div>
+          <div class="editor-save-status"><div class="editor-save-dot"></div>未保存</div>
+          <button class="btn-primary" style="width:auto;padding:6px 16px;font-size:12px" onclick="saveSpec()">保存</button>
+        </div>
+      </div>
+      <div class="editor-right">
+        <div class="spec-hier-title">Spec 层级</div>
+        <div class="spec-hier-item active" onclick="jumpToEditor('page-shell')">
+          <div class="spec-hier-name">page-shell</div>
+          <div class="spec-hier-type">L2 · page</div>
+          <div class="spec-hier-children">
+            <div class="spec-hier-child active" onclick="jumpToEditor('sidebar-nav')">
+              <div class="spec-hier-dot"></div>
+              <div class="spec-hier-child-name">sidebar-nav</div>
+            </div>
+            <div class="spec-hier-child" onclick="jumpToEditor('main-content')">
+              <div class="spec-hier-dot"></div>
+              <div class="spec-hier-child-name">main-content</div>
+            </div>
+            <div class="spec-hier-child depth2" onclick="jumpToEditor('card-list')">
+              <div class="spec-hier-dot"></div>
+              <div class="spec-hier-child-name">card-list</div>
+            </div>
+            <div class="spec-hier-child" onclick="jumpToEditor('footer-nav')">
+              <div class="spec-hier-dot"></div>
+              <div class="spec-hier-child-name">footer-nav</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <div class="spec-hier-title">层级关系</div>
+          <div style="padding:10px;background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:10px;color:var(--t4)">影响范围</span>
+              <span style="font-size:11px;color:var(--acc);margin-left:auto">L2 → L3 → L4</span>
+            </div>
+            <div style="font-size:11px;color:var(--t3);line-height:1.5">
+              <span style="color:var(--ok)">✓</span> 同级 Spec 互不影响<br>
+              <span style="color:var(--ok)">✓</span> 上级变更 → 下级感知<br>
+              <span style="color:var(--er)">△</span> 下级变更需确认上级
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW 5: INTERACTION PROTOTYPE -->
+  <div class="view v-prototype" id="view-5">
+    <div class="proto-toolbar">
+      <div class="proto-mode-btn active" onclick="setProtoMode(this,'intent')">
+        <span class="proto-mode-icon">🎯</span>
+        意图探索
+      </div>
+      <div class="proto-mode-btn" onclick="setProtoMode(this,'listen')">
+        <span class="proto-mode-icon">👂</span>
+        双向监听
+      </div>
+      <div class="proto-sep"></div>
+      <div class="proto-spec-selector" onclick="showSpecChain()">
+        <div class="proto-spec-dot page"></div>
+        <span>sidebar-nav</span>
+        <span style="color:var(--t4);font-size:10px">›</span>
+        <div class="proto-spec-dot comp" style="margin-left:4px"></div>
+        <span>menu-item</span>
+      </div>
+    </div>
+    <!-- Proto spec chain -->
+    <div style="position:relative;flex:1;overflow:hidden;background:#fff">
+      <div class="proto-spec-chain">
+        <span class="proto-chain-item" style="color:var(--t1)">sidebar-nav</span>
+        <span class="proto-chain-sep">›</span>
+        <span class="proto-chain-item">menu-item</span>
+        <span class="proto-chain-sep">›</span>
+        <span class="proto-chain-item">icon-btn</span>
+      </div>
+      <!-- Proto page elements -->
+      <div style="position:absolute;inset:0;padding:20px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:48px;height:48px;background:#1a1a2e;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px">✦</div>
+          <div style="flex:1;height:12px;background:#e8e8f0;border-radius:3px"></div>
+          <div style="width:32px;height:32px;background:#f0f0f8;border-radius:50%"></div>
+        </div>
+        <div style="display:flex;flex:1;gap:12px">
+          <div style="width:180px;background:#f5f5fa;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px">
+            <div style="height:8px;background:#d8d8e8;border-radius:2px;width:60%"></div>
+            <div style="height:32px;background:#e8e8f4;border-radius:4px;display:flex;align-items:center;padding:0 8px;gap:8px">
+              <div style="width:16px;height:16px;background:#c0c0d8;border-radius:3px"></div>
+              <div style="flex:1;height:8px;background:#d8d8e8;border-radius:2px"></div>
+            </div>
+            <div style="height:32px;background:#e8e8f4;border-radius:4px;display:flex;align-items:center;padding:0 8px;gap:8px">
+              <div style="width:16px;height:16px;background:#c0c0d8;border-radius:3px"></div>
+              <div style="flex:1;height:8px;background:#d8d8e8;border-radius:2px"></div>
+            </div>
+            <div style="height:32px;background:#e8e8f4;border-radius:4px;display:flex;align-items:center;padding:0 8px;gap:8px">
+              <div style="width:16px;height:16px;background:#c0c0d8;border-radius:3px"></div>
+              <div style="flex:1;height:8px;background:#d8d8e8;border-radius:2px"></div>
+            </div>
+          </div>
+          <div style="flex:1;background:#f8f8fc;border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:10px">
+            <div style="height:14px;background:#e0e0f0;border-radius:2px;width:50%"></div>
+            <div style="height:8px;background:#ebebf5;border-radius:2px;width:80%"></div>
+            <div style="height:8px;background:#ebebf5;border-radius:2px;width:65%"></div>
+            <div style="height:80px;background:#f0f0f8;border-radius:4px"></div>
+          </div>
+        </div>
+      </div>
+      <!-- Clickable elements -->
+      <div class="proto-elem annotated" data-ann="L4-icon-btn" style="left:28px;top:86px;width:24px;height:24px;background:rgba(113,112,255,.08);border-color:var(--acc)" onclick="protoClick(this,'icon-btn')"></div>
+      <div class="proto-elem annotated" data-ann="L4-menu-item" style="left:28px;top:114px;width:160px;height:32px" onclick="protoClick(this,'menu-item')"></div>
+      <div class="proto-elem annotated" data-ann="L4-menu-item" style="left:28px;top:150px;width:160px;height:32px" onclick="protoClick(this,'menu-item')"></div>
+      <div class="proto-elem annotated" data-ann="L4-menu-item" style="left:28px;top:186px;width:160px;height:32px" onclick="protoClick(this,'menu-item')"></div>
+      <div class="proto-elem annotated" data-ann="L3-main-content" style="left:216px;top:86px;width:calc(100% - 236px);height:calc(100% - 106px)" onclick="protoClick(this,'main-content')"></div>
+      <!-- Interaction panel -->
+      <div class="proto-interaction-panel" id="proto-ip">
+        <div class="proto-ip-header">已点击: <span id="proto-ip-name">menu-item</span></div>
+        <div class="proto-ip-body">
+          <div class="proto-ip-row">
+            <div class="proto-ip-label">Spec</div>
+            <div class="proto-ip-value">L4-menu-item.yaml</div>
+          </div>
+          <div class="proto-ip-row">
+            <div class="proto-ip-label">层级</div>
+            <div class="proto-ip-value">L4 · behavior</div>
+          </div>
+          <div class="proto-ip-row">
+            <div class="proto-ip-label">父级</div>
+            <div class="proto-ip-value">sidebar-nav (L3)</div>
+          </div>
+          <div class="proto-ip-row">
+            <div class="proto-ip-label">行为</div>
+            <div class="proto-ip-value">hover → highlight</div>
+          </div>
+          <div class="proto-ip-actions">
+            <button class="proto-ip-btn" onclick="protoViewSpec()">查看 Spec</button>
+            <button class="proto-ip-btn primary" onclick="protoGenBehavior()">生成交互</button>
+          </div>
+        </div>
+      </div>
+      <!-- Mode hint -->
+      <div class="proto-click-hint" id="proto-hint">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v6l3 2"/></svg>
+        点击元素探索交互，或切换双向监听模式
+      </div>
+    </div>
+  </div>
+
+</div><!-- /body -->
+
+<!-- ─── BIND MODAL ─── -->
+<div id="bind-modal">
+  <div class="bind-modal-box">
+    <div class="bind-modal-hdr">
+      <div class="bind-modal-icon" style="background:#2a2b3d;color:#a5a8ff;font-size:18px">📄</div>
+      <div>
+        <div class="bind-modal-title">绑定新 Spec</div>
+        <div class="bind-modal-sub" id="bind-modal-area">将绑定到: main-content</div>
+      </div>
+    </div>
+    <div class="bind-modal-body">
+      <div class="bind-modal-row">
+        <label class="bind-modal-label">Spec 名称</label>
+        <input class="bind-modal-input" id="bind-name" placeholder="例如: card-list" />
+      </div>
+      <div class="bind-modal-row">
+        <label class="bind-modal-label">层级</label>
+        <select class="bind-modal-input" id="bind-layer" style="cursor:pointer">
+          <option value="L2">L2 — 页面 (page)</option>
+          <option value="L3" selected>L3 — 组件 (component)</option>
+          <option value="L4">L4 — 行为 (behavior)</option>
+          <option value="L5">L5 — 样式 (style)</option>
+        </select>
+      </div>
+      <div class="bind-modal-row">
+        <label class="bind-modal-label">页面选择器</label>
+        <input class="bind-modal-input" id="bind-selector" value=".main-content" style="font-family:var(--mono)" />
+      </div>
+      <div class="bind-modal-preview" id="bind-preview">
+<span class="k">name</span><span class="p">: </span><span class="v">"card-list"</span>
+<span class="k">layer</span><span class="p">: </span><span class="v">"L4"</span>
+<span class="k">parent</span><span class="p">: </span><span class="v">"main-content"</span>
+<span class="k">selector</span><span class="p">: </span><span class="v">".main-content"</span></div>
+    </div>
+    <div class="bind-modal-foot">
+      <button class="btn-ghost" onclick="closeBindModal()">取消</button>
+      <button class="btn-primary" onclick="doBind()">绑定</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════
+   TOAST
+══════════════════════════════════ */
+function toast(msg, type='ok') {
+  const c = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  const icons = {ok:'✓',er:'✕',info:'ℹ'};
+  t.innerHTML = `<span class="ti" style="font-size:13px">${icons[type]||'ℹ'}</span>${msg}`;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 2400);
+}
+
+/* ══════════════════════════════════
+   FLOW / STEPS
+══════════════════════════════════ */
+let currentStep = 0;
+const STEPS = 6;
+
+function goStep(n) {
+  if (n < 0 || n >= STEPS) return;
+  currentStep = n;
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + n).classList.add('active');
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  const stepEl = document.getElementById('step-' + n);
+  if (stepEl) stepEl.classList.add('active');
+  // Mark previous as done
+  for (let i = 0; i < n; i++) {
+    const s = document.getElementById('step-' + i);
+    if (s) s.classList.add('done');
+    const num = s?.querySelector('.step-num');
+    if (num) num.textContent = '✓';
+  }
+  // On entering step 3, populate spec list
+  if (n === 3) populateBindSpecList('page');
+  // On entering step 5, show hint
+  if (n === 5) setTimeout(() => {
+    document.getElementById('proto-ip').classList.add('active');
+    setTimeout(() => document.getElementById('proto-ip').classList.remove('active'), 3000);
+  }, 500);
+}
+
+function resetAll() {
+  currentStep = 0;
+  goStep(0);
+  document.querySelectorAll('.step').forEach((s,i) => {
+    s.classList.remove('active','done');
+    const num = s.querySelector('.step-num');
+    if (num) num.textContent = i + 1;
+  });
+  document.getElementById('step-0').classList.add('active');
+}
+
+/* ══════════════════════════════════
+   GRILL-ME WIZARD
+══════════════════════════════════ */
+let grillStep = 0;
+const GRILL_STEPS = 4;
+const grillAnswers = {};
+
+function selectOpt(el, key, val, multi) {
+  if (multi) {
+    el.classList.toggle('selected');
+    grillAnswers[key] = grillAnswers[key] || [];
+    const idx = grillAnswers[key].indexOf(val);
+    if (idx >= 0) grillAnswers[key].splice(idx, 1);
+    else grillAnswers[key].push(val);
+  } else {
+    el.parentElement.querySelectorAll('.grill-opt').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    grillAnswers[key] = val;
+  }
+}
+
+function grillNext() {
+  const total = GRILL_STEPS;
+  grillStep++;
+  if (grillStep >= total) {
+    // Done — summary
+    const typeMap = {dashboard:'数据看板',saas:'SaaS 产品',social:'社交/内容',tool:'效率工具'};
+    const refMap = {linear:'Linear',notion:'Notion',figma:'Figma',raycast:'Raycast',none:'无参照'};
+    document.getElementById('summary-type').textContent = typeMap[grillAnswers.type] || grillAnswers.type || '—';
+    document.getElementById('summary-ref').textContent = refMap[grillAnswers.ref] || '—';
+    document.getElementById('summary-pref').textContent = (grillAnswers.pref||[]).join('、') || '—';
+    document.querySelectorAll('[id^="grill-q"]').forEach(q => q.style.display = 'none');
+    document.getElementById('grill-q4').style.display = '';
+    document.getElementById('grill-label').textContent = '确认后生成骨架';
+    document.getElementById('grill-fill').style.width = '100%';
+    document.getElementById('grill-next').textContent = '生成骨架 →';
+    document.getElementById('grill-next').onclick = () => goStep(2);
+    return;
+  }
+  document.querySelectorAll('[id^="grill-q"]').forEach(q => q.style.display = 'none');
+  const q = document.getElementById('grill-q' + (grillStep + 1));
+  if (q) q.style.display = '';
+  document.getElementById('grill-fill').style.width = ((grillStep + 1) / total * 100) + '%';
+  document.getElementById('grill-label').textContent = `第 ${grillStep + 1} 步 / 共 ${total} 步`;
+  document.getElementById('grill-back').style.visibility = grillStep === 0 ? 'hidden' : 'visible';
+}
+
+function grillBack() {
+  if (grillStep <= 0) return;
+  grillStep--;
+  document.querySelectorAll('[id^="grill-q"]').forEach(q => q.style.display = 'none');
+  const q = document.getElementById('grill-q' + (grillStep + 1));
+  if (q) q.style.display = '';
+  document.getElementById('grill-fill').style.width = ((grillStep + 1) / GRILL_STEPS * 100) + '%';
+  document.getElementById('grill-label').textContent = `第 ${grillStep + 1} 步 / 共 ${GRILL_STEPS} 步`;
+  document.getElementById('grill-back').style.visibility = grillStep === 0 ? 'hidden' : 'visible';
+}
+
+// Char counter
+document.getElementById('grill-custom')?.addEventListener('input', e => {
+  document.getElementById('grill-counter').textContent = e.target.value.length;
+});
+
+/* ══════════════════════════════════
+   SKELETON CARDS
+══════════════════════════════════ */
+let selectedSkel = 0;
+function selectSkel(n) {
+  selectedSkel = n;
+  document.querySelectorAll('.skel-card').forEach((c,i) => c.classList.toggle('selected', i===n));
+}
+function confirmSkeleton() {
+  toast('骨架已确认，开始绑定 Spec →', 'ok');
+  goStep(3);
+}
+function regenSkeletons() {
+  toast('正在重新生成骨架…', 'info');
+  setTimeout(() => toast('已生成 4 种新方案', 'ok'), 1200);
+}
+
+/* ══════════════════════════════════
+   SPEC BINDING
+══════════════════════════════════ */
+const specData = {
+  page: [
+    {name:'page-shell',path:'specs/L2/page-shell.yaml',layer:'L2',type:'page',desc:'页面容器骨架',icon:'page'},
+    {name:'page-login',path:'specs/L2/page-login.yaml',layer:'L2',type:'page',desc:'登录页容器',icon:'page'},
+  ],
+  feat: [
+    {name:'sidebar-nav',path:'specs/L3/sidebar-nav.yaml',layer:'L3',type:'component',desc:'侧边导航栏',icon:'feat'},
+    {name:'main-content',path:'specs/L3/main-content.yaml',layer:'L3',type:'component',desc:'主内容区',icon:'feat'},
+    {name:'header-bar',path:'specs/L3/header-bar.yaml',layer:'L3',type:'component',desc:'顶部导航条',icon:'feat'},
+    {name:'footer-nav',path:'specs/L3/footer-nav.yaml',layer:'L3',type:'component',desc:'底部导航',icon:'feat'},
+  ],
+  comp: [
+    {name:'card-list',path:'specs/L4/card-list.yaml',layer:'L4',type:'behavior',desc:'卡片列表行为',icon:'comp'},
+    {name:'menu-item',path:'specs/L4/menu-item.yaml',layer:'L4',type:'behavior',desc:'菜单项交互',icon:'comp'},
+    {name:'icon-btn',path:'specs/L4/icon-btn.yaml',layer:'L4',type:'behavior',desc:'图标按钮行为',icon:'comp'},
+    {name:'search-bar',path:'specs/L4/search-bar.yaml',layer:'L4',type:'behavior',desc:'搜索栏行为',icon:'comp'},
+    {name:'modal-overlay',path:'specs/L4/modal-overlay.yaml',layer:'L4',type:'behavior',desc:'弹窗行为',icon:'comp'},
+    {name:'tooltip',path:'specs/L4/tooltip.yaml',layer:'L4',type:'behavior',desc:'提示气泡',icon:'comp'},
+  ],
+  behav: [
+    {name:'hover-highlight',path:'specs/L5/hover-highlight.yaml',layer:'L5',type:'style',desc:'悬停高亮样式',icon:'behav'},
+    {name:'focus-ring',path:'specs/L5/focus-ring.yaml',layer:'L5',type:'style',desc:'焦点环样式',icon:'behav'},
+    {name:'transition-ease',path:'specs/L5/transition-ease.yaml',layer:'L5',type:'style',desc:'缓动曲线',icon:'behav'},
+  ],
+};
+
+function populateBindSpecList(tab) {
+  const items = specData[tab] || [];
+  const body = document.getElementById('bind-spec-body');
+  body.innerHTML = items.map(item => `
+    <div class="bind-spec-item" onclick="focusBindTag('${item.name}')">
+      <div class="bind-spec-icon ${item.icon}">${item.name[0].toUpperCase()}</div>
+      <div class="bind-spec-info">
+        <div class="bind-spec-name">${item.name}</div>
+        <div class="bind-spec-path">${item.path}</div>
+      </div>
+      <div class="bind-spec-arrow">→</div>
+    </div>
+  `).join('');
+  if (items.length === 0) {
+    body.innerHTML = `<div style="padding:24px;text-align:center;color:var(--t4);font-size:12px">暂无 ${tab} 层级 Spec</div>`;
+  }
+}
+
+function switchBindTab(el, tab) {
+  el.parentElement.querySelectorAll('.bind-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  populateBindSpecList(tab);
+}
+
+function selectBindTag(n) {
+  document.querySelectorAll('.bind-tag').forEach(t => t.classList.remove('active'));
+  document.getElementById('bind-tag-' + n)?.classList.add('active');
+  // Switch to corresponding spec tab
+  const tagNames = ['page-shell','sidebar-nav','main-content','card-list','footer-nav'];
+  const tag = document.getElementById('bind-tag-' + n);
+  if (tag) {
+    const label = tag.querySelector('.bind-tag-label').textContent;
+    toast(`选中: ${label}`, 'info');
+  }
+}
+
+function focusBindTag(name) {
+  toast(`跳转到页面: ${name}`, 'info');
+}
+
+/* ══════════════════════════════════
+   BIND MODAL
+══════════════════════════════════ */
+function showBindModal() {
+  document.getElementById('bind-modal').classList.add('open');
+}
+function closeBindModal() {
+  document.getElementById('bind-modal').classList.remove('open');
+}
+document.getElementById('bind-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('bind-modal')) closeBindModal();
+});
+// Live preview
+['bind-name','bind-layer','bind-selector'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', updateBindPreview);
+});
+function updateBindPreview() {
+  const n = document.getElementById('bind-name').value || 'unnamed';
+  const l = document.getElementById('bind-layer').value;
+  const s = document.getElementById('bind-selector').value || '.selector';
+  document.getElementById('bind-preview').innerHTML =
+    `<span class="k">name</span><span class="p">: </span><span class="v">"${n}"</span>
+<span class="k">layer</span><span class="p">: </span><span class="v">"${l}"</span>
+<span class="k">selector</span><span class="p">: </span><span class="v">"${s}"</span>`;
+}
+function doBind() {
+  const name = document.getElementById('bind-name').value;
+  if (!name) { toast('请输入 Spec 名称', 'er'); return; }
+  closeBindModal();
+  toast(`已绑定: ${name}`, 'ok');
+  // Add to list
+  populateBindSpecList('feat');
+}
+
+/* ══════════════════════════════════
+   SPEC EDITOR
+══════════════════════════════════ */
+function switchEditorTab(el) {
+  el.parentElement.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  toast('已切换到: ' + el.textContent.trim(), 'info');
+}
+function jumpToEditor(name) {
+  document.querySelectorAll('.spec-hier-child, .spec-hier-item').forEach(i => i.classList.remove('active'));
+  event?.target?.closest('.spec-hier-child, .spec-hier-item')?.classList.add('active');
+  toast('跳转到: ' + name, 'info');
+}
+function saveSpec() {
+  toast('Spec 已保存', 'ok');
+}
+document.querySelectorAll('.editor-layer-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    chip.classList.toggle('active');
+    toast('层级过滤: ' + chip.textContent.trim(), 'info');
+  });
+});
+
+/* ══════════════════════════════════
+   INTERACTION PROTOTYPE
+══════════════════════════════════ */
+function setProtoMode(el, mode) {
+  el.parentElement.querySelectorAll('.proto-mode-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  const hint = document.getElementById('proto-hint');
+  if (mode === 'intent') {
+    hint.innerHTML = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v6l3 2"/></svg> 点击元素探索 Spec`;
+  } else {
+    hint.innerHTML = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v6l3 2"/></svg> 双向监听: 改 Spec → 页面响应`;
+  }
+  toast('已切换到: ' + (mode === 'intent' ? '意图探索模式' : '双向监听模式'), 'info');
+}
+function protoClick(el, name) {
+  document.querySelectorAll('.proto-elem').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('proto-ip-name').textContent = name;
+  document.getElementById('proto-ip').classList.add('active');
+}
+function protoViewSpec() {
+  goStep(4);
+}
+function protoGenBehavior() {
+  toast('正在生成 L4 behavior spec…', 'info');
+  setTimeout(() => toast('L4 behavior spec 生成完成', 'ok'), 1500);
+}
+function showSpecChain() {
+  toast('Spec 链: sidebar-nav › menu-item › icon-btn', 'info');
+}
+
+/* ══════════════════════════════════
+   INIT
+══════════════════════════════════ */
+goStep(0);
+</script>
+</body>
+</html>
