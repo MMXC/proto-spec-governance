@@ -3,672 +3,1329 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Proto Spec Governance — UI Prototype</title>
+<title>Proto Spec Governance — 完整交互原型</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;590;600&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;590;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    /* Chrome extension viewport — side panel */
-    --vp-w: 400px;
-    --vp-h: 700px;
-    /* Linear-inspired dark theme */
-    --bg:        #0f1011;
-    --bg-el:     #16171a;
-    --bg-hover:  rgba(255,255,255,0.04);
-    --bg-sel:    rgba(255,255,255,0.06);
-    --border:    rgba(255,255,255,0.06);
-    --border-md: rgba(255,255,255,0.09);
-    --text-1:    #f7f8f8;
-    --text-2:    #c8cdd6;
-    --text-3:    #8a8f98;
-    --text-4:    #62666d;
-    --accent:    #7170ff;
-    --accent-h:  #828fff;
-    --success:   #10b981;
-    --warn:      #f59e0b;
-    --radius-sm: 4px;
-    --radius-md: 6px;
-    --radius-lg: 10px;
-    /* Cursor-inspired warm chat */
-    --warm-bg:   #f5f4ed;
-    --warm-sur:  #ffffff;
-    --warm-bdr:  #e8e4d8;
-    --warm-text: #141413;
-    --warm-2:    #5e5d59;
-    /* Code */
-    --mono: 'JetBrains Mono', monospace;
-    --sans: 'Inter', sans-serif;
-    --serif: 'Playfair Display', serif;
-  }
+:root {
+  --vp-w: 440px;
+  --vp-h: 780px;
+  --bg:        #0f1011;
+  --bg-el:     #16171a;
+  --bg-hover:  rgba(255,255,255,0.04);
+  --bg-sel:    rgba(255,255,255,0.07);
+  --border:    rgba(255,255,255,0.06);
+  --border-md: rgba(255,255,255,0.10);
+  --text-1:    #f7f8f8;
+  --text-2:    #c8cdd6;
+  --text-3:    #8a8f98;
+  --text-4:    #62666d;
+  --accent:    #7170ff;
+  --accent-h:  #828fff;
+  --accent-bg: rgba(113,112,255,0.12);
+  --success:   #10b981;
+  --warn:      #f59e0b;
+  --danger:    #f87171;
+  --warm-bg:   #f5f4ed;
+  --warm-sur:  #ffffff;
+  --warm-bdr:  #e0dcd0;
+  --warm-text: #141413;
+  --warm-2:    #6e6b63;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Inter', sans-serif;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+}
 
-  body {
-    font-family: var(--sans);
-    background: var(--bg);
-    color: var(--text-1);
-    font-size: 13px;
-    height: var(--vp-h);
-    width: var(--vp-w);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border-radius: var(--radius-lg);
-  }
+body {
+  font-family: var(--sans);
+  background: #0a0a0c;
+  color: var(--text-1);
+  font-size: 13px;
+  height: var(--vp-h);
+  width: var(--vp-w);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
-  /* ── Header ── */
-  .header {
-    height: 44px;
-    background: var(--bg-el);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    padding: 0 12px;
-    gap: 8px;
-    flex-shrink: 0;
-  }
-  .header-icon {
-    width: 22px; height: 22px;
-    background: var(--accent);
-    border-radius: var(--radius-sm);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px; color: #fff; font-weight: 600;
-  }
-  .header-title {
-    font-size: 14px; font-weight: 590;
-    letter-spacing: 0.1px;
-    flex: 1;
-  }
-  .header-actions { display: flex; gap: 4px; }
-  .hdr-btn {
-    width: 28px; height: 28px;
-    border: none; background: transparent;
-    border-radius: var(--radius-sm);
-    color: var(--text-4);
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px;
-    transition: background 0.15s, color 0.15s;
-  }
-  .hdr-btn:hover { background: var(--bg-hover); color: var(--text-1); }
+/* ─────────────────────────────── */
+/*  TOAST SYSTEM                  */
+/* ─────────────────────────────── */
+#toast-container {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 9999;
+  pointer-events: none;
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  background: var(--bg-el);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-md);
+  font-size: 12.5px;
+  color: var(--text-1);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  animation: toastIn 0.2s ease, toastOut 0.2s ease 1.8s forwards;
+  white-space: nowrap;
+}
+.toast.success { border-color: rgba(16,185,129,0.4); }
+.toast.success .toast-icon { color: var(--success); }
+.toast.error { border-color: rgba(248,113,113,0.4); }
+.toast.error .toast-icon { color: var(--danger); }
+.toast.info .toast-icon { color: var(--accent); }
+@keyframes toastIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes toastOut { from { opacity:1; } to { opacity:0; } }
 
-  /* ── Body: tab bar + panels ── */
-  .body {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+/* ─────────────────────────────── */
+/*  COMMAND PALETTE (⌘K)          */
+/* ─────────────────────────────── */
+#cmd-palette {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 80px;
+  z-index: 1000;
+}
+#cmd-palette.open { display: flex; }
+.cmd-modal {
+  width: 380px;
+  background: var(--bg-el);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.8), 0 24px 48px rgba(0,0,0,0.6);
+  overflow: hidden;
+}
+.cmd-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.cmd-search svg { color: var(--text-3); width: 16px; height: 16px; flex-shrink: 0; }
+.cmd-input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-1);
+  font-family: var(--sans);
+  font-size: 15px;
+  outline: none;
+}
+.cmd-input::placeholder { color: var(--text-4); }
+.cmd-results { padding: 6px; max-height: 320px; overflow-y: auto; }
+.cmd-group-label {
+  font-size: 10px; font-weight: 590;
+  color: var(--text-4);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  padding: 6px 10px 3px;
+}
+.cmd-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.cmd-item:hover, .cmd-item.active {
+  background: var(--bg-hover);
+}
+.cmd-item-icon {
+  width: 28px; height: 28px;
+  background: var(--bg);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.cmd-item-label { font-size: 13px; color: var(--text-1); flex: 1; }
+.cmd-item-hint { font-size: 11px; color: var(--text-4); }
+.cmd-kbd { display: flex; gap: 3px; }
+.cmd-kbd .kbd {
+  font-family: var(--mono);
+  font-size: 10px;
+  background: var(--bg);
+  border: 1px solid var(--border-md);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  padding: 1px 5px;
+  color: var(--text-3);
+}
+.cmd-footer {
+  display: flex;
+  gap: 12px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-4);
+}
+.cmd-footer span { display: flex; align-items: center; gap: 4px; }
 
-  /* Tab bar */
-  .tab-bar {
-    display: flex;
-    background: var(--bg-el);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-  .tab {
-    flex: 1;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    font-size: 12px; font-weight: 500;
-    color: var(--text-4);
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: color 0.15s, border-color 0.15s;
-    user-select: none;
-  }
-  .tab:hover { color: var(--text-2); }
-  .tab.active {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
-    font-weight: 590;
-  }
-  .tab svg { width: 14px; height: 14px; }
+/* ─────────────────────────────── */
+/*  CONTEXT MENU                  */
+/* ─────────────────────────────── */
+#context-menu {
+  position: fixed;
+  min-width: 180px;
+  background: var(--bg-el);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  z-index: 900;
+  display: none;
+  padding: 4px;
+}
+#context-menu.open { display: block; }
+.ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--text-2);
+  transition: background 0.1s;
+  user-select: none;
+}
+.ctx-item:hover { background: var(--bg-hover); }
+.ctx-item.danger { color: var(--danger); }
+.ctx-sep { height: 1px; background: var(--border); margin: 3px 0; }
+.ctx-item svg { width: 13px; height: 13px; color: var(--text-4); flex-shrink: 0; }
+.ctx-item .ctx-label { flex: 1; }
+.ctx-item .ctx-kbd { font-size: 10px; color: var(--text-4); margin-left: auto; }
+.ctx-shortcut { display: flex; gap: 2px; margin-left: auto; }
+.ctx-shortcut .kbd { font-family: var(--mono); font-size: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; color: var(--text-4); }
 
-  /* Panel container */
-  .panels {
-    flex: 1;
-    overflow: hidden;
-    position: relative;
-  }
-  .panel {
-    position: absolute; inset: 0;
-    overflow-y: auto;
-    display: none;
-  }
-  .panel.active { display: flex; flex-direction: column; }
+/* ─────────────────────────────── */
+/*  KEYBOARD SHORTCUTS OVERLAY    */
+/* ─────────────────────────────── */
+#shortcuts-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+}
+#shortcuts-overlay.open { display: flex; }
+.shortcuts-modal {
+  width: 380px;
+  background: var(--bg-el);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.8), 0 24px 48px rgba(0,0,0,0.6);
+}
+.shortcuts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.shortcuts-title { font-size: 15px; font-weight: 590; }
+.shortcuts-close {
+  width: 24px; height: 24px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-3);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  transition: all 0.15s;
+}
+.shortcuts-close:hover { color: var(--text-1); }
+.shortcuts-body { padding: 8px 12px 16px; }
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px;
+  border-radius: var(--radius-sm);
+}
+.shortcut-row:hover { background: var(--bg-hover); }
+.shortcut-desc { flex: 1; font-size: 12.5px; color: var(--text-2); }
+.shortcut-keys { display: flex; gap: 3px; }
+.shortcut-keys .kbd {
+  font-family: var(--mono); font-size: 10px;
+  background: var(--bg);
+  border: 1px solid var(--border-md); border-bottom-width: 2px;
+  border-radius: 3px; padding: 1px 5px;
+  color: var(--text-2);
+}
 
-  /* Scrollbar */
-  .panel::-webkit-scrollbar { width: 4px; }
-  .panel::-webkit-scrollbar-track { background: transparent; }
-  .panel::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 2px; }
-  .panel::-webkit-scrollbar-thumb:hover { background: var(--text-4); }
+/* ─────────────────────────────── */
+/*  UNDO/REDO PANEL               */
+/* ─────────────────────────────── */
+#undo-panel {
+  position: fixed;
+  right: 10px; top: 52px;
+  width: 200px;
+  background: var(--bg-el);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  z-index: 800;
+  display: none;
+  overflow: hidden;
+}
+#undo-panel.open { display: block; }
+.undo-header {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px; font-weight: 590;
+  color: var(--text-4);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+.undo-list { padding: 4px; max-height: 260px; overflow-y: auto; }
+.undo-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 11.5px;
+  color: var(--text-2);
+  transition: background 0.1s;
+}
+.undo-item:hover { background: var(--bg-hover); }
+.undo-item.current { background: var(--accent-bg); color: var(--accent); }
+.undo-item.future { color: var(--text-4); }
+.undo-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.undo-item .undo-dot { background: var(--accent); }
+.undo-item.future .undo-dot { background: var(--text-4); }
+.undo-current-marker {
+  width: 2px; height: 100%;
+  background: var(--accent);
+  position: absolute;
+  left: 0; top: 0;
+}
 
-  /* ── Panel: DOM Tree ── */
-  .panel-dom {}
-  .search-row {
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-  .search-input {
-    width: 100%;
-    background: var(--bg-el);
-    border: 1px solid var(--border-md);
-    border-radius: var(--radius-sm);
-    color: var(--text-1);
-    font-family: var(--sans);
-    font-size: 12px;
-    padding: 5px 8px 5px 28px;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  .search-input:focus { border-color: var(--accent); }
-  .search-input::placeholder { color: var(--text-4); }
-  .search-wrap { position: relative; }
-  .search-wrap svg {
-    position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
-    width: 13px; height: 13px; color: var(--text-4); pointer-events: none;
-  }
-  .tree {
-    padding: 4px 0;
-    flex: 1;
-    overflow-y: auto;
-  }
-  .tree-node {
-    display: flex;
-    align-items: center;
-    height: 28px;
-    padding-right: 8px;
-    cursor: pointer;
-    border-left: 2px solid transparent;
-    transition: background 0.1s;
-    user-select: none;
-  }
-  .tree-node:hover { background: var(--bg-hover); }
-  .tree-node.selected {
-    background: var(--bg-sel);
-    border-left-color: var(--accent);
-  }
-  .tree-indent { flex-shrink: 0; }
-  .tree-chevron {
-    width: 18px; height: 18px;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--text-4);
-    flex-shrink: 0;
-    transition: transform 0.15s;
-  }
-  .tree-chevron.open { transform: rotate(90deg); }
-  .tree-chevron.empty { visibility: hidden; }
-  .tree-icon {
-    width: 16px; height: 16px;
-    margin-right: 5px;
-    border-radius: 3px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 9px; font-weight: 600;
-    flex-shrink: 0;
-  }
-  .icon-tag    { background: #2a2b3d; color: #a5a8ff; }
-  .icon-attr   { background: #2d3025; color: #b5d98e; }
-  .icon-text   { background: #2d2a25; color: #d9b88e; }
-  .tree-label {
-    font-family: var(--mono);
-    font-size: 11.5px;
-    color: var(--text-2);
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .tree-node.selected .tree-label { color: var(--text-1); font-weight: 500; }
-  .tree-badge {
-    font-size: 10px;
-    color: var(--text-4);
-    margin-left: 4px;
-    flex-shrink: 0;
-  }
+/* ─────────────────────────────── */
+/*  ANNOTATION OVERLAY (mock)     */
+/* ─────────────────────────────── */
+#annotation-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 700;
+  display: none;
+}
+#annotation-layer.active { display: block; }
+.ann-rect {
+  position: absolute;
+  border: 2px solid var(--accent);
+  border-radius: 4px;
+  background: rgba(113,112,255,0.08);
+  cursor: pointer;
+  pointer-events: all;
+  transition: all 0.2s;
+}
+.ann-rect:hover {
+  background: rgba(113,112,255,0.15);
+  box-shadow: 0 0 0 3px rgba(113,112,255,0.2);
+}
+.ann-label {
+  position: absolute;
+  top: -22px; left: 0;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px; font-weight: 590;
+  padding: 2px 7px;
+  border-radius: 4px 4px 0 0;
+  white-space: nowrap;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ann-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px); left: 0;
+  background: var(--bg-el);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--text-1);
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  display: none;
+  pointer-events: none;
+}
+.ann-rect:hover .ann-tooltip { display: block; }
 
-  /* ── Panel: Properties ── */
-  .panel-props {}
-  .prop-tabs {
-    display: flex;
-    border-bottom: 1px solid var(--border);
-    padding: 0 10px;
-    gap: 4px;
-    flex-shrink: 0;
-  }
-  .prop-tab {
-    padding: 7px 10px;
-    font-size: 12px; font-weight: 500;
-    color: var(--text-4);
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: color 0.15s, border-color 0.15s;
-  }
-  .prop-tab:hover { color: var(--text-2); }
-  .prop-tab.active { color: var(--text-1); border-bottom-color: var(--accent); }
-  .prop-content { padding: 8px 10px; flex: 1; overflow-y: auto; }
-  .prop-section-title {
-    font-size: 11px; font-weight: 590;
-    color: var(--text-4);
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    margin: 10px 0 6px;
-  }
-  .prop-section-title:first-child { margin-top: 0; }
-  .prop-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 5px;
-  }
-  .prop-label {
-    font-size: 11.5px;
-    color: var(--text-3);
-    width: 56px;
-    flex-shrink: 0;
-    font-family: var(--mono);
-  }
-  .prop-input {
-    flex: 1;
-    background: var(--bg-el);
-    border: 1px solid var(--border-md);
-    border-radius: var(--radius-sm);
-    color: var(--text-1);
-    font-family: var(--mono);
-    font-size: 11.5px;
-    padding: 4px 7px;
-    outline: none;
-    transition: border-color 0.15s;
-    min-width: 0;
-  }
-  .prop-input:focus { border-color: var(--accent); }
-  .color-swatch {
-    width: 20px; height: 20px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border-md);
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-  .toggle-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 6px 0;
-  }
-  .toggle-label { font-size: 12px; color: var(--text-2); }
-  .toggle {
-    width: 32px; height: 18px;
-    background: var(--bg-el);
-    border: 1px solid var(--border-md);
-    border-radius: 9px;
-    position: relative;
-    cursor: pointer;
-    transition: background 0.2s, border-color 0.2s;
-  }
-  .toggle.on { background: var(--accent); border-color: var(--accent); }
-  .toggle::after {
-    content: '';
-    position: absolute;
-    width: 12px; height: 12px;
-    background: #fff;
-    border-radius: 50%;
-    top: 2px; left: 2px;
-    transition: transform 0.2s;
-  }
-  .toggle.on::after { transform: translateX(14px); }
+/* ─────────────────────────────── */
+/*  LOADING / SKELETON            */
+/* ─────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-el) 25%, var(--bg-hover) 50%, var(--bg-el) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+.loading-dots { display: flex; gap: 4px; align-items: center; }
+.loading-dots span {
+  width: 5px; height: 5px;
+  background: var(--text-4);
+  border-radius: 50%;
+  animation: dotPulse 1.2s ease-in-out infinite;
+}
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dotPulse { 0%,100%{opacity:0.3;transform:scale(0.8)} 50%{opacity:1;transform:scale(1)} }
 
-  /* ── Panel: A2UI Chat ── */
-  .panel-a2ui {
-    background: var(--warm-bg);
-  }
-  .chat-header {
-    padding: 10px 14px;
-    background: var(--warm-sur);
-    border-bottom: 1px solid var(--warm-bdr);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-shrink: 0;
-  }
-  .chat-header-title {
-    font-family: var(--serif);
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--warm-text);
-  }
-  .chat-header-badge {
-    font-size: 10px; font-weight: 590;
-    background: var(--accent);
-    color: #fff;
-    padding: 2px 6px;
-    border-radius: 10px;
-  }
-  .chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .chat-messages::-webkit-scrollbar-track { background: transparent; }
-  .chat-messages::-webkit-scrollbar-thumb { background: var(--warm-bdr); border-radius: 2px; }
-  .msg {
-    max-width: 85%;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
-  .msg.user { align-self: flex-end; align-items: flex-end; }
-  .msg.ai   { align-self: flex-start; align-items: flex-start; }
-  .msg-bubble {
-    padding: 8px 11px;
-    border-radius: 12px;
-    font-size: 13px;
-    line-height: 1.55;
-  }
-  .msg.user .msg-bubble {
-    background: var(--accent);
-    color: #fff;
-    border-bottom-right-radius: 3px;
-  }
-  .msg.ai .msg-bubble {
-    background: var(--warm-sur);
-    color: var(--warm-text);
-    border-bottom-left-radius: 3px;
-    border: 1px solid var(--warm-bdr);
-  }
-  .msg-meta {
-    font-size: 10px;
-    color: var(--warm-2);
-    padding: 0 4px;
-  }
-  .msg.user .msg-meta { text-align: right; }
-  .code-block {
-    background: #1a1a1a;
-    color: #e2e8f0;
-    font-family: var(--mono);
-    font-size: 11px;
-    padding: 8px 10px;
-    border-radius: 6px;
-    line-height: 1.6;
-    overflow-x: auto;
-    margin-top: 4px;
-    border-left: 3px solid var(--accent);
-  }
-  .code-block .kw  { color: #c792ea; }
-  .code-block .str { color: #c3e88d; }
-  .code-block .cmt { color: #546e7a; }
-  .chat-input-area {
-    padding: 10px 14px;
-    background: var(--warm-sur);
-    border-top: 1px solid var(--warm-bdr);
-    flex-shrink: 0;
-  }
-  .chat-input-wrap {
-    display: flex;
-    gap: 8px;
-    align-items: flex-end;
-  }
-  .chat-textarea {
-    flex: 1;
-    background: var(--warm-bg);
-    border: 1px solid var(--warm-bdr);
-    border-radius: 10px;
-    padding: 8px 12px;
-    font-family: var(--sans);
-    font-size: 13px;
-    color: var(--warm-text);
-    resize: none;
-    outline: none;
-    min-height: 36px;
-    max-height: 100px;
-    transition: border-color 0.15s;
-    line-height: 1.5;
-  }
-  .chat-textarea:focus { border-color: var(--accent); }
-  .chat-textarea::placeholder { color: var(--warm-2); }
-  .chat-send {
-    width: 36px; height: 36px;
-    background: var(--accent);
-    border: none;
-    border-radius: 8px;
-    color: #fff;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    transition: background 0.15s, transform 0.1s;
-  }
-  .chat-send:hover { background: var(--accent-h); }
-  .chat-send:active { transform: scale(0.94); }
-  .chat-send svg { width: 16px; height: 16px; }
+/* ─────────────────────────────── */
+/*  HEADER                        */
+/* ─────────────────────────────── */
+.header {
+  height: 44px;
+  background: var(--bg-el);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 6px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+.header-icon {
+  width: 24px; height: 24px;
+  background: var(--accent);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: #fff; font-weight: 600; letter-spacing: -0.3px;
+  flex-shrink: 0;
+}
+.header-title { font-size: 13.5px; font-weight: 590; flex: 1; }
+.header-divider { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+.header-status {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; color: var(--text-3);
+}
+.status-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 5px var(--success);
+}
+.status-dot.warn { background: var(--warn); box-shadow: 0 0 5px var(--warn); }
+.status-dot.error { background: var(--danger); box-shadow: 0 0 5px var(--danger); }
+.hdr-btn {
+  width: 28px; height: 28px;
+  border: none; background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-4);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+}
+.hdr-btn:hover { background: var(--bg-hover); color: var(--text-1); }
+.hdr-btn .badge {
+  position: absolute;
+  top: 2px; right: 2px;
+  width: 8px; height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  border: 1.5px solid var(--bg-el);
+}
+.hdr-btn.active { color: var(--accent); }
 
-  /* ── Panel: Spec Preview ── */
-  .panel-spec {}
-  .spec-toolbar {
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    gap: 4px;
-    flex-shrink: 0;
-  }
-  .spec-btn {
-    padding: 4px 10px;
-    background: transparent;
-    border: 1px solid var(--border-md);
-    border-radius: var(--radius-sm);
-    color: var(--text-3);
-    font-family: var(--sans);
-    font-size: 11px; font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .spec-btn:hover { border-color: var(--text-3); color: var(--text-1); }
-  .spec-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .spec-code {
-    flex: 1;
-    padding: 12px 14px;
-    overflow-y: auto;
-    font-family: var(--mono);
-    font-size: 11px;
-    line-height: 1.7;
-    color: var(--text-2);
-  }
-  .spec-code .key    { color: #7dd3fc; }
-  .spec-code .val    { color: #86efac; }
-  .spec-code .punct  { color: var(--text-4); }
-  .spec-code .cmt   { color: var(--text-4); font-style: italic; }
-  .spec-code .lay-h  { color: var(--accent); font-weight: 500; }
-  .cursor-blink {
-    display: inline-block;
-    width: 2px; height: 13px;
-    background: var(--accent);
-    vertical-align: middle;
-    animation: blink 1s step-end infinite;
-    margin-left: 1px;
-  }
-  @keyframes blink { 50% { opacity: 0; } }
-  .stream-indicator {
-    display: inline-flex; align-items: center; gap: 4px;
-    font-size: 10px; color: var(--text-4);
-    margin-left: 8px;
-  }
-  .stream-dot {
-    width: 5px; height: 5px;
-    background: var(--accent);
-    border-radius: 50%;
-    animation: pulse 1.2s ease-in-out infinite;
-  }
-  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+/* ─────────────────────────────── */
+/*  BREADCRUMB                    */
+/* ─────────────────────────────── */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  font-size: 11.5px;
+  flex-shrink: 0;
+}
+.breadcrumb-item { color: var(--text-3); cursor: pointer; transition: color 0.15s; }
+.breadcrumb-item:hover { color: var(--text-1); }
+.breadcrumb-item.current { color: var(--text-1); font-weight: 500; }
+.breadcrumb-sep { color: var(--text-4); font-size: 10px; }
 
-  /* ── Panel: Settings ── */
-  .panel-settings {}
-  .settings-section {
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--border);
-  }
-  .settings-title {
-    font-size: 11px; font-weight: 590;
-    color: var(--text-4);
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    margin-bottom: 10px;
-  }
-  .settings-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 6px 0;
-  }
-  .settings-label {
-    font-size: 12.5px;
-    color: var(--text-2);
-    flex: 1;
-  }
-  .settings-desc {
-    font-size: 11px;
-    color: var(--text-4);
-    margin-top: 1px;
-  }
-  select.sett-select {
-    background: var(--bg-el);
-    border: 1px solid var(--border-md);
-    border-radius: var(--radius-sm);
-    color: var(--text-1);
-    font-family: var(--sans);
-    font-size: 12px;
-    padding: 4px 8px;
-    outline: none;
-    cursor: pointer;
-  }
-  select.sett-select:focus { border-color: var(--accent); }
-  .radio-group { display: flex; flex-direction: column; gap: 4px; }
-  .radio-item {
-    display: flex; align-items: center; gap: 7px;
-    cursor: pointer;
-    font-size: 12px; color: var(--text-2);
-  }
-  .radio-item input[type=radio] { accent-color: var(--accent); }
-  .shortcut-hint {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--text-4);
-    background: var(--bg-el);
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    padding: 1px 5px;
-    margin-left: 4px;
-  }
-  .agent-status {
-    display: flex; align-items: center; gap: 6px;
-    padding: 8px 10px;
-    background: var(--bg-el);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    margin-top: 8px;
-  }
-  .agent-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--success);
-    box-shadow: 0 0 6px var(--success);
-  }
-  .agent-dot.offline { background: var(--text-4); box-shadow: none; }
-  .agent-info { font-size: 11.5px; color: var(--text-2); }
-  .agent-sub  { font-size: 10px; color: var(--text-4); }
-  .kbd-hint {
-    display: flex; gap: 4px; align-items: center;
-    font-size: 11px; color: var(--text-4);
-    margin-top: 12px;
-    padding: 0 12px;
-  }
-  .kbd {
-    font-family: var(--mono);
-    font-size: 10px;
-    background: linear-gradient(to bottom, #1a1b1d, #121213);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-bottom-width: 2px;
-    border-radius: 3px;
-    padding: 1px 5px;
-    color: var(--text-2);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.4);
-  }
-  .kbd-hint span { flex: 1; }
+/* ─────────────────────────────── */
+/*  TAB BAR                       */
+/* ─────────────────────────────── */
+.tab-bar {
+  display: flex;
+  background: var(--bg-el);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.tab {
+  flex: 1;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 12px; font-weight: 500;
+  color: var(--text-4);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  user-select: none;
+}
+.tab:hover { color: var(--text-2); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 590; }
+.tab svg { width: 14px; height: 14px; }
+.tab .tab-count {
+  font-size: 10px; font-weight: 590;
+  background: var(--bg-hover);
+  color: var(--text-4);
+  padding: 1px 5px;
+  border-radius: 8px;
+  min-width: 16px;
+  text-align: center;
+}
+.tab.active .tab-count { background: var(--accent-bg); color: var(--accent); }
+
+/* ─────────────────────────────── */
+/*  PANELS                        */
+/* ─────────────────────────────── */
+.body { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.panels { flex: 1; overflow: hidden; position: relative; }
+.panel { position: absolute; inset: 0; overflow-y: auto; display: none; flex-direction: column; }
+.panel.active { display: flex; }
+.panel::-webkit-scrollbar { width: 4px; }
+.panel::-webkit-scrollbar-track { background: transparent; }
+.panel::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 2px; }
+
+/* ── Toolbar inside panel ── */
+.panel-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  flex-shrink: 0;
+}
+.toolbar-btn {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-3);
+  font-family: var(--sans);
+  font-size: 11.5px; font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.toolbar-btn:hover { background: var(--bg-hover); color: var(--text-1); border-color: var(--border-md); }
+.toolbar-btn.active { background: var(--accent-bg); color: var(--accent); border-color: rgba(113,112,255,0.3); }
+.toolbar-btn svg { width: 13px; height: 13px; }
+.toolbar-divider { width: 1px; height: 16px; background: var(--border); margin: 0 2px; }
+.toolbar-spacer { flex: 1; }
+
+/* ── Empty state ── */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 20px;
+  text-align: center;
+}
+.empty-icon {
+  width: 48px; height: 48px;
+  background: var(--bg-el);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-lg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  color: var(--text-4);
+}
+.empty-title { font-size: 13.5px; font-weight: 590; color: var(--text-2); }
+.empty-desc { font-size: 12px; color: var(--text-4); line-height: 1.5; max-width: 200px; }
+.empty-action {
+  margin-top: 4px;
+  padding: 6px 14px;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-md);
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 12px; font-weight: 590;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.empty-action:hover { background: var(--accent-h); }
+
+/* ─────────────────────────────── */
+/*  DOM TREE PANEL                 */
+/* ─────────────────────────────── */
+.search-row {
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.search-input {
+  width: 100%;
+  background: var(--bg-el);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-family: var(--sans);
+  font-size: 12px;
+  padding: 5px 8px 5px 28px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.search-input:focus { border-color: var(--accent); }
+.search-input::placeholder { color: var(--text-4); }
+.search-wrap { position: relative; }
+.search-wrap svg { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; color: var(--text-4); pointer-events: none; }
+
+.tree { padding: 4px 0; flex: 1; overflow-y: auto; }
+.tree-node {
+  display: flex; align-items: center;
+  height: 28px; padding-right: 8px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: background 0.1s;
+  user-select: none;
+  position: relative;
+}
+.tree-node:hover { background: var(--bg-hover); }
+.tree-node.selected { background: var(--bg-sel); border-left-color: var(--accent); }
+.tree-node.highlighted { background: rgba(113,112,255,0.12); border-left-color: var(--accent); }
+.tree-node.keyboard-focus { outline: 1px solid var(--accent); outline-offset: -1px; }
+.tree-node.filtered-out { display: none; }
+.tree-indent { flex-shrink: 0; }
+.tree-chevron {
+  width: 18px; height: 18px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-4); flex-shrink: 0;
+  transition: transform 0.15s;
+  font-size: 9px;
+}
+.tree-chevron.open { transform: rotate(90deg); }
+.tree-chevron.empty { visibility: hidden; }
+.tree-icon {
+  width: 16px; height: 16px;
+  margin-right: 5px; border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px; font-weight: 700; flex-shrink: 0;
+}
+.icon-tag   { background: #2a2b3d; color: #a5a8ff; }
+.icon-attr  { background: #2d3025; color: #b5d98e; }
+.icon-text  { background: #2d2a25; color: #d9b88e; }
+.icon-event { background: #3d2525; color: #d98e8e; }
+.tree-label {
+  font-family: var(--mono);
+  font-size: 11.5px; color: var(--text-2);
+  flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tree-node.selected .tree-label { color: var(--text-1); font-weight: 500; }
+.tree-node.highlighted .tree-label { color: var(--accent); }
+.tree-badge { font-size: 10px; color: var(--text-4); margin-left: 4px; flex-shrink: 0; }
+.tree-ann-dot {
+  width: 5px; height: 5px;
+  background: var(--accent);
+  border-radius: 50%;
+  margin-left: 3px;
+  flex-shrink: 0;
+  box-shadow: 0 0 4px var(--accent);
+}
+
+/* Inline edit */
+.inline-edit {
+  flex: 1;
+  background: var(--bg-el);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  padding: 1px 4px;
+  outline: none;
+}
+
+/* Multi-select checkbox */
+.tree-node.multi-selected { background: rgba(113,112,255,0.08); }
+.tree-check {
+  width: 14px; height: 14px;
+  border: 1px solid var(--border-md);
+  border-radius: 3px;
+  margin-right: 6px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-el);
+  transition: all 0.15s;
+}
+.tree-node.multi-selected .tree-check {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.tree-node.multi-selected .tree-check::after {
+  content: '✓';
+  font-size: 9px;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ─────────────────────────────── */
+/*  PROPERTIES PANEL               */
+/* ─────────────────────────────── */
+.prop-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  padding: 0 10px;
+  gap: 2px;
+  flex-shrink: 0;
+  background: var(--bg);
+}
+.prop-tab {
+  padding: 7px 10px;
+  font-size: 12px; font-weight: 500;
+  color: var(--text-4);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  display: flex; align-items: center; gap: 5px;
+}
+.prop-tab:hover { color: var(--text-2); }
+.prop-tab.active { color: var(--text-1); border-bottom-color: var(--accent); }
+.prop-tab .tab-badge {
+  font-size: 9px; font-weight: 590;
+  background: var(--bg-hover);
+  color: var(--text-4);
+  padding: 1px 4px;
+  border-radius: 6px;
+}
+.prop-tab.active .tab-badge { background: var(--accent-bg); color: var(--accent); }
+.prop-content { padding: 8px 10px; flex: 1; overflow-y: auto; }
+.prop-section-title {
+  font-size: 10.5px; font-weight: 590;
+  color: var(--text-4);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin: 10px 0 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+.prop-section-title:first-child { margin-top: 0; }
+.prop-section-title::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.prop-row {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 5px;
+}
+.prop-label {
+  font-size: 11px; color: var(--text-3);
+  width: 52px; flex-shrink: 0;
+  font-family: var(--mono);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.prop-input {
+  flex: 1; min-width: 0;
+  background: var(--bg-el);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  padding: 4px 7px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.prop-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(113,112,255,0.15); }
+.prop-input.modified { border-color: var(--warn); }
+.prop-input:hover:not(:focus) { border-color: var(--text-4); }
+.color-swatch {
+  width: 20px; height: 20px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-md);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.color-swatch:hover { transform: scale(1.1); box-shadow: 0 0 0 2px rgba(113,112,255,0.3); }
+.toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 5px 0;
+}
+.toggle-label { font-size: 12px; color: var(--text-2); }
+.toggle {
+  width: 32px; height: 18px;
+  background: var(--bg-el);
+  border: 1px solid var(--border-md);
+  border-radius: 9px;
+  position: relative; cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.toggle.on { background: var(--accent); border-color: var(--accent); }
+.toggle::after {
+  content: ''; position: absolute;
+  width: 12px; height: 12px;
+  background: #fff; border-radius: 50%;
+  top: 2px; left: 2px;
+  transition: transform 0.2s;
+}
+.toggle.on::after { transform: translateX(14px); }
+
+/* ─────────────────────────────── */
+/*  A2UI CHAT PANEL               */
+/* ─────────────────────────────── */
+.panel-a2ui { background: var(--warm-bg); }
+.chat-header {
+  padding: 10px 14px;
+  background: var(--warm-sur);
+  border-bottom: 1px solid var(--warm-bdr);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.chat-header-title {
+  font-family: var(--sans);
+  font-size: 14px; font-weight: 590;
+  color: var(--warm-text);
+}
+.chat-header-actions { display: flex; gap: 6px; }
+.chat-action-btn {
+  width: 26px; height: 26px;
+  background: transparent;
+  border: 1px solid var(--warm-bdr);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: var(--warm-2);
+  transition: all 0.15s;
+}
+.chat-action-btn:hover { background: var(--warm-bg); color: var(--warm-text); }
+.chat-messages {
+  flex: 1; overflow-y: auto;
+  padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.chat-messages::-webkit-scrollbar-track { background: transparent; }
+.chat-messages::-webkit-scrollbar-thumb { background: var(--warm-bdr); border-radius: 2px; }
+.msg { max-width: 88%; display: flex; flex-direction: column; gap: 3px; }
+.msg.user { align-self: flex-end; align-items: flex-end; }
+.msg.ai   { align-self: flex-start; align-items: flex-start; }
+.msg-bubble {
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 13px; line-height: 1.55;
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+}
+.msg-bubble:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.msg.user .msg-bubble {
+  background: var(--accent); color: #fff;
+  border-bottom-right-radius: 3px;
+}
+.msg.ai .msg-bubble {
+  background: var(--warm-sur); color: var(--warm-text);
+  border: 1px solid var(--warm-bdr);
+  border-bottom-left-radius: 3px;
+}
+.msg-meta { font-size: 10px; color: var(--warm-2); padding: 0 4px; display: flex; align-items: center; gap: 6px; }
+.msg-actions {
+  display: flex; gap: 6px;
+  opacity: 0; transition: opacity 0.15s;
+}
+.msg:hover .msg-actions { opacity: 1; }
+.msg-action {
+  font-size: 10px; color: var(--warm-2);
+  cursor: pointer; padding: 2px 0;
+  transition: color 0.15s;
+}
+.msg-action:hover { color: var(--warm-text); }
+.msg-status { font-size: 10px; color: var(--success); display: flex; align-items: center; gap: 3px; }
+.msg-error { color: var(--danger); }
+.msg-annotation {
+  display: inline-flex; align-items: center; gap: 3px;
+  background: rgba(113,112,255,0.1);
+  border: 1px solid rgba(113,112,255,0.25);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+  color: var(--accent);
+  cursor: pointer;
+  margin: 2px 0;
+  transition: all 0.15s;
+}
+.msg-annotation:hover { background: rgba(113,112,255,0.18); }
+.msg-annotation::before { content: '#'; opacity: 0.6; }
+.code-block {
+  background: #1e1e1e; color: #e2e8f0;
+  font-family: var(--mono); font-size: 11px;
+  padding: 8px 10px; border-radius: 6px;
+  line-height: 1.6; overflow-x: auto;
+  margin-top: 4px;
+  border-left: 3px solid var(--accent);
+  position: relative;
+}
+.code-lang {
+  position: absolute; top: 6px; right: 8px;
+  font-size: 9px; color: var(--text-4);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.code-block .kw  { color: #c792ea; }
+.code-block .str { color: #c3e88d; }
+.code-block .cmt { color: #546e7a; font-style: italic; }
+.code-copy {
+  position: absolute; bottom: 6px; right: 8px;
+  font-size: 10px; color: var(--text-4);
+  cursor: pointer; opacity: 0;
+  transition: opacity 0.15s;
+}
+.code-block:hover .code-copy { opacity: 1; }
+.code-copy:hover { color: var(--text-1); }
+.chat-input-area {
+  padding: 10px 14px;
+  background: var(--warm-sur);
+  border-top: 1px solid var(--warm-bdr);
+  flex-shrink: 0;
+}
+.chat-input-wrap { display: flex; gap: 8px; align-items: flex-end; }
+.chat-textarea {
+  flex: 1;
+  background: var(--warm-bg);
+  border: 1px solid var(--warm-bdr);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-family: var(--sans); font-size: 13px;
+  color: var(--warm-text); resize: none;
+  outline: none; min-height: 36px; max-height: 100px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  line-height: 1.5;
+}
+.chat-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(113,112,255,0.1); }
+.chat-textarea::placeholder { color: var(--warm-2); }
+.chat-send {
+  width: 36px; height: 36px;
+  background: var(--accent); border: none;
+  border-radius: 8px; color: #fff;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, transform 0.1s;
+}
+.chat-send:hover { background: var(--accent-h); }
+.chat-send:active { transform: scale(0.94); }
+.chat-send:disabled { background: var(--text-4); cursor: not-allowed; transform: none; }
+.chat-send svg { width: 16px; height: 16px; }
+.chat-tools {
+  display: flex; gap: 6px; margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.chat-tool-chip {
+  display: flex; align-items: center; gap: 4px;
+  padding: 3px 9px;
+  background: var(--warm-bg);
+  border: 1px solid var(--warm-bdr);
+  border-radius: 20px;
+  font-size: 11px; color: var(--warm-2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.chat-tool-chip:hover { border-color: var(--accent); color: var(--accent); }
+.chat-tool-chip.active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
+
+/* ─────────────────────────────── */
+/*  SPEC PREVIEW PANEL             */
+/* ─────────────────────────────── */
+.spec-layers {
+  display: flex; gap: 2px; padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+.spec-layer-btn {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: 11.5px; font-weight: 500;
+  color: var(--text-4);
+  cursor: pointer; white-space: nowrap;
+  transition: all 0.15s;
+}
+.spec-layer-btn:hover { background: var(--bg-hover); color: var(--text-2); }
+.spec-layer-btn.active { background: var(--accent-bg); border-color: rgba(113,112,255,0.3); color: var(--accent); }
+.spec-layer-btn .layer-num {
+  font-size: 9px; font-weight: 600;
+  background: var(--bg-hover);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+.spec-layer-btn.active .layer-num { background: var(--accent); color: #fff; }
+.spec-toolbar {
+  display: flex; gap: 4px; padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.spec-btn {
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-sm);
+  color: var(--text-3);
+  font-family: var(--sans); font-size: 11px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s;
+}
+.spec-btn:hover { border-color: var(--text-3); color: var(--text-1); }
+.spec-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.spec-btn svg { width: 12px; height: 12px; display: inline; vertical-align: middle; margin-right: 3px; }
+.spec-streaming {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10.5px; color: var(--text-4);
+  padding-right: 8px;
+}
+.spec-stream-dot {
+  width: 5px; height: 5px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+.spec-code { flex: 1; padding: 12px 14px; overflow-y: auto; font-family: var(--mono); font-size: 11px; line-height: 1.7; color: var(--text-2); }
+.spec-code .key    { color: #7dd3fc; }
+.spec-code .val    { color: #86efac; }
+.spec-code .punct  { color: var(--text-4); }
+.spec-code .cmt    { color: var(--text-4); font-style: italic; }
+.spec-code .lay-h  { color: var(--accent); font-weight: 590; }
+.spec-code .missing { color: var(--warn); }
+.cursor-blink { display: inline-block; width: 2px; height: 13px; background: var(--accent); vertical-align: middle; animation: blink 1s step-end infinite; margin-left: 1px; }
+@keyframes blink { 50% { opacity: 0; } }
+.spec-copy-btn {
+  position: absolute; top: 6px; right: 8px;
+  font-size: 10px; color: var(--text-4);
+  cursor: pointer; opacity: 0; transition: opacity 0.15s;
+  background: var(--bg-el); border: 1px solid var(--border-md);
+  border-radius: var(--radius-sm); padding: 2px 7px;
+}
+.spec-code:hover .spec-copy-btn { opacity: 1; }
+.spec-copy-btn:hover { color: var(--text-1); }
+
+/* ─────────────────────────────── */
+/*  SETTINGS PANEL                 */
+/* ─────────────────────────────── */
+/* Settings uses common component styles */
 </style>
 </head>
 <body>
 
-<!-- Header -->
-<div class="header">
-  <div class="header-icon">PS</div>
-  <div class="header-title">Proto Spec Governance</div>
-  <div class="header-actions">
-    <button class="hdr-btn" title="Settings">⚙</button>
+<!-- ─── Toast Container ─── -->
+<div id="toast-container"></div>
+
+<!-- ─── Command Palette ─── -->
+<div id="cmd-palette">
+  <div class="cmd-modal">
+    <div class="cmd-search">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4"/><path d="M10 10l3 3"/></svg>
+      <input class="cmd-input" id="cmd-input" placeholder="输入命令或搜索…" autocomplete="off" />
+    </div>
+    <div class="cmd-results" id="cmd-results">
+      <div class="cmd-group-label">常用操作</div>
+      <div class="cmd-item" data-action="new-prototype">
+        <div class="cmd-item-icon">📄</div>
+        <span class="cmd-item-label">新建原型</span>
+        <div class="cmd-kbd"><span class="kbd">⌘</span><span class="kbd">N</span></div>
+      </div>
+      <div class="cmd-item" data-action="export-spec">
+        <div class="cmd-item-icon">📤</div>
+        <span class="cmd-item-label">导出 Spec</span>
+        <div class="cmd-kbd"><span class="kbd">⌘</span><span class="kbd">E</span></div>
+      </div>
+      <div class="cmd-item" data-action="undo">
+        <div class="cmd-item-icon">↩</div>
+        <span class="cmd-item-label">撤销</span>
+        <div class="cmd-kbd"><span class="kbd">⌘</span><span class="kbd">Z</span></div>
+      </div>
+      <div class="cmd-item" data-action="redo">
+        <div class="cmd-item-icon">↪</div>
+        <span class="cmd-item-label">重做</span>
+        <div class="cmd-kbd"><span class="kbd">⌘</span><span class="kbd">⇧</span><span class="kbd">Z</span></div>
+      </div>
+      <div class="cmd-item" data-action="generate-spec">
+        <div class="cmd-item-icon">✨</div>
+        <span class="cmd-item-label">生成 Spec</span>
+        <div class="cmd-kbd"><span class="kbd">⌘</span><span class="kbd">G</span></div>
+      </div>
+      <div class="cmd-item" data-action="toggle-panel">
+        <div class="cmd-item-icon">☰</div>
+        <span class="cmd-item-label">切换面板</span>
+        <div class="cmd-kbd"><span class="kbd">⌘</span><span class="kbd">1-5</span></div>
+      </div>
+      <div class="cmd-group-label">视图</div>
+      <div class="cmd-item" data-action="toggle-annotations">
+        <div class="cmd-item-icon">🏷</div>
+        <span class="cmd-item-label">显示/隐藏标注</span>
+      </div>
+      <div class="cmd-item" data-action="show-shortcuts">
+        <div class="cmd-item-icon">⌨</div>
+        <span class="cmd-item-label">快捷键</span>
+        <div class="cmd-kbd"><span class="kbd">?</span></div>
+      </div>
+      <div class="cmd-item" data-action="reload-agent">
+        <div class="cmd-item-icon">🔄</div>
+        <span class="cmd-item-label">重启 Agent</span>
+      </div>
+      <div class="cmd-item" data-action="clear-chat">
+        <div class="cmd-item-icon">🗑</div>
+        <span class="cmd-item-label">清空对话</span>
+      </div>
+    </div>
+    <div class="cmd-footer">
+      <span><span class="kbd" style="font-family:var(--mono);font-size:10px;background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:0 4px;">↑↓</span> 导航</span>
+      <span><span class="kbd" style="font-family:var(--mono);font-size:10px;background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:0 4px;">↵</span> 选择</span>
+      <span><span class="kbd" style="font-family:var(--mono);font-size:10px;background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:0 4px;">esc</span> 关闭</span>
+    </div>
   </div>
 </div>
 
-<!-- Body -->
-<div class="body">
+<!-- ─── Context Menu ─── -->
+<div id="context-menu">
+  <div class="ctx-item" data-action="edit-node">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2l3 3-8 8H3v-3l8-8z"/></svg>
+    <span class="ctx-label">编辑元素</span>
+    <div class="ctx-shortcut"><span class="kbd">E</span></div>
+  </div>
+  <div class="ctx-item" data-action="duplicate-node">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="9" height="9" rx="1"/><path d="M5 5V3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2"/></svg>
+    <span class="ctx-label">复制元素</span>
+    <div class="ctx-shortcut"><span class="kbd">⌘</span><span class="kbd">D</span></div>
+  </div>
+  <div class="ctx-item" data-action="delete-node">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5h10M6 5V3h4v2M5 5v7a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V5"/></svg>
+    <span class="ctx-label">删除元素</span>
+    <div class="ctx-shortcut"><span class="kbd">⌫</span></div>
+  </div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" data-action="add-annotation">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M2 8h12"/><circle cx="8" cy="8" r="3"/></svg>
+    <span class="ctx-label">添加标注</span>
+    <div class="ctx-shortcut"><span class="kbd">A</span></div>
+  </div>
+  <div class="ctx-item" data-action="copy-selector">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="9" height="9" rx="1"/><path d="M12 4V3a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h1"/></svg>
+    <span class="ctx-label">复制 Selector</span>
+  </div>
+  <div class="ctx-item" data-action="wrap-element">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h4v4H3zM9 3h4v4H9zM3 9h4v4H3zM9 9h2v4H9z"/></svg>
+    <span class="ctx-label">包裹元素…</span>
+  </div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" data-action="focus-parent">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 3L4 8l4 5M8 3l4 5-4 5"/></svg>
+    <span class="ctx-label">选中父元素</span>
+    <div class="ctx-shortcut"><span class="kbd">↑</span></div>
+  </div>
+  <div class="ctx-item" data-action="collapse-children">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6l5 5 5-5"/></svg>
+    <span class="ctx-label">折叠子元素</span>
+  </div>
+</div>
 
-  <!-- Tab bar -->
-  <div class="tab-bar">
-    <div class="tab active" data-panel="dom">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h4v4H3zM9 3h4v4H9zM3 9h4v4H3zM9 9h2v4h-2z"/></svg>
-      DOM 树
+<!-- ─── Undo/Redo Panel ─── -->
+<div id="undo-panel">
+  <div class="undo-header">历史记录</div>
+  <div class="undo-list" id="undo-list"></div>
+</div>
+
+<!-- ─── Annotation Layer ─── -->
+<div id="annotation-layer">
+  <div class="ann-rect" style="left:60px;top:280px;width:320px;height:60px;">
+    <div class="ann-label">header-nav</div>
+    <div class="ann-tooltip">布局头部导航栏 — 需要响应式折叠</div>
+  </div>
+  <div class="ann-rect" style="left:60px;top:360px;width:320px;height:100px;">
+    <div class="ann-label">main-content</div>
+    <div class="ann-tooltip">主内容区 — 卡片网格布局</div>
+  </div>
+</div>
+
+<!-- ─── Shortcuts Overlay ─── -->
+<div id="shortcuts-overlay">
+  <div class="shortcuts-modal">
+    <div class="shortcuts-header">
+      <span class="shortcuts-title">快捷键</span>
+      <button class="shortcuts-close" onclick="document.getElementById('shortcuts-overlay').classList.remove('open')">✕</button>
     </div>
-    <div class="tab" data-panel="props">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="2"/><circle cx="11" cy="5" r="2"/><circle cx="5" cy="11" r="2"/><circle cx="11" cy="11" r="2"/><path d="M5 7v2M11 7v2M7 5h2M7 11h2"/></svg>
-      属性
-    </div>
-    <div class="tab" data-panel="a2ui">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><path d="M5 7h6M5 9h4"/></svg>
-      A2UI
-    </div>
-    <div class="tab" data-panel="spec">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h12M2 7h8M2 11h10M2 15h6"/></svg>
-      Spec
-    </div>
-    <div class="tab" data-panel="settings">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2M3.5 3.5l1.5 1.5M11 11l1.5 1.5M3.5 12.5l1.5-1.5M11 5l1.5-1.5"/></svg>
-      设置
+    <div class="shortcuts-body">
+      <div class="shortcut-row"><span class="shortcut-desc">命令面板</span><div class="shortcut-keys"><span class="kbd">⌘</span><span class="kbd">K</span></div></div>
+      <div class="shortcut-row"><span class="shortcut-desc">新建原型</span><div class="shortcut-keys"><span class="kbd">⌘</span><span class="kbd">N</span></div></div>
+      <div class="shortcut-row"><span class="shortcut-desc">导出 Spec</span><div class="shortcut-keys"><span class="kbd">⌘</span><span class="kbd">E</span></div></div>
+      <div class="shortcut-row"><span class="shortcut-desc">生成 Spec</span><div class="shortcut-keys"><span class="kbd">⌘</span><span class="kbd">G</span></div></div>
+      <div class="shortcut-row"><span class="shortcut-desc">撤销</span><div class="shortcut-keys"><span class="kbd">⌘</span><span class="kbd">Z</span></div></div>
+      <div class="shortcut-row"><span class="shortcut-desc">重做</span><div class="shortcut-keys"><span class="kbd">⌘</span><span class="kbd">⇧</span><span class="kbd">Z</span></div></div>
+      <div class="shortcut-row"><span class="shortcut-desc">删除选中</span><div class="shortcut-keys"><span class="kbd">⌫</span></div></div>
+      <div class="shortcut-row"><span class="shortcut-desc">选中父元素</span><div class="shortcut-keys"><span class="kbd">↑</span></div></div>
+      <div class="shortcut-row"><span class="shortcut-desc">复制元素</span><div class="shortcut-keys"><span class="kbd">⌘</span><span class="kbd">D</span></div></div>
+      <div class="shortcut-row"><span class="shortcut-desc">切换面板</span><div class="shortcut-keys"><span class="kbd">⌘</span><span class="kbd">1-5</span></div></div>
+      <div class="shortcut-row"><span class="shortcut-desc">显示标注</span><div class="shortcut-keys"><span class="kbd">⌘</span><span class="kbd">;</span></div></div>
+      <div class="shortcut-row"><span class="shortcut-desc">关闭面板</span><div class="shortcut-keys"><span class="kbd">esc</span></div></div>
     </div>
   </div>
+</div>
 
-  <!-- Panels -->
+<!-- ─── Header ─── -->
+<div class="header">
+  <div class="header-icon">PS</div>
+  <div class="header-title">Proto Spec Governance</div>
+  <div class="header-divider"></div>
+  <div class="header-status">
+    <div class="status-dot"></div>
+    <span>Agent 就绪</span>
+  </div>
+  <div style="flex:1"></div>
+  <button class="hdr-btn active" id="btn-undo" title="撤销历史">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8H12M4 8l3-3M4 8l3 3"/></svg>
+  </button>
+  <button class="hdr-btn" id="btn-ann" title="显示标注">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 2h12v9H8l-4 3V11H2z"/></svg>
+    <span class="badge"></span>
+  </button>
+  <button class="hdr-btn" id="btn-shortcuts" title="快捷键">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="8" rx="1"/><path d="M5 8h1M8 8h1M11 8h1M5 6v4M11 6v4"/></svg>
+  </button>
+  <button class="hdr-btn" id="btn-cmd" title="命令面板">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4l-2 4 2 4M12 4l2 4-2 4M8 4v8"/></svg>
+  </button>
+</div>
+
+<!-- ─── Breadcrumb ─── -->
+<div class="breadcrumb">
+  <span class="breadcrumb-item current">全部原型</span>
+  <span class="breadcrumb-sep">›</span>
+  <span class="breadcrumb-item">landing-page</span>
+  <span class="breadcrumb-sep">›</span>
+  <span class="breadcrumb-item">L3</span>
+  <span class="breadcrumb-sep">›</span>
+  <span class="breadcrumb-item current">layout-container</span>
+</div>
+
+<!-- ─── Tab Bar ─── -->
+<div class="tab-bar">
+  <div class="tab active" data-panel="dom">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h4v4H3zM9 3h4v4H9zM3 9h4v4H3zM9 9h2v4h-2z"/></svg>
+    DOM 树 <span class="tab-count">12</span>
+  </div>
+  <div class="tab" data-panel="props">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="2"/><circle cx="11" cy="5" r="2"/><circle cx="5" cy="11" r="2"/><circle cx="11" cy="11" r="2"/><path d="M5 7v2M11 7v2M7 5h2M7 11h2"/></svg>
+    属性
+  </div>
+  <div class="tab" data-panel="a2ui">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><path d="M5 7h6M5 9h4"/></svg>
+    A2UI <span class="tab-count">3</span>
+  </div>
+  <div class="tab" data-panel="spec">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h12M2 7h8M2 11h10M2 15h6"/></svg>
+    Spec
+  </div>
+  <div class="tab" data-panel="settings">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2M3.5 3.5l1.5 1.5M11 11l1.5 1.5M3.5 12.5l1.5-1.5M11 5l1.5-1.5"/></svg>
+    设置
+  </div>
+</div>
+
+<!-- ─── Body / Panels ─── -->
+<div class="body">
   <div class="panels">
 
-    <!-- ── DOM Tree Panel ── -->
+    <!-- ── DOM Tree ── -->
     <div class="panel panel-dom active" id="panel-dom">
       <div class="search-row">
         <div class="search-wrap">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4"/><path d="M10 10l3 3"/></svg>
-          <input class="search-input" placeholder="搜索元素…" />
+          <input class="search-input" id="tree-search" placeholder="搜索元素 (支持 CSS 选择器)…" />
         </div>
+      </div>
+      <div class="panel-toolbar">
+        <button class="toolbar-btn" id="btn-expand-all" title="展开全部">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4 4 4-4"/></svg>
+          展开
+        </button>
+        <button class="toolbar-btn" id="btn-collapse-all" title="折叠全部">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 10l4-4 4 4"/></svg>
+          折叠
+        </button>
+        <div class="toolbar-divider"></div>
+        <button class="toolbar-btn" id="btn-multi-select" title="多选">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+          多选
+        </button>
+        <div class="toolbar-spacer"></div>
+        <button class="toolbar-btn" title="刷新">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8a6 6 0 1 0 1.5-3.9M2 4v4h4"/></svg>
+        </button>
       </div>
       <div class="tree" id="dom-tree"></div>
     </div>
 
-    <!-- ── Properties Panel ── -->
+    <!-- ── Properties ── -->
     <div class="panel panel-props" id="panel-props">
       <div class="prop-tabs">
-        <div class="prop-tab active">样式</div>
-        <div class="prop-tab">属性</div>
-        <div class="prop-tab">事件</div>
+        <div class="prop-tab active">
+          样式 <span class="tab-badge">8</span>
+        </div>
+        <div class="prop-tab">
+          属性 <span class="tab-badge">3</span>
+        </div>
+        <div class="prop-tab">
+          事件 <span class="tab-badge">2</span>
+        </div>
       </div>
       <div class="prop-content">
+        <div style="padding: 8px 0 4px; display:flex; align-items:center; gap:8px;">
+          <span style="font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:500;">main#content</span>
+          <span style="font-size:10px;color:var(--text-4);">24 × 580px</span>
+        </div>
+
         <div class="prop-section-title">布局</div>
         <div class="prop-row">
           <span class="prop-label">display</span>
-          <input class="prop-input" value="flex" />
+          <input class="prop-input" id="prop-display" value="flex" />
+          <div class="color-swatch" style="background:transparent;opacity:0;pointer-events:none;"></div>
         </div>
         <div class="prop-row">
           <span class="prop-label">position</span>
-          <input class="prop-input" value="relative" />
+          <input class="prop-input modified" id="prop-position" value="relative" />
         </div>
         <div class="prop-row">
           <span class="prop-label">top</span>
@@ -677,6 +1334,10 @@
         <div class="prop-row">
           <span class="prop-label">z-index</span>
           <input class="prop-input" value="10" />
+        </div>
+        <div class="prop-row">
+          <span class="prop-label">flex-dir</span>
+          <input class="prop-input" value="column" />
         </div>
 
         <div class="prop-section-title">尺寸</div>
@@ -693,7 +1354,7 @@
         <div class="prop-row">
           <span class="prop-label">bg</span>
           <input class="prop-input" value="transparent" />
-          <div class="color-swatch" style="background:#0f1011;"></div>
+          <div class="color-swatch" style="background:#0f1011;" title="点击打开颜色选择器"></div>
         </div>
         <div class="prop-row">
           <span class="prop-label">border</span>
@@ -703,65 +1364,136 @@
         <div class="prop-section-title">状态</div>
         <div class="toggle-row">
           <span class="toggle-label">可见</span>
-          <div class="toggle on"></div>
+          <div class="toggle on" data-prop="visibility"></div>
         </div>
         <div class="toggle-row">
           <span class="toggle-label">可交互</span>
-          <div class="toggle on"></div>
+          <div class="toggle on" data-prop="interactive"></div>
+        </div>
+
+        <div style="margin-top:12px; display:flex;gap:6px;">
+          <button class="empty-action" style="flex:1;background:var(--bg-el);color:var(--text-2);border:1px solid var(--border-md);" onclick="showToast('已重置为默认值', 'info')">重置</button>
+          <button class="empty-action" style="flex:1;" onclick="showToast('属性已复制', 'success')">复制</button>
         </div>
       </div>
     </div>
 
-    <!-- ── A2UI Chat Panel ── -->
+    <!-- ── A2UI Chat ── -->
     <div class="panel panel-a2ui" id="panel-a2ui">
       <div class="chat-header">
         <span class="chat-header-title">A2UI 对话</span>
-        <span class="chat-header-badge">v1</span>
+        <div class="chat-header-actions">
+          <button class="chat-action-btn" title="清空对话" onclick="clearChat()">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5h10M6 5V3h4v2M5 5v7a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V5"/></svg>
+          </button>
+          <button class="chat-action-btn" title="导出对话" onclick="showToast('对话已导出为 Markdown', 'success')">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 10v3a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-3M8 2v8M5 5l3 3 3-3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="chat-tools">
+        <div class="chat-tool-chip active" onclick="this.classList.toggle('active')">🏷 标注模式</div>
+        <div class="chat-tool-chip" onclick="this.classList.toggle('active')">🎯 点击推荐</div>
+        <div class="chat-tool-chip" onclick="this.classList.toggle('active')">📋 生成 Spec</div>
       </div>
       <div class="chat-messages" id="chat-messages">
         <div class="msg ai">
-          <div class="msg-bubble">这是一个 <code style="background:rgba(0,0,0,0.08);padding:1px 4px;border-radius:3px;font-size:11px;">div.container</code> 容器，我建议将其拆分为 header / main / footer 三个 section，符合单页应用的标准结构。</div>
-          <div class="msg-meta">A2UI · 2s</div>
+          <div class="msg-bubble">
+            已检测到当前页面共有 <strong>12</strong> 个元素。我建议将其拆分为 <code style="background:rgba(0,0,0,0.07);padding:1px 4px;border-radius:3px;font-size:11px;">header</code> / <code style="background:rgba(0,0,0,0.07);padding:1px 4px;border-radius:3px;font-size:11px;">main</code> / <code style="background:rgba(0,0,0,0.07);padding:1px 4px;border-radius:3px;font-size:11px;">footer</code> 三个 section。
+            <br><br>
+            <div class="msg-annotation" onclick="jumpToAnnotation('header-nav')">header-nav</div>
+            导航栏建议使用 flex + 响应式折叠策略。
+          </div>
+          <div class="msg-meta">
+            A2UI · 刚刚
+            <span class="msg-status">✓ 已处理</span>
+          </div>
+          <div class="msg-actions">
+            <span class="msg-action" onclick="showToast('已复制', 'info')">复制</span>
+            <span class="msg-action" onclick="editMessage(this)">编辑</span>
+            <span class="msg-action" onclick="showToast('已重新生成', 'info')">重新生成</span>
+          </div>
         </div>
         <div class="msg user">
           <div class="msg-bubble">帮我生成对应的 L3 Component spec</div>
-          <div class="msg-meta">刚刚</div>
+          <div class="msg-meta">你 · 刚刚</div>
+          <div class="msg-actions" style="opacity:1;">
+            <span class="msg-action" onclick="editMessage(this)">编辑</span>
+            <span class="msg-action" onclick="deleteMessage(this)">删除</span>
+          </div>
         </div>
         <div class="msg ai">
-          <div class="msg-bubble">好的，正在根据当前标注生成 L3 Component Spec…</div>
-          <div class="msg-meta">A2UI · 正在输入<span class="cursor-blink"></span></div>
+          <div class="msg-bubble">
+            好的，正在根据当前标注生成 L3 Component Spec…
+            <div style="margin-top:8px;">
+              <div class="loading-dots"><span></span><span></span><span></span></div>
+            </div>
+          </div>
+          <div class="msg-meta" id="typing-indicator">A2UI · 正在输入…</div>
         </div>
       </div>
       <div class="chat-input-area">
         <div class="chat-input-wrap">
-          <textarea class="chat-textarea" placeholder="输入指令或标注…" rows="1">帮我生成对应的 L3 Component spec</textarea>
-          <button class="chat-send">
+          <textarea class="chat-textarea" id="chat-input" placeholder="输入指令或标注… (⌘↵ 发送, ⇧↵ 换行)" rows="1">帮我生成对应的 L3 Component spec</textarea>
+          <button class="chat-send" id="chat-send" onclick="sendMessage()">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2L2 7l5 2 2 5 5-12z" stroke-linejoin="round"/></svg>
           </button>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+          <span style="font-size:10px;color:var(--warm-2);">按 ⇧ + Enter 换行</span>
+          <span style="font-size:10px;color:var(--warm-2);" id="char-count">20 / 2000</span>
         </div>
       </div>
     </div>
 
-    <!-- ── Spec Preview Panel ── -->
+    <!-- ── Spec Preview ── -->
     <div class="panel panel-spec" id="panel-spec">
-      <div class="spec-toolbar">
-        <button class="spec-btn active">YAML</button>
-        <button class="spec-btn">MD</button>
-        <button class="spec-btn">JSON</button>
-        <div style="flex:1"></div>
-        <span class="stream-indicator"><span class="stream-dot"></span>流式生成中</span>
+      <div class="spec-layers">
+        <div class="spec-layer-btn active">
+          <span class="layer-num">L1</span> 总体
+        </div>
+        <div class="spec-layer-btn">
+          <span class="layer-num">L2</span> 架构
+        </div>
+        <div class="spec-layer-btn">
+          <span class="layer-num">L3</span> 组件 <span style="font-size:9px;color:var(--text-4);margin-left:2px;">★</span>
+        </div>
+        <div class="spec-layer-btn">
+          <span class="layer-num">L4</span> 行为
+        </div>
+        <div class="spec-layer-btn">
+          <span class="layer-num">L5</span> 样式
+        </div>
       </div>
-      <div class="spec-code">
-<span class="lay-h">## L3 — Component Spec</span>
+      <div class="spec-toolbar">
+        <button class="spec-btn active" onclick="this.classList.toggle('active')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/></svg>
+          YAML
+        </button>
+        <button class="spec-btn" onclick="this.classList.toggle('active')">MD</button>
+        <button class="spec-btn" onclick="this.classList.toggle('active')">JSON</button>
+        <div class="toolbar-divider"></div>
+        <button class="spec-btn" onclick="showToast('已复制到剪贴板', 'success')" title="复制">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="9" height="9" rx="1"/><path d="M12 4V3a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h1"/></svg>
+        </button>
+        <button class="spec-btn" onclick="showToast('已导出为 .yaml 文件', 'success')" title="导出">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 10v3a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-3M8 2v8M5 5l3 3 3-3"/></svg>
+        </button>
+        <button class="spec-btn" id="btn-diff" onclick="toggleDiff()" title="对比">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M2 8h12"/></svg>
+        </button>
+        <div class="toolbar-spacer"></div>
+        <div class="spec-streaming">
+          <div class="spec-stream-dot"></div>
+          流式生成中
+        </div>
+      </div>
+      <div class="spec-code" id="spec-code" style="position:relative;">
+        <span class="lay-h">## L3 — Component Spec</span>
 <span class="punct">---</span>
 <span class="key">name</span><span class="punct">: </span><span class="val">"layout-container"</span>
 <span class="key">parent</span><span class="punct">: </span><span class="val">"layout-page"</span>
 <span class="key">type</span><span class="punct">: </span><span class="val">"container"</span>
-<span class="punct"></span>
-<span class="key">children</span><span class="punct">:</span>
-<span class="punct">  - </span><span class="val">"layout-header"</span>
-<span class="punct">  - </span><span class="val">"layout-main"</span>
-<span class="punct">  - </span><span class="val">"layout-footer"</span>
 <span class="punct"></span>
 <span class="key">io_contract</span><span class="punct">:</span>
 <span class="punct">  </span><span class="key">slots</span><span class="punct">:</span>
@@ -771,190 +1503,734 @@
       </div>
     </div>
 
-    <!-- ── Settings Panel ── -->
+    <!-- ── Settings ── -->
     <div class="panel panel-settings" id="panel-settings">
-      <div class="settings-section">
-        <div class="settings-title">Agent 状态</div>
-        <div class="agent-status">
-          <div class="agent-dot"></div>
-          <div>
-            <div class="agent-info">nanoClaudeCode</div>
-            <div class="agent-sub">v0.1.0 · stdio · 已就绪</div>
+      <div style="padding: 10px 12px; border-bottom: 1px solid var(--border); display:flex; align-items:center; gap:8px;">
+        <div style="font-size:11px;font-weight:590;color:var(--text-4);text-transform:uppercase;letter-spacing:0.6px;">Agent 状态</div>
+        <div style="flex:1"></div>
+        <div class="agent-status-inline">
+          <div class="status-dot"></div>
+          <span style="font-size:11px;color:var(--success);">已连接</span>
+        </div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:0 0 80px;">
+        <div style="padding:10px 12px;">
+          <div style="font-size:10.5px;font-weight:590;color:var(--text-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">LLM 配置</div>
+          <div style="margin-bottom:10px;">
+            <div style="font-size:12px;color:var(--text-3);margin-bottom:5px;">模型</div>
+            <select style="width:100%;background:var(--bg-el);border:1px solid var(--border-md);border-radius:var(--radius-sm);color:var(--text-1);font-family:var(--sans);font-size:12px;padding:6px 8px;outline:none;">
+              <option>MiniMax-Text-01</option>
+              <option>Claude-3.5-Sonnet</option>
+              <option>GPT-4o</option>
+            </select>
+          </div>
+          <div style="margin-bottom:10px;">
+            <div style="font-size:12px;color:var(--text-3);margin-bottom:5px;">Temperature</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input type="range" min="0" max="100" value="70" style="flex:1;accent-color:var(--accent);" />
+              <span style="font-size:11px;color:var(--text-3);width:28px;text-align:right;">0.7</span>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="settings-section">
-        <div class="settings-title">LLM 配置</div>
-        <div class="settings-row">
-          <div>
-            <div class="settings-label">模型</div>
+        <div style="padding:10px 12px;border-top:1px solid var(--border);">
+          <div style="font-size:10.5px;font-weight:590;color:var(--text-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">模板</div>
+          <div style="margin-bottom:10px;">
+            <div style="font-size:12px;color:var(--text-3);margin-bottom:5px;">Design.md 模板</div>
+            <select style="width:100%;background:var(--bg-el);border:1px solid var(--border-md);border-radius:var(--radius-sm);color:var(--text-1);font-family:var(--sans);font-size:12px;padding:6px 8px;outline:none;">
+              <option>Vercel</option>
+              <option selected>Linear.app</option>
+              <option>Stripe</option>
+              <option>Cursor</option>
+            </select>
           </div>
-          <select class="sett-select">
-            <option>MiniMax-Text-01</option>
-            <option>Claude-3.5</option>
-            <option>GPT-4o</option>
-          </select>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <div style="padding:4px 8px;background:var(--accent-bg);border:1px solid rgba(113,112,255,0.3);border-radius:20px;font-size:10.5px;color:var(--accent);cursor:pointer;">+ 新建模板</div>
+          </div>
         </div>
-      </div>
-      <div class="settings-section">
-        <div class="settings-title">模板</div>
-        <div class="settings-row">
-          <div class="settings-label">Design.md 模板</div>
-          <select class="sett-select">
-            <option>Vercel</option>
-            <option>Linear.app</option>
-            <option>Stripe</option>
-          </select>
+        <div style="padding:10px 12px;border-top:1px solid var(--border);">
+          <div style="font-size:10.5px;font-weight:590;color:var(--text-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">导出格式</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 8px;border-radius:var(--radius-sm);transition:background 0.1s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
+              <input type="radio" name="fmt" checked style="accent-color:var(--accent);" />
+              <div>
+                <div style="font-size:12px;color:var(--text-1);">YAML + frontmatter</div>
+                <div style="font-size:10.5px;color:var(--text-4);">推荐 · 兼容 VibeX spec 体系</div>
+              </div>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 8px;border-radius:var(--radius-sm);transition:background 0.1s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
+              <input type="radio" name="fmt" style="accent-color:var(--accent);" />
+              <div>
+                <div style="font-size:12px;color:var(--text-1);">Pure Markdown</div>
+                <div style="font-size:10.5px;color:var(--text-4);">无 frontmatter，纯文档格式</div>
+              </div>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 8px;border-radius:var(--radius-sm);transition:background 0.1s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
+              <input type="radio" name="fmt" style="accent-color:var(--accent);" />
+              <div>
+                <div style="font-size:12px;color:var(--text-1);">JSON</div>
+                <div style="font-size:10.5px;color:var(--text-4);">机器可读，适合 CI/CD 集成</div>
+              </div>
+            </label>
+          </div>
         </div>
-      </div>
-      <div class="settings-section">
-        <div class="settings-title">导出格式</div>
-        <div class="radio-group" style="margin-top:4px;">
-          <label class="radio-item"><input type="radio" name="fmt" checked> YAML + frontmatter</label>
-          <label class="radio-item"><input type="radio" name="fmt"> Pure Markdown</label>
-          <label class="radio-item"><input type="radio" name="fmt"> JSON</label>
+        <div style="padding:10px 12px;border-top:1px solid var(--border);">
+          <div style="font-size:10.5px;font-weight:590;color:var(--text-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">快捷键</div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <div style="display:flex;justify-content:space-between;padding:4px 0;">
+              <span style="font-size:12px;color:var(--text-2);">命令面板</span>
+              <div style="display:flex;gap:2px;"><span class="kbd">⌘</span><span class="kbd">K</span></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0;">
+              <span style="font-size:12px;color:var(--text-2);">撤销</span>
+              <div style="display:flex;gap:2px;"><span class="kbd">⌘</span><span class="kbd">Z</span></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0;">
+              <span style="font-size:12px;color:var(--text-2);">生成 Spec</span>
+              <div style="display:flex;gap:2px;"><span class="kbd">⌘</span><span class="kbd">G</span></div>
+            </div>
+          </div>
+          <div style="margin-top:8px;">
+            <button class="empty-action" style="width:100%;background:var(--bg-el);color:var(--text-2);border:1px solid var(--border-md);" onclick="document.getElementById('shortcuts-overlay').classList.add('open')">查看全部快捷键</button>
+          </div>
         </div>
-      </div>
-      <div class="kbd-hint">
-        <span class="kbd">⌘</span><span class="kbd">K</span>
-        <span>命令面板</span>
-        <span class="kbd">⌘</span><span class="kbd">Z</span>
-        <span>撤销</span>
       </div>
     </div>
 
   </div><!-- /panels -->
 </div><!-- /body -->
 
+<style>
+.agent-status-inline { display:flex; align-items:center; gap:5px; }
+</style>
+
 <script>
-  /* ── Tab switching ── */
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      tab.classList.add('active');
-      document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+/* ════════════════════════════════════
+   TOAST SYSTEM
+════════════════════════════════════ */
+function showToast(msg, type='info') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + type;
+  const icons = { success:'✓', error:'✕', info:'ℹ' };
+  toast.innerHTML = `<span class="toast-icon" style="font-size:13px;">${icons[type]||'ℹ'}</span>${msg}`;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 2200);
+}
+
+/* ════════════════════════════════════
+   COMMAND PALETTE
+════════════════════════════════════ */
+function openCmd() {
+  document.getElementById('cmd-palette').classList.add('open');
+  document.getElementById('cmd-input').focus();
+}
+function closeCmd() {
+  document.getElementById('cmd-palette').classList.remove('open');
+  document.getElementById('cmd-input').value = '';
+}
+document.getElementById('cmd-palette').addEventListener('click', e => {
+  if (e.target === document.getElementById('cmd-palette')) closeCmd();
+});
+document.getElementById('cmd-input').addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeCmd();
+  if (e.key === 'Enter') {
+    const active = document.querySelector('.cmd-item.active');
+    if (active) active.click();
+  }
+  // Arrow navigation
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    const items = [...document.querySelectorAll('.cmd-item')];
+    const cur = items.findIndex(i => i.classList.contains('active'));
+    const next = e.key === 'ArrowDown'
+      ? Math.min(cur + 1, items.length - 1)
+      : Math.max(cur - 1, 0);
+    items.forEach(i => i.classList.remove('active'));
+    items[next].classList.add('active');
+    items[next].scrollIntoView({ block: 'nearest' });
+  }
+});
+document.querySelectorAll('.cmd-item').forEach(item => {
+  item.addEventListener('mouseenter', () => {
+    document.querySelectorAll('.cmd-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+  });
+  item.addEventListener('click', () => {
+    const action = item.dataset.action;
+    closeCmd();
+    if (action === 'show-shortcuts') document.getElementById('shortcuts-overlay').classList.add('open');
+    else if (action === 'toggle-annotations') toggleAnnotations();
+    else if (action === 'undo') simulateUndo();
+    else if (action === 'redo') simulateRedo();
+    else if (action === 'clear-chat') clearChat();
+    else if (action === 'new-prototype') showToast('新建原型…', 'info');
+    else if (action === 'export-spec') showToast('正在导出 Spec…', 'info');
+    else if (action === 'generate-spec') showToast('正在生成 Spec…', 'info');
+    else if (action === 'reload-agent') {
+      showToast('Agent 重启中…', 'info');
+      setTimeout(() => showToast('Agent 已重启', 'success'), 1500);
+    }
+    else showToast(`执行: ${action}`, 'info');
+  });
+});
+
+/* ════════════════════════════════════
+   CONTEXT MENU
+════════════════════════════════════ */
+const ctxMenu = document.getElementById('context-menu');
+function showCtx(e) {
+  e.preventDefault();
+  ctxMenu.style.left = Math.min(e.clientX, window.innerWidth - 200) + 'px';
+  ctxMenu.style.top = Math.min(e.clientY, window.innerHeight - 280) + 'px';
+  ctxMenu.classList.add('open');
+}
+function hideCtx() { ctxMenu.classList.remove('open'); }
+document.addEventListener('click', hideCtx);
+document.querySelectorAll('.ctx-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const action = item.dataset.action;
+    hideCtx();
+    if (action === 'delete-node') {
+      showToast('已删除元素', 'success');
+      const sel = document.querySelector('.tree-node.selected');
+      if (sel) sel.remove();
+    } else if (action === 'copy-selector') {
+      showToast('Selector 已复制到剪贴板', 'success');
+    } else if (action === 'add-annotation') {
+      toggleAnnotations(true);
+      showToast('进入标注模式，点击页面元素添加标注', 'info');
+    } else if (action === 'edit-node') {
+      inlineEditSelected();
+    } else {
+      showToast(`操作: ${action}`, 'info');
+    }
+  });
+});
+
+/* ════════════════════════════════════
+   ANNOTATION LAYER
+════════════════════════════════════ */
+let annotationsVisible = false;
+function toggleAnnotations(show) {
+  annotationsVisible = show !== undefined ? show : !annotationsVisible;
+  document.getElementById('annotation-layer').classList.toggle('active', annotationsVisible);
+  document.getElementById('btn-ann').classList.toggle('active', annotationsVisible);
+}
+document.querySelectorAll('.ann-rect').forEach(rect => {
+  rect.addEventListener('click', () => {
+    const label = rect.querySelector('.ann-label').textContent;
+    showToast(`跳转到: ${label}`, 'info');
+    // Switch to DOM tree and highlight
+    switchPanel('dom');
+    document.querySelectorAll('.tree-node').forEach(n => {
+      if (n.dataset.tag === 'header' && label.includes('header')) n.classList.add('highlighted');
     });
   });
+});
 
-  /* ── Toggle ── */
-  document.querySelectorAll('.toggle').forEach(t => {
-    t.addEventListener('click', () => t.classList.toggle('on'));
+/* ════════════════════════════════════
+   UNDO/REDO PANEL
+════════════════════════════════════ */
+const undoHistory = [
+  { desc: '修改 background-color', time: '刚刚' },
+  { desc: '添加子元素 div.btn', time: '2 分钟前' },
+  { desc: '修改 width: 100% → 80%', time: '5 分钟前' },
+  { desc: '添加 class: card', time: '10 分钟前' },
+];
+let undoIndex = 0;
+function renderUndoList() {
+  const list = document.getElementById('undo-list');
+  list.innerHTML = undoHistory.map((h, i) =>
+    `<div class="undo-item ${i === undoIndex ? 'current' : i > undoIndex ? 'future' : ''}" data-i="${i}">
+       <div class="undo-dot"></div>
+       <div>
+         <div style="font-size:11.5px;">${h.desc}</div>
+         <div style="font-size:10px;color:var(--text-4);">${h.time}</div>
+       </div>
+     </div>`
+  ).join('');
+  list.querySelectorAll('.undo-item').forEach(item => {
+    item.addEventListener('click', () => {
+      undoIndex = parseInt(item.dataset.i);
+      renderUndoList();
+      showToast('已恢复到: ' + undoHistory[undoIndex].desc, 'info');
+    });
   });
+}
+renderUndoList();
+document.getElementById('btn-undo').addEventListener('click', () => {
+  document.getElementById('undo-panel').classList.toggle('open');
+});
+function simulateUndo() {
+  if (undoIndex < undoHistory.length - 1) {
+    undoIndex++;
+    renderUndoList();
+    showToast('已撤销: ' + undoHistory[undoIndex].desc, 'info');
+  } else {
+    showToast('没有可撤销的操作', 'info');
+  }
+}
+function simulateRedo() {
+  if (undoIndex > 0) {
+    undoIndex--;
+    renderUndoList();
+    showToast('已重做', 'info');
+  }
+}
 
-  /* ── DOM Tree ── */
-  const treeData = [
-    {
-      tag: 'html', children: [
-        {
-          tag: 'body', label: 'body.app', children: [
-            { tag: 'header', label: 'header#header', children: [
-              { tag: 'nav', label: 'nav.main-nav', children: [
-                { tag: 'a', label: 'a.logo', text: '"App"' },
-                { tag: 'ul', label: 'ul.nav-links', children: [
-                  { tag: 'li', label: 'li*3' },
-                ]},
-              ]},
-            ]},
-            { tag: 'main', label: 'main#content', children: [
-              { tag: 'h1', label: 'h1.heading', text: '"Welcome"' },
-              { tag: 'p', label: 'p.desc' },
-              { tag: 'button', label: 'button.btn-primary', text: '"Get Started"' },
-            ]},
-            { tag: 'footer', label: 'footer#footer', children: [
-              { tag: 'p', label: 'p.copyright', text: '"© 2025"' },
-            ]},
+/* ════════════════════════════════════
+   TREE
+════════════════════════════════════ */
+const treeData = [
+  { tag:'html', children:[
+    { tag:'body', label:'body.app', children:[
+      { tag:'header', label:'header#header', children:[
+        { tag:'nav', label:'nav.main-nav', children:[
+          { tag:'a', label:'a.logo', text:'"App"', ann:true },
+          { tag:'ul', label:'ul.nav-links', children:[
+            { tag:'li', label:'li.nav-item', ann:true },
+            { tag:'li', label:'li.nav-item' },
+            { tag:'li', label:'li.nav-item' },
           ]},
-        ]
-      }
-    }
-  ];
+        ]},
+      ]},
+      { tag:'main', label:'main#content', children:[
+        { tag:'h1', label:'h1.heading', text:'"Welcome"', ann:true },
+        { tag:'p', label:'p.desc' },
+        { tag:'button', label:'button.btn-primary', text:'"Get Started"' },
+        { tag:'div', label:'div.card-grid', children:[
+          { tag:'div', label:'div.card' },
+          { tag:'div', label:'div.card' },
+        ]},
+      ]},
+      { tag:'footer', label:'footer#footer', children:[
+        { tag:'p', label:'p.copyright', text:'"© 2025"' },
+      ]},
+    ]},
+  ]},
+];
 
-  const ICON_COLORS = {
-    div: '#2a2b3d| #a5a8ff',
-    span: '#2d2a25| #d9b88e',
-    body: '#1e2a2b| #8ed9d9',
-    header: '#2a2b3d| #a5a8ff',
-    nav: '#252630| #c5a8ff',
-    ul: '#252630| #c5a8ff',
-    li: '#252630| #c5a8ff',
-    main: '#2a2b3d| #a5a8ff',
-    a: '#2d3025| #b5d98e',
-    h1: '#2d2a25| #d9b88e',
-    p: '#2d2a25| #d9b88e',
-    button: '#2d2a25| #d9b88e',
-    footer: '#2a2b3d| #a5a8ff',
-    html: '#2a2b3d| #a5a8ff',
-    section: '#2a2b3d| #a5a8ff',
+function getIcon(tag) {
+  const map = {
+    html:'H', body:'B', header:'H', nav:'N', ul:'U', li:'L',
+    main:'M', a:'A', h1:'T', p:'P', button:'B', div:'D', footer:'F',
   };
+  const colors = {
+    header:'#2a2b3d|#a5a8ff', nav:'#252630|#c5a8ff', ul:'#252630|#c5a8ff',
+    a:'#2d3025|#b5d98e', main:'#2a2b3d|#a5a8ff', footer:'#2a2b3d|#a5a8ff',
+  };
+  const pair = colors[tag] || '#1e1e2a|#8888ff';
+  const [bg, color] = pair.split('|');
+  return `<span class="tree-icon icon-tag" style="background:${bg};color:${color}">${map[tag]||tag[0].toUpperCase()}</span>`;
+}
 
-  function getIcon(tag) {
-    const pair = ICON_COLORS[tag] || '#1e1e2a| #8888ff';
-    const [bg, color] = pair.split('|');
-    return `<span class="tree-icon icon-tag" style="background:${bg.trim()};color:${color.trim()}">${tag.charAt(0).toUpperCase()}</span>`;
+let multiSelectMode = false;
+let selectedNodes = new Set();
+
+function buildNode(node, depth) {
+  const hasChildren = node.children && node.children.length;
+  const indent = depth * 14;
+  const isSelected = node.label === 'main#content';
+  const selClass = isSelected ? 'selected' : '';
+  const annDot = node.ann ? '<div class="tree-ann-dot" title="已标注"></div>' : '';
+  const checkHtml = multiSelectMode
+    ? `<div class="tree-check" data-tag="${node.tag}"></div>`
+    : '';
+
+  let html = `<div class="tree-node ${selClass}"
+    style="padding-left:${indent}px"
+    data-tag="${node.tag}"
+    data-label="${node.label || node.tag}"
+    oncontextmenu="showCtx(event)"
+    tabindex="0">`;
+
+  html += `<div class="tree-chevron ${hasChildren ? 'open' : 'empty'}">▶</div>`;
+  html += checkHtml;
+  html += getIcon(node.tag);
+  html += `<span class="tree-label">${node.label || node.tag}</span>`;
+  if (node.text) html += `<span class="tree-badge">"${node.text.replace(/"/g,'')}"</span>`;
+  html += annDot;
+  html += '</div>';
+
+  if (hasChildren) {
+    node.children.forEach(child => { html += buildNode(child, depth + 1); });
   }
+  return html;
+}
 
-  function buildNode(node, depth, isLast) {
-    const hasChildren = node.children && node.children.length > 0;
-    const indent = depth * 14 + 'px';
-    const sel = node.label === 'main#content' ? 'selected' : '';
+document.getElementById('dom-tree').innerHTML = treeData.map(n => buildNode(n, 0)).join('');
 
-    let html = `<div class="tree-node ${sel}" style="padding-left:${indent}px" data-tag="${node.tag}">`;
-    html += `<div class="tree-chevron ${hasChildren ? 'open' : 'empty'}">▶</div>`;
-    html += getIcon(node.tag);
-    html += `<span class="tree-label">${node.label || node.tag}</span>`;
-    if (node.text) html += `<span class="tree-badge">"${node.text.replace(/"/g,'')}"</span>`;
-    html += '</div>';
-
-    if (hasChildren) {
-      node.children.forEach((child, i) => {
-        html += buildNode(child, depth + 1, i === node.children.length - 1);
-      });
-    }
-    return html;
+// Click selection
+document.getElementById('dom-tree').addEventListener('click', e => {
+  const node = e.target.closest('.tree-node');
+  if (!node) return;
+  if (multiSelectMode) {
+    node.classList.toggle('multi-selected');
+    return;
   }
+  document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
+  node.classList.add('selected');
+  // Update breadcrumb
+  document.querySelector('.breadcrumb-item.current').textContent = node.dataset.label;
+});
 
-  document.getElementById('dom-tree').innerHTML = treeData.map(n => buildNode(n, 0, true)).join('');
-
-  /* ── Tree node click ── */
-  document.getElementById('dom-tree').addEventListener('click', e => {
-    const node = e.target.closest('.tree-node');
-    if (!node) return;
-    document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
-    node.classList.add('selected');
+// Chevron toggle
+document.getElementById('dom-tree').addEventListener('click', e => {
+  const chev = e.target.closest('.tree-chevron');
+  if (!chev || chev.classList.contains('empty')) return;
+  chev.classList.toggle('open');
+  const nodeEl = chev.closest('.tree-node');
+  const nodeDepth = parseInt(nodeEl.style.paddingLeft) / 14;
+  const nextEls = [];
+  let sib = nodeEl.nextElementSibling;
+  while (sib && sib.classList.contains('tree-node')) {
+    nextEls.push(sib); sib = sib.nextElementSibling;
+  }
+  const isOpen = chev.classList.contains('open');
+  nextEls.forEach(el => {
+    const d = parseInt(el.style.paddingLeft) / 14;
+    if (isOpen) {
+      el.style.display = '';
+    } else if (d > nodeDepth) {
+      el.style.display = 'none';
+    } else return;
   });
+});
 
-  /* ── Chevron toggle ── */
-  document.getElementById('dom-tree').addEventListener('click', e => {
-    const chev = e.target.closest('.tree-chevron');
-    if (!chev || chev.classList.contains('empty')) return;
-    chev.classList.toggle('open');
-    const node = chev.closest('.tree-node');
-    const nextSiblings = [];
-    let sibling = node.nextElementSibling;
-    while (sibling && sibling.classList.contains('tree-node')) {
-      nextSiblings.push(sibling);
-      sibling = sibling.nextElementSibling;
+// Keyboard navigation
+document.getElementById('dom-tree').addEventListener('keydown', e => {
+  const selected = document.querySelector('.tree-node.selected');
+  if (!selected) return;
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    const next = selected.nextElementSibling || selected.parentElement?.nextElementSibling;
+    if (next && next.classList.contains('tree-node')) {
+      document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('keyboard-focus'));
+      next.classList.add('selected', 'keyboard-focus');
+      selected.classList.remove('selected');
+      next.scrollIntoView({ block: 'nearest' });
     }
-    const isOpen = chev.classList.contains('open');
-    nextSiblings.forEach(s => {
-      const nodeDepth = parseInt(s.style.paddingLeft) / 14;
-      const currentDepth = parseInt(node.style.paddingLeft) / 14 + 1;
-      if (isOpen) {
-        s.style.display = '';
-      } else {
-        if (nodeDepth === currentDepth) s.style.display = 'none';
-        else {
-          const sDepth = parseInt(s.style.paddingLeft) / 14;
-          if (sDepth > currentDepth) s.style.display = 'none';
-        }
-      }
-    });
-  });
+  }
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    const prev = selected.previousElementSibling;
+    if (prev && prev.classList.contains('tree-node')) {
+      document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('keyboard-focus'));
+      prev.classList.add('selected', 'keyboard-focus');
+      selected.classList.remove('selected');
+      prev.scrollIntoView({ block: 'nearest' });
+    }
+  }
+  if (e.key === 'Enter') {
+    inlineEditSelected();
+  }
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    showToast('已删除: ' + selected.dataset.label, 'success');
+    selected.remove();
+  }
+});
 
-  /* ── Chat scroll to bottom ── */
-  const cm = document.getElementById('chat-messages');
-  cm.scrollTop = cm.scrollHeight;
+// Search / filter
+document.getElementById('tree-search').addEventListener('input', e => {
+  const q = e.target.value.toLowerCase();
+  if (!q) {
+    document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('filtered-out'));
+    return;
+  }
+  document.querySelectorAll('.tree-node').forEach(n => {
+    const label = (n.dataset.label || '').toLowerCase();
+    n.classList.toggle('filtered-out', !label.includes(q) && !label.includes(q.replace('#','.id-')));
+  });
+});
+
+// Expand/collapse all
+document.getElementById('btn-expand-all').addEventListener('click', () => {
+  document.querySelectorAll('.tree-chevron:not(.empty)').forEach(c => c.classList.add('open'));
+  document.querySelectorAll('.tree-node[style*="display: none"]').forEach(n => n.style.display = '');
+  showToast('已展开全部', 'info');
+});
+document.getElementById('btn-collapse-all').addEventListener('click', () => {
+  document.querySelectorAll('.tree-chevron').forEach(c => c.classList.remove('open'));
+  showToast('已折叠全部', 'info');
+});
+
+// Multi-select
+document.getElementById('btn-multi-select').addEventListener('click', () => {
+  multiSelectMode = !multiSelectMode;
+  document.getElementById('btn-multi-select').classList.toggle('active', multiSelectMode);
+  if (!multiSelectMode) {
+    document.querySelectorAll('.tree-node.multi-selected').forEach(n => n.classList.remove('multi-selected'));
+  }
+  // Re-render with/without checkboxes
+  document.getElementById('dom-tree').innerHTML = treeData.map(n => buildNode(n, 0)).join('');
+  showToast(multiSelectMode ? '已进入多选模式，点击节点勾选' : '已退出多选模式', 'info');
+});
+
+function inlineEditSelected() {
+  const sel = document.querySelector('.tree-node.selected');
+  if (!sel) return;
+  const label = sel.querySelector('.tree-label');
+  const current = label.textContent;
+  const input = document.createElement('input');
+  input.className = 'inline-edit';
+  input.value = current;
+  label.replaceWith(input);
+  input.focus();
+  input.select();
+  input.addEventListener('blur', () => {
+    const newLabel = document.createElement('span');
+    newLabel.className = 'tree-label';
+    newLabel.textContent = input.value;
+    input.replaceWith(newLabel);
+    showToast(`已重命名为: ${input.value}`, 'success');
+  });
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') input.blur();
+    if (e.key === 'Escape') {
+      const l = document.createElement('span'); l.className='tree-label'; l.textContent=current;
+      input.replaceWith(l);
+    }
+  });
+}
+
+/* ════════════════════════════════════
+   CHAT
+════════════════════════════════════ */
+const chatInput = document.getElementById('chat-input');
+chatInput.addEventListener('input', () => {
+  const len = chatInput.value.length;
+  document.getElementById('char-count').textContent = `${len} / 2000`;
+  chatInput.style.height = 'auto';
+  chatInput.style.height = Math.min(chatInput.scrollHeight, 100) + 'px';
+});
+chatInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+function sendMessage() {
+  const text = chatInput.value.trim();
+  if (!text) return;
+  const messages = document.getElementById('chat-messages');
+  // Add user message
+  const userMsg = document.createElement('div');
+  userMsg.className = 'msg user';
+  userMsg.innerHTML = `<div class="msg-bubble">${escapeHtml(text)}</div><div class="msg-meta">你 · 刚刚</div>`;
+  messages.appendChild(userMsg);
+  chatInput.value = '';
+  document.getElementById('char-count').textContent = '0 / 2000';
+  chatInput.style.height = '';
+
+  // Add AI thinking message
+  const aiMsg = document.createElement('div');
+  aiMsg.className = 'msg ai';
+  aiMsg.innerHTML = `<div class="msg-bubble"><div class="loading-dots"><span></span><span></span><span></span></div></div><div class="msg-meta">A2UI · 正在输入…</div>`;
+  messages.appendChild(aiMsg);
+  messages.scrollTop = messages.scrollHeight;
+
+  // Simulate response
+  setTimeout(() => {
+    aiMsg.querySelector('.msg-bubble').innerHTML = `已理解您的请求。基于当前标注 "<span style="color:var(--accent);">layout-container</span>"，正在生成 L3 Component Spec…`;
+    aiMsg.querySelector('.msg-meta').innerHTML = `A2UI · 刚刚 <span class="msg-status">✓</span>`;
+    showToast('Spec 生成完成', 'success');
+    messages.scrollTop = messages.scrollHeight;
+    switchPanel('spec');
+  }, 1800);
+}
+
+function clearChat() {
+  const messages = document.getElementById('chat-messages');
+  messages.innerHTML = `
+    <div class="msg ai">
+      <div class="msg-bubble">对话已清空。有什么我可以帮您设计或生成的吗？</div>
+      <div class="msg-meta">A2UI</div>
+    </div>`;
+  showToast('对话已清空', 'info');
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ════════════════════════════════════
+   TABS / PANELS
+════════════════════════════════════ */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+  });
+});
+
+function switchPanel(name) {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.panel === name);
+  });
+  document.querySelectorAll('.panel').forEach(p => {
+    p.classList.toggle('active', p.id === 'panel-' + name);
+  });
+}
+
+/* ════════════════════════════════════
+   PROPERTIES TABS
+════════════════════════════════════ */
+document.querySelectorAll('.prop-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.prop-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+  });
+});
+
+/* ════════════════════════════════════
+   TOGGLES
+════════════════════════════════════ */
+document.querySelectorAll('.toggle').forEach(t => {
+  t.addEventListener('click', () => {
+    t.classList.toggle('on');
+    showToast(`属性已${t.classList.contains('on')?'启用':'禁用'}`, 'info');
+  });
+});
+
+/* ════════════════════════════════════
+   SPEC LAYERS
+════════════════════════════════════ */
+document.querySelectorAll('.spec-layer-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.spec-layer-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    showToast(`切换到 ${btn.textContent.trim()}`, 'info');
+  });
+});
+
+/* ════════════════════════════════════
+   SPEC DIFF TOGGLE
+════════════════════════════════════ */
+let diffMode = false;
+function toggleDiff() {
+  diffMode = !diffMode;
+  document.getElementById('btn-diff').classList.toggle('active', diffMode);
+  showToast(diffMode ? '已开启对比模式' : '已关闭对比模式', 'info');
+}
+
+/* ════════════════════════════════════
+   GLOBAL KEYBOARD SHORTCUTS
+════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  const isMac = navigator.platform.includes('Mac');
+  const cmd = isMac ? e.metaKey : e.ctrlKey;
+
+  // Cmd+K — command palette
+  if (cmd && e.key === 'k') {
+    e.preventDefault();
+    openCmd();
+  }
+  // Cmd+N — new prototype
+  if (cmd && e.key === 'n') {
+    e.preventDefault();
+    showToast('新建原型…', 'info');
+  }
+  // Cmd+Z — undo
+  if (cmd && e.key === 'z' && !e.shiftKey) {
+    e.preventDefault();
+    simulateUndo();
+  }
+  // Cmd+Shift+Z — redo
+  if (cmd && e.key === 'z' && e.shiftKey) {
+    e.preventDefault();
+    simulateRedo();
+  }
+  // Cmd+E — export
+  if (cmd && e.key === 'e') {
+    e.preventDefault();
+    showToast('正在导出 Spec…', 'info');
+  }
+  // Cmd+G — generate
+  if (cmd && e.key === 'g') {
+    e.preventDefault();
+    showToast('正在生成 Spec…', 'info');
+  }
+  // Cmd+; — toggle annotations
+  if (cmd && e.key === ';') {
+    e.preventDefault();
+    toggleAnnotations();
+  }
+  // ? — shortcuts overlay
+  if (e.key === '?' && !e.target.matches('input,textarea')) {
+    document.getElementById('shortcuts-overlay').classList.add('open');
+  }
+  // Escape — close overlays
+  if (e.key === 'Escape') {
+    document.getElementById('shortcuts-overlay').classList.remove('open');
+    closeCmd();
+    document.getElementById('undo-panel').classList.remove('open');
+  }
+  // Cmd+1-5 — switch panels
+  if (cmd && ['1','2','3','4','5'].includes(e.key)) {
+    e.preventDefault();
+    const panels = ['dom','props','a2ui','spec','settings'];
+    switchPanel(panels[parseInt(e.key)-1]);
+  }
+});
+
+/* ── Header buttons ── */
+document.getElementById('btn-shortcuts').addEventListener('click', () => {
+  document.getElementById('shortcuts-overlay').classList.toggle('open');
+});
+document.getElementById('btn-ann').addEventListener('click', () => toggleAnnotations());
+document.getElementById('btn-cmd').addEventListener('click', openCmd);
+
+/* ── Spec layer button click ── */
+document.querySelectorAll('.spec-layer-btn').forEach(btn => {
+  btn.addEventListener('dblclick', () => {
+    showToast('在新窗口打开 L' + btn.textContent.trim().split(' ')[0].replace('L','') + ' Spec', 'info');
+  });
+});
+
+/* ── Jump to annotation from chat ── */
+function jumpToAnnotation(label) {
+  toggleAnnotations(true);
+  showToast('跳转到: ' + label, 'info');
+}
+
+/* ── Edit message ── */
+function editMessage(el) {
+  const bubble = el.closest('.msg').querySelector('.msg-bubble');
+  const current = bubble.innerText;
+  const textarea = document.createElement('textarea');
+  textarea.style.cssText = 'width:100%;background:var(--warm-bg);border:1px solid var(--accent);border-radius:8px;padding:8px;font-family:var(--sans);font-size:13px;color:var(--warm-text);resize:none;outline:none;';
+  textarea.value = current;
+  textarea.rows = 3;
+  bubble.replaceWith(textarea);
+  textarea.focus();
+  textarea.addEventListener('blur', () => {
+    const newBubble = document.createElement('div');
+    newBubble.className = 'msg-bubble';
+    newBubble.innerHTML = escapeHtml(textarea.value).replace(/\n/g,'<br>');
+    textarea.replaceWith(newBubble);
+    showToast('消息已更新', 'success');
+  });
+}
+
+/* ── Delete message ── */
+function deleteMessage(el) {
+  el.closest('.msg').remove();
+  showToast('消息已删除', 'info');
+}
+
+/* ── Chat send button state ── */
+const chatSend = document.getElementById('chat-send');
+chatInput.addEventListener('input', () => {
+  chatSend.disabled = !chatInput.value.trim();
+});
+chatSend.disabled = false;
+
+/* ── Scroll chat to bottom on load ── */
+document.getElementById('chat-messages').scrollTop =
+  document.getElementById('chat-messages').scrollHeight;
 </script>
 </body>
 </html>
