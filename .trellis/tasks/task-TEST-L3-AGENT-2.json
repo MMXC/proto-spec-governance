@@ -1,0 +1,16 @@
+{
+  "id": "task-TEST-L3-AGENT-2",
+  "title": "指令集测试",
+  "description": "Layer 3 指令集测试：AgentBridge 所有方法（dom.edit/dom.query/a2ui.annotate/a2ui.suggest/spec.export/spec.schema.get/design.md.template/prototype.new/prototype.load）、事件订阅 on() 正确分发。",
+  "status": "ready",
+  "dependencies": [
+    "task-L3-AGENT-HANDLERS",
+    "task-L3-AGENT-EVENTS",
+    "task-L3-AGENT-LAUNCHER"
+  ],
+  "tags": [
+    "test",
+    "integration"
+  ],
+  "created": "2025-05-12"
+}

@@ -1,0 +1,18 @@
+{
+  "id": "task-TEST-L3-AGENT-1",
+  "title": "通信协议测试",
+  "description": "Layer 3 通信协议测试：进程启动/READY 信号检测/崩溃重启（最多3次）/进程清理、JSON-RPC 请求序列化/响应解析/队列/超时重试/id 匹配、SSE 行解析/多行组装/事件分发/空行处理。",
+  "status": "ready",
+  "dependencies": [
+    "task-L3-AGENT-STUB",
+    "task-L3-AGENT-BRIDGE",
+    "task-L3-AGENT-JSONRPC",
+    "task-L3-AGENT-SSE",
+    "task-L3-AGENT-READY"
+  ],
+  "tags": [
+    "test",
+    "integration"
+  ],
+  "created": "2025-05-12"
+}

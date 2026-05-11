@@ -1,0 +1,13 @@
+{
+  "id": "task-L4-OUTPUT-EXPORT",
+  "title": "导出功能（YAML/MD/JSON）",
+  "description": "导出功能：YAML 序列化、MD+frontmatter 格式、JSON 格式、格式验证（符合 Layer 4 Schema）。",
+  "status": "ready",
+  "dependencies": [
+    "task-L4-OUTPUT-SCHEMA"
+  ],
+  "tags": [
+    "layer4"
+  ],
+  "created": "2025-05-12"
+}

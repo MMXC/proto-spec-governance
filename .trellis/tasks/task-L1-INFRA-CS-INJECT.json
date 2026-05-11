@@ -1,0 +1,14 @@
+{
+  "id": "task-L1-INFRA-CS-INJECT",
+  "title": "content-script 注入逻辑",
+  "description": "content-script 生命周期管理：页面注入、DOMContentLoaded 初始化、MutationObserver 注册、页面 ↔ background 消息通信。",
+  "status": "ready",
+  "dependencies": [
+    "task-L1-INFRA-DIRS",
+    "task-L1-INFRA-CHROME-API"
+  ],
+  "tags": [
+    "layer1"
+  ],
+  "created": "2025-05-12"
+}

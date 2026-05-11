@@ -1,0 +1,13 @@
+{
+  "id": "task-L2-CORE-DOM-HOOK",
+  "title": "DOM 变更监听（MutationObserver）",
+  "description": "content-script 中 MutationObserver 实现：DOM 变化 → 序列化 → 通过 background 通知 panel，panel 更新 DOM 树快照。",
+  "status": "ready",
+  "dependencies": [
+    "task-L2-CORE-DOMTREE"
+  ],
+  "tags": [
+    "layer2"
+  ],
+  "created": "2025-05-12"
+}

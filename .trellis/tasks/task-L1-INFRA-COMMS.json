@@ -1,0 +1,14 @@
+{
+  "id": "task-L1-INFRA-COMMS",
+  "title": "content↔background↔panel 三方通信架构",
+  "description": "基于 chrome.runtime.sendMessage / tabMessaging 实现 content-script ↔ background ↔ panel 三方通信协议，定义消息类型与路由规则。",
+  "status": "ready",
+  "dependencies": [
+    "task-L1-INFRA-BG-SERVICE",
+    "task-L1-INFRA-SNAPSHOT"
+  ],
+  "tags": [
+    "layer1"
+  ],
+  "created": "2025-05-12"
+}

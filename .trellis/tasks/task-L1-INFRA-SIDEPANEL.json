@@ -1,0 +1,13 @@
+{
+  "id": "task-L1-INFRA-SIDEPANEL",
+  "title": "Side Panel 注册",
+  "description": "Chrome Side Panel 注册与基础框架：manifest side_panel 权限声明、panel 入口组件、Tab 切换导航。",
+  "status": "ready",
+  "dependencies": [
+    "task-L1-INFRA-COMMS"
+  ],
+  "tags": [
+    "layer1"
+  ],
+  "created": "2025-05-12"
+}

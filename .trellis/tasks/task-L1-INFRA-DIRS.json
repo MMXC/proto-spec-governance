@@ -1,0 +1,13 @@
+{
+  "id": "task-L1-INFRA-DIRS",
+  "title": "目录结构搭建（src/shared/background/panel/...）",
+  "description": "创建 src/shared/、src/background/、src/content-script/、src/panel/、src/popup/ 等目录结构，定义模块边界与共享类型路径。",
+  "status": "ready",
+  "dependencies": [
+    "task-L1-INFRA-SCAFFOLD"
+  ],
+  "tags": [
+    "layer1"
+  ],
+  "created": "2025-05-12"
+}

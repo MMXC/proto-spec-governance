@@ -1,0 +1,15 @@
+{
+  "id": "task-L1-INFRA-SNAPSHOT",
+  "title": "DOM 快照序列化（serialize/deserialize）",
+  "description": "DOM 树序列化为 JSON（包含 id/tag/xpath/cssSelector/attributes/children/boundingRect），支持 diff 计算与 IndexedDB 存储。",
+  "status": "ready",
+  "dependencies": [
+    "task-L1-INFRA-CS-INJECT",
+    "task-L1-INFRA-IDB",
+    "task-L1-INFRA-CHROME-API"
+  ],
+  "tags": [
+    "layer1"
+  ],
+  "created": "2025-05-12"
+}

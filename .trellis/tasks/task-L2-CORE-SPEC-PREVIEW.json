@@ -1,0 +1,14 @@
+{
+  "id": "task-L2-CORE-SPEC-PREVIEW",
+  "title": "Spec 流式预览",
+  "description": "Spec 预览面板：Agent SSE 流实时解析（data: spec_chunk 事件）、预览面板更新、streaming indicator、分层导航（总体/页面/组件/行为）。",
+  "status": "ready",
+  "dependencies": [
+    "task-L1-INFRA-CHROME-API",
+    "task-L1-INFRA-BG-SERVICE"
+  ],
+  "tags": [
+    "layer2"
+  ],
+  "created": "2025-05-12"
+}

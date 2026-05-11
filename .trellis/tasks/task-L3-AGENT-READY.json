@@ -1,0 +1,14 @@
+{
+  "id": "task-L3-AGENT-READY",
+  "title": "Agent READY 信号检测",
+  "description": "Agent READY 信号检测：启动流程中等待 'READY\\n' 输出、超时处理（10s）、AgentBridge 进入可用状态通知。",
+  "status": "ready",
+  "dependencies": [
+    "task-L3-AGENT-STUB",
+    "task-L3-AGENT-BRIDGE"
+  ],
+  "tags": [
+    "layer3"
+  ],
+  "created": "2025-05-12"
+}

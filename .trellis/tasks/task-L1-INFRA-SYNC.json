@@ -1,0 +1,14 @@
+{
+  "id": "task-L1-INFRA-SYNC",
+  "title": "内存↔IndexedDB 同步机制",
+  "description": "实现内存状态 ↔ IndexedDB 双向同步：读取时内存优先、变更时防抖（300ms）异步写入 IndexedDB、冲突合并策略。",
+  "status": "ready",
+  "dependencies": [
+    "task-L1-INFRA-IDB",
+    "task-L1-INFRA-CHROME-API"
+  ],
+  "tags": [
+    "layer1"
+  ],
+  "created": "2025-05-12"
+}

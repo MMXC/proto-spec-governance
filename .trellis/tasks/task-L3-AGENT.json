@@ -1,0 +1,23 @@
+{
+  "id": "task-L3-AGENT",
+  "title": "Layer 3：Agent 层",
+  "description": "Layer 3 Agent 层父任务：Go Agent stub、Agent bridge（进程管理+通信）、JSON-RPC 协议、SSE 流式解析、Extension handlers、事件订阅、Design.md 模板、Go 模板系统、Spec 流水线、launcher、READY 信号。",
+  "status": "ready",
+  "dependencies": [
+    "task-L3-AGENT-STUB",
+    "task-L3-AGENT-BRIDGE",
+    "task-L3-AGENT-JSONRPC",
+    "task-L3-AGENT-SSE",
+    "task-L3-AGENT-HANDLERS",
+    "task-L3-AGENT-EVENTS",
+    "task-L3-AGENT-DESIGN-REF",
+    "task-L3-AGENT-TEMPLATE",
+    "task-L3-AGENT-PIPELINE",
+    "task-L3-AGENT-LAUNCHER",
+    "task-L3-AGENT-READY"
+  ],
+  "tags": [
+    "layer3"
+  ],
+  "created": "2025-05-12"
+}

@@ -1,0 +1,16 @@
+{
+  "id": "task-L3-AGENT-BRIDGE",
+  "title": "Agent bridge（进程管理 + 通信）",
+  "description": "AgentBridge 单例：ProcessManager（进程启动/停止/健康检查/重连最多3次）、Agent READY 信号检测、stdio ↔ JSON-RPC 集成、EventBus 事件分发。",
+  "status": "ready",
+  "dependencies": [
+    "task-L3-AGENT-STUB",
+    "task-L3-AGENT-JSONRPC",
+    "task-L3-AGENT-SSE",
+    "task-L3-AGENT-HANDLERS"
+  ],
+  "tags": [
+    "layer3"
+  ],
+  "created": "2025-05-12"
+}

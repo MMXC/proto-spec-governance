@@ -1,0 +1,11 @@
+{
+  "id": "task-L1-INFRA-MANIFEST",
+  "title": "Chrome 插件清单配置",
+  "description": "配置 Chrome Manifest V3 清单文件，包含 content-script/background/popup/side_panel 权限声明与入口点定义。",
+  "status": "ready",
+  "dependencies": [],
+  "tags": [
+    "layer1"
+  ],
+  "created": "2025-05-12"
+}

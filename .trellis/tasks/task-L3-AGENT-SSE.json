@@ -1,0 +1,13 @@
+{
+  "id": "task-L3-AGENT-SSE",
+  "title": "SSE 流式解析",
+  "description": "Agent SSE 流解析：data: 前缀剥离、多行 JSON 组装、空行过滤、EventBus 分发（dom_change/spec_chunk/a2ui.suggestion/progress/error）。",
+  "status": "ready",
+  "dependencies": [
+    "task-L3-AGENT-JSONRPC"
+  ],
+  "tags": [
+    "layer3"
+  ],
+  "created": "2025-05-12"
+}

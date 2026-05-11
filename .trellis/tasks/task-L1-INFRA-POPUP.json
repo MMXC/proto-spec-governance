@@ -1,0 +1,13 @@
+{
+  "id": "task-L1-INFRA-POPUP",
+  "title": "popup 界面基础",
+  "description": "插件图标点击 popup：最近项目列表、新建原型按钮、打开 HTML 文件入口、打开侧边面板快捷入口。",
+  "status": "ready",
+  "dependencies": [
+    "task-L1-INFRA-BG-SERVICE"
+  ],
+  "tags": [
+    "layer1"
+  ],
+  "created": "2025-05-12"
+}

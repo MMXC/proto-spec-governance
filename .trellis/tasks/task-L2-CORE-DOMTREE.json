@@ -1,0 +1,19 @@
+{
+  "id": "task-L2-CORE-DOMTREE",
+  "title": "DOM 树面板 UI",
+  "description": "DOM 树面板：树形展示（折叠/展开）、节点图标（tag 类型区分）、标注高亮（不同颜色）、搜索/筛选、滚动同步到选中节点。",
+  "status": "ready",
+  "dependencies": [
+    "task-L1-INFRA-MANIFEST",
+    "task-L1-INFRA-SCAFFOLD",
+    "task-L1-INFRA-DIRS",
+    "task-L1-INFRA-CS-INJECT",
+    "task-L1-INFRA-BG-SERVICE",
+    "task-L1-INFRA-COMMS",
+    "task-L1-INFRA-SIDEPANEL"
+  ],
+  "tags": [
+    "layer2"
+  ],
+  "created": "2025-05-12"
+}

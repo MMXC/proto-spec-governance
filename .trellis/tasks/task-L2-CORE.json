@@ -1,0 +1,26 @@
+{
+  "id": "task-L2-CORE",
+  "title": "Layer 2：核心交互层",
+  "description": "Layer 2 核心交互层父任务：DOM 编辑（tree/props/hook/highlight/edit/undo）、A2UI 感知（chat/annotate/click/spec-preview）、设置面板（agent/tpl/export）、Shell 整合。",
+  "status": "ready",
+  "dependencies": [
+    "task-L2-CORE-DOMTREE",
+    "task-L2-CORE-PROPS",
+    "task-L2-CORE-DOM-HOOK",
+    "task-L2-CORE-DOM-HIGHLIGHT",
+    "task-L2-CORE-DOM-EDIT",
+    "task-L2-CORE-UNDO",
+    "task-L2-CORE-A2UI-CHAT",
+    "task-L2-CORE-A2UI-ANNOTATE",
+    "task-L2-CORE-A2UI-CLICK",
+    "task-L2-CORE-SPEC-PREVIEW",
+    "task-L2-CORE-SETTINGS-AGENT",
+    "task-L2-CORE-SETTINGS-TPL",
+    "task-L2-CORE-SETTINGS-EXPORT",
+    "task-L2-CORE-SHELL"
+  ],
+  "tags": [
+    "layer2"
+  ],
+  "created": "2025-05-12"
+}

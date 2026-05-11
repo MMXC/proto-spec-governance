@@ -1,0 +1,13 @@
+{
+  "id": "task-L1-INFRA-DEV",
+  "title": "本地开发调试模式",
+  "description": "本地开发热重载（wxt dev）、watch 脚本、logger 统一日志、Chrome DevTools 调试集成、打包发布脚本（.crx/.xpi）。",
+  "status": "ready",
+  "dependencies": [
+    "task-L1-INFRA-BUILD"
+  ],
+  "tags": [
+    "layer1"
+  ],
+  "created": "2025-05-12"
+}

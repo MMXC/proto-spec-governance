@@ -1,0 +1,14 @@
+{
+  "id": "task-TEST-L4-OUTPUT-3",
+  "title": "文件落盘测试",
+  "description": "Layer 4 文件落盘测试：文件保存到本地、路径选择、chrome.downloads API 调用、文件落盘确认。",
+  "status": "ready",
+  "dependencies": [
+    "task-L4-OUTPUT-FILE"
+  ],
+  "tags": [
+    "test",
+    "integration"
+  ],
+  "created": "2025-05-12"
+}

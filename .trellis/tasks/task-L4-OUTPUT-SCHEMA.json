@@ -1,0 +1,11 @@
+{
+  "id": "task-L4-OUTPUT-SCHEMA",
+  "title": "分层 Spec Schema 定义",
+  "description": "分层 Spec Schema 定义：overall（总体概览）/page（页面规范）/component（组件规范）/behavior（行为规范）四层 TypeScript interface + JSON Schema 定义与验证。",
+  "status": "ready",
+  "dependencies": [],
+  "tags": [
+    "layer4"
+  ],
+  "created": "2025-05-12"
+}

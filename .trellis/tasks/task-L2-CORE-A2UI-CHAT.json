@@ -1,0 +1,15 @@
+{
+  "id": "task-L2-CORE-A2UI-CHAT",
+  "title": "A2UI 对话界面",
+  "description": "A2UI 对话面板 UI：消息输入框、对话展示（用户/AI 消息）、LLM 调用入口（prompt 构造）、对话历史管理。",
+  "status": "ready",
+  "dependencies": [
+    "task-L2-CORE-DOMTREE",
+    "task-L2-CORE-PROPS",
+    "task-L1-INFRA-CHROME-API"
+  ],
+  "tags": [
+    "layer2"
+  ],
+  "created": "2025-05-12"
+}

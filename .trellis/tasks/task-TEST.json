@@ -1,0 +1,26 @@
+{
+  "id": "task-TEST",
+  "title": "测试层",
+  "description": "测试层父任务：Layer 1 基础设施测试（脚手架/持久化）、Layer 2 核心交互测试（DOM编辑/A2UI/设置）、Layer 3 Agent 测试（通信协议/指令集/执行引擎）、Layer 4 输出测试（Schema/导出/文件落盘）、E2E/性能测试。",
+  "status": "ready",
+  "dependencies": [
+    "task-TEST-L1-INFRA-1",
+    "task-TEST-L1-INFRA-2",
+    "task-TEST-L2-CORE-1",
+    "task-TEST-L2-CORE-2",
+    "task-TEST-L2-CORE-3",
+    "task-TEST-L3-AGENT-1",
+    "task-TEST-L3-AGENT-2",
+    "task-TEST-L3-AGENT-3",
+    "task-TEST-L4-OUTPUT-1",
+    "task-TEST-L4-OUTPUT-2",
+    "task-TEST-L4-OUTPUT-3",
+    "task-TEST-INT-E2E",
+    "task-TEST-INT-PERF"
+  ],
+  "tags": [
+    "test",
+    "integration"
+  ],
+  "created": "2025-05-12"
+}

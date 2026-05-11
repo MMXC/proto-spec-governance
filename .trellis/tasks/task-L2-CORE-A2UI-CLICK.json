@@ -1,0 +1,13 @@
+{
+  "id": "task-L2-CORE-A2UI-CLICK",
+  "title": "点击推荐",
+  "description": "点击推荐：用户点击页面 → content-script 捕获事件 → 提取 DOM 信息 → LLM 生成推荐提示词 → 展示在对话输入框上方，支持一键发送。",
+  "status": "ready",
+  "dependencies": [
+    "task-L2-CORE-A2UI-ANNOTATE"
+  ],
+  "tags": [
+    "layer2"
+  ],
+  "created": "2025-05-12"
+}

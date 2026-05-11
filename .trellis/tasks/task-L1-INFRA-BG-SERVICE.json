@@ -1,0 +1,14 @@
+{
+  "id": "task-L1-INFRA-BG-SERVICE",
+  "title": "background service worker 消息路由",
+  "description": "background service worker 作为消息中枢：panel ↔ content-script 消息转发、Agent 进程引用、全局状态持久化（连接状态等）。",
+  "status": "ready",
+  "dependencies": [
+    "task-L1-INFRA-CS-INJECT",
+    "task-L1-INFRA-CHROME-API"
+  ],
+  "tags": [
+    "layer1"
+  ],
+  "created": "2025-05-12"
+}

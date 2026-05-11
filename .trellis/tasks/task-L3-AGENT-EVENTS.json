@@ -1,0 +1,14 @@
+{
+  "id": "task-L3-AGENT-EVENTS",
+  "title": "事件订阅（on()）",
+  "description": "Agent 事件订阅系统：on('dom_change'/'spec_chunk'/'a2ui.suggestion'/'progress'/'error')，EventBus 实现，多 panel 监听者分发。",
+  "status": "ready",
+  "dependencies": [
+    "task-L3-AGENT-BRIDGE",
+    "task-L3-AGENT-STUB"
+  ],
+  "tags": [
+    "layer3"
+  ],
+  "created": "2025-05-12"
+}

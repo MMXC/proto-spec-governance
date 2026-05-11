@@ -1,0 +1,18 @@
+{
+  "id": "task-TEST-L3-AGENT-3",
+  "title": "执行引擎测试",
+  "description": "Layer 3 执行引擎测试：Go Agent 启动输出 READY、dom.edit DOM 字符串修改、Design.md 模板加载/正确注入 prompt、Spec 生成（输入 → 流式输出 → 格式正确）。",
+  "status": "ready",
+  "dependencies": [
+    "task-L3-AGENT-STUB",
+    "task-L3-AGENT-DESIGN-REF",
+    "task-L3-AGENT-TEMPLATE",
+    "task-L3-AGENT-PIPELINE",
+    "task-L3-AGENT-LAUNCHER"
+  ],
+  "tags": [
+    "test",
+    "integration"
+  ],
+  "created": "2025-05-12"
+}

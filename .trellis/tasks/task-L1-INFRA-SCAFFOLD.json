@@ -1,0 +1,13 @@
+{
+  "id": "task-L1-INFRA-SCAFFOLD",
+  "title": "插件脚手架搭建（wxt + TypeScript）",
+  "description": "使用 wxt 框架初始化 Chrome 扩展项目，配置 TypeScript、构建工具链（Vite）和多平台输出（Chrome/Firefox）。",
+  "status": "ready",
+  "dependencies": [
+    "task-L1-INFRA-MANIFEST"
+  ],
+  "tags": [
+    "layer1"
+  ],
+  "created": "2025-05-12"
+}

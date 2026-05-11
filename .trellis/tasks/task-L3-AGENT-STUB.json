@@ -1,0 +1,11 @@
+{
+  "id": "task-L3-AGENT-STUB",
+  "title": "Go Agent stub 项目初始化",
+  "description": "Go Agent stub 项目初始化：目录结构（agent/main.go/stdio.go/rpc/handlers）、基本 stdio 通信框架、READY 信号输出。",
+  "status": "ready",
+  "dependencies": [],
+  "tags": [
+    "layer3"
+  ],
+  "created": "2025-05-12"
+}

@@ -1,0 +1,15 @@
+{
+  "id": "task-L4-OUTPUT",
+  "title": "Layer 4：输出层",
+  "description": "Layer 4 输出层父任务：分层 Spec Schema 定义（overall/page/component/behavior）、导出功能（YAML/MD/JSON）、文件系统操作。",
+  "status": "ready",
+  "dependencies": [
+    "task-L4-OUTPUT-SCHEMA",
+    "task-L4-OUTPUT-EXPORT",
+    "task-L4-OUTPUT-FILE"
+  ],
+  "tags": [
+    "layer4"
+  ],
+  "created": "2025-05-12"
+}

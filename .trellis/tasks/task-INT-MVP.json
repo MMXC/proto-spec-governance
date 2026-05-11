@@ -1,0 +1,18 @@
+{
+  "id": "task-INT-MVP",
+  "title": "端到端联调",
+  "description": "端到端联调：Layer 1-4 完整集成、Agent 通信联调、Side Panel 三层面板联动、Spec 生成 → 预览 → 导出全链路验证、性能基线测试。",
+  "status": "ready",
+  "dependencies": [
+    "task-L1-INFRA",
+    "task-L2-CORE",
+    "task-L3-AGENT",
+    "task-L4-OUTPUT",
+    "task-TEST"
+  ],
+  "tags": [
+    "layer1",
+    "integration"
+  ],
+  "created": "2025-05-12"
+}

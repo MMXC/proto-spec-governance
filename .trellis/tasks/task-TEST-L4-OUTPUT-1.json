@@ -1,0 +1,14 @@
+{
+  "id": "task-TEST-L4-OUTPUT-1",
+  "title": "Schema 测试",
+  "description": "Layer 4 Schema 测试：overall/page/component/behavior 四层 Schema 验证（有效 Spec → pass，无效 → 正确报错）。",
+  "status": "ready",
+  "dependencies": [
+    "task-L4-OUTPUT-SCHEMA"
+  ],
+  "tags": [
+    "test",
+    "integration"
+  ],
+  "created": "2025-05-12"
+}

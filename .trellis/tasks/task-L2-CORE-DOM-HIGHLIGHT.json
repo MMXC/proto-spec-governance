@@ -1,0 +1,13 @@
+{
+  "id": "task-L2-CORE-DOM-HIGHLIGHT",
+  "title": "元素高亮覆盖层",
+  "description": "content-script 在页面上对选中元素添加高亮（border/outline），支持标注颜色区分（$annotationMap），高亮随节点切换实时更新。",
+  "status": "ready",
+  "dependencies": [
+    "task-L2-CORE-DOM-HOOK"
+  ],
+  "tags": [
+    "layer2"
+  ],
+  "created": "2025-05-12"
+}

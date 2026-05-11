@@ -1,0 +1,14 @@
+{
+  "id": "task-L3-AGENT-PIPELINE",
+  "title": "Spec 生成流水线",
+  "description": "Spec 生成流水线：对话 → prompt 组装 → LLM 调用 → SSE 流式输出 spec_chunk → Extension 解析 → $specDraft 更新 → 预览面板展示。",
+  "status": "ready",
+  "dependencies": [
+    "task-L3-AGENT-TEMPLATE",
+    "task-L3-AGENT-BRIDGE"
+  ],
+  "tags": [
+    "layer3"
+  ],
+  "created": "2025-05-12"
+}

@@ -1,0 +1,11 @@
+{
+  "id": "task-L1-INFRA-CHROME-API",
+  "title": "chrome API 封装层",
+  "description": "封装 chrome.runtime/chrome.tabs/chrome.storage 等 API，统一错误处理与类型定义，作为全插件的 Chrome API 访问基础。",
+  "status": "ready",
+  "dependencies": [],
+  "tags": [
+    "layer1"
+  ],
+  "created": "2025-05-12"
+}

@@ -1,0 +1,17 @@
+{
+  "id": "task-L2-CORE-SHELL",
+  "title": "三层面板 Shell 整合",
+  "description": "Side Panel 三层面板 Shell 整合：DOM 树/属性/A2UI/Spec 预览/设置 Tab 导航、$selectedNode/$annotationMap/$specDraft 跨面板共享状态、panel 布局框架。",
+  "status": "ready",
+  "dependencies": [
+    "task-L2-CORE-DOMTREE",
+    "task-L2-CORE-PROPS",
+    "task-L2-CORE-A2UI-CHAT",
+    "task-L2-CORE-SPEC-PREVIEW",
+    "task-L2-CORE-SETTINGS-EXPORT"
+  ],
+  "tags": [
+    "layer2"
+  ],
+  "created": "2025-05-12"
+}

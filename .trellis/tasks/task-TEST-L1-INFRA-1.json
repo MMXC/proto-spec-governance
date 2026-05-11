@@ -1,0 +1,19 @@
+{
+  "id": "task-TEST-L1-INFRA-1",
+  "title": "插件脚手架测试",
+  "description": "Layer 1 插件脚手架测试：content-script 注入逻辑、background 消息转发、popup 功能、dom-serializer 序列化/反序列化、MutationObserver 行为、消息路由逻辑。",
+  "status": "ready",
+  "dependencies": [
+    "task-L1-INFRA-MANIFEST",
+    "task-L1-INFRA-SCAFFOLD",
+    "task-L1-INFRA-DIRS",
+    "task-L1-INFRA-CS-INJECT",
+    "task-L1-INFRA-BG-SERVICE",
+    "task-L1-INFRA-POPUP"
+  ],
+  "tags": [
+    "test",
+    "integration"
+  ],
+  "created": "2025-05-12"
+}

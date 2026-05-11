@@ -1,0 +1,13 @@
+{
+  "id": "task-L2-CORE-UNDO",
+  "title": "撤销/重做",
+  "description": "跨面板撤销/重做系统：操作快照（DOM state diff）、undo 栈/redo 栈、Ctrl+Z/Ctrl+Y 快捷键绑定、面板 UI 反馈按钮。",
+  "status": "ready",
+  "dependencies": [
+    "task-L2-CORE-DOM-EDIT"
+  ],
+  "tags": [
+    "layer2"
+  ],
+  "created": "2025-05-12"
+}

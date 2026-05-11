@@ -1,0 +1,13 @@
+{
+  "id": "task-L2-CORE-PROPS",
+  "title": "属性面板 UI",
+  "description": "属性面板：Style Tab（颜色选择器/数值输入/布局属性/box model 可视化）、Attributes Tab（id/class/data-* 编辑）、Events Tab（事件绑定查看）。",
+  "status": "ready",
+  "dependencies": [
+    "task-L2-CORE-DOMTREE"
+  ],
+  "tags": [
+    "layer2"
+  ],
+  "created": "2025-05-12"
+}

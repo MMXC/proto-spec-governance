@@ -1,0 +1,13 @@
+{
+  "id": "task-L2-CORE-A2UI-ANNOTATE",
+  "title": "标注系统",
+  "description": "区域标注管理：对话 → LLM 分析意图 → 关联 HTML 区域 → 更新 $annotationMap → DOM 树高亮。标注列表查看/编辑/删除。",
+  "status": "ready",
+  "dependencies": [
+    "task-L2-CORE-A2UI-CHAT"
+  ],
+  "tags": [
+    "layer2"
+  ],
+  "created": "2025-05-12"
+}

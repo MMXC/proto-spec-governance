@@ -1,0 +1,26 @@
+{
+  "id": "task-L1-INFRA",
+  "title": "Layer 1：基础设施层",
+  "description": "Layer 1 基础设施层父任务：Chrome 插件脚手架（manifest/scaffold/dirs/cs-inject/bg-service/popup/sidepanel/comms）与本地持久化（idb/sync/snapshot/chrome-api/build/dev）。",
+  "status": "ready",
+  "dependencies": [
+    "task-L1-INFRA-MANIFEST",
+    "task-L1-INFRA-SCAFFOLD",
+    "task-L1-INFRA-DIRS",
+    "task-L1-INFRA-CS-INJECT",
+    "task-L1-INFRA-BG-SERVICE",
+    "task-L1-INFRA-POPUP",
+    "task-L1-INFRA-SIDEPANEL",
+    "task-L1-INFRA-COMMS",
+    "task-L1-INFRA-IDB",
+    "task-L1-INFRA-SYNC",
+    "task-L1-INFRA-SNAPSHOT",
+    "task-L1-INFRA-CHROME-API",
+    "task-L1-INFRA-BUILD",
+    "task-L1-INFRA-DEV"
+  ],
+  "tags": [
+    "layer1"
+  ],
+  "created": "2025-05-12"
+}

@@ -1,0 +1,16 @@
+{
+  "id": "task-TEST-L1-INFRA-2",
+  "title": "持久化测试",
+  "description": "Layer 1 持久化测试：IndexedDB CRUD（原型/快照/对话/标注/Spec）、内存 ↔ IndexedDB 同步（防抖 300ms）、快照序列化/反序列化、diff 计算、冲突合并策略。",
+  "status": "ready",
+  "dependencies": [
+    "task-L1-INFRA-IDB",
+    "task-L1-INFRA-SYNC",
+    "task-L1-INFRA-SNAPSHOT"
+  ],
+  "tags": [
+    "test",
+    "integration"
+  ],
+  "created": "2025-05-12"
+}

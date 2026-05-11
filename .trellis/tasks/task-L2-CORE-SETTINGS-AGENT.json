@@ -1,0 +1,13 @@
+{
+  "id": "task-L2-CORE-SETTINGS-AGENT",
+  "title": "Agent 配置面板",
+  "description": "设置面板 — Agent 配置：Agent 路径输入、模型选择（gpt-4/claude/本地模型）、API Key 输入、连接测试按钮。",
+  "status": "ready",
+  "dependencies": [
+    "task-L2-CORE-DOMTREE"
+  ],
+  "tags": [
+    "layer2"
+  ],
+  "created": "2025-05-12"
+}

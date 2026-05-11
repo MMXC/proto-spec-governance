@@ -1,0 +1,13 @@
+{
+  "id": "task-L3-AGENT-DESIGN-REF",
+  "title": "Design.md 参考模板加载",
+  "description": "Go Agent 加载 awesome-design-md-cn 模板文件（vercel/stripe/linear/figma/minimax.yaml），模板内容注入到 Spec 生成 prompt。",
+  "status": "ready",
+  "dependencies": [
+    "task-L3-AGENT-STUB"
+  ],
+  "tags": [
+    "layer3"
+  ],
+  "created": "2025-05-12"
+}

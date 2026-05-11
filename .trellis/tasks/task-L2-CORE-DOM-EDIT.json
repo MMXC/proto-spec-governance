@@ -1,0 +1,14 @@
+{
+  "id": "task-L2-CORE-DOM-EDIT",
+  "title": "DOM 编辑操作",
+  "description": "属性面板 → content-script → DOM API 调用：setAttribute/setStyle/setInnerHTML/insertBefore/remove/move，实时预览，onPropertyChange 回调。",
+  "status": "ready",
+  "dependencies": [
+    "task-L2-CORE-PROPS",
+    "task-L2-CORE-DOM-HIGHLIGHT"
+  ],
+  "tags": [
+    "layer2"
+  ],
+  "created": "2025-05-12"
+}

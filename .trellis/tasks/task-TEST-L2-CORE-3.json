@@ -1,0 +1,16 @@
+{
+  "id": "task-TEST-L2-CORE-3",
+  "title": "设置面板测试",
+  "description": "Layer 2 设置面板测试：Agent 配置（路径/模型/API Key/连接测试）、模板选择（列表/预览/自定义上传）、导出格式配置（YAML/MD/JSON 默认选择）。",
+  "status": "ready",
+  "dependencies": [
+    "task-L2-CORE-SETTINGS-AGENT",
+    "task-L2-CORE-SETTINGS-TPL",
+    "task-L2-CORE-SETTINGS-EXPORT"
+  ],
+  "tags": [
+    "test",
+    "integration"
+  ],
+  "created": "2025-05-12"
+}

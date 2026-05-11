@@ -1,0 +1,24 @@
+{
+  "id": "task-TEST-INT-E2E",
+  "title": "端到端 E2E 测试",
+  "description": "端到端 E2E 测试（Playwright）：DOM 编辑完整流程（选中 → 修改 → 实时变化 → 撤销）、A2UI 完整流程（对话 → 标注 → 点击 → 推荐 → Spec 生成 → 导出）、持久化完整流程（操作 → 刷新 → 数据恢复）。",
+  "status": "ready",
+  "dependencies": [
+    "task-TEST-L1-INFRA-1",
+    "task-TEST-L1-INFRA-2",
+    "task-TEST-L2-CORE-1",
+    "task-TEST-L2-CORE-2",
+    "task-TEST-L2-CORE-3",
+    "task-TEST-L3-AGENT-1",
+    "task-TEST-L3-AGENT-2",
+    "task-TEST-L3-AGENT-3",
+    "task-TEST-L4-OUTPUT-1",
+    "task-TEST-L4-OUTPUT-2",
+    "task-TEST-L4-OUTPUT-3"
+  ],
+  "tags": [
+    "test",
+    "integration"
+  ],
+  "created": "2025-05-12"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "task-L2-CORE-SETTINGS-TPL",
+  "title": "模板选择",
+  "description": "设置面板 — 模板选择：Design.md 模板列表（vercel/stripe/linear/figma/minimax）、模板预览、自定义模板上传。",
+  "status": "ready",
+  "dependencies": [
+    "task-L2-CORE-SETTINGS-AGENT"
+  ],
+  "tags": [
+    "layer2"
+  ],
+  "created": "2025-05-12"
+}

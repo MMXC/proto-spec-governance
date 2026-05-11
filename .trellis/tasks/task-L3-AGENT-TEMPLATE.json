@@ -1,0 +1,13 @@
+{
+  "id": "task-L3-AGENT-TEMPLATE",
+  "title": "Go 模板系统",
+  "description": "Go 模板系统：HTML 原型分析 prompt 模板组装、DOM 上下文 + Design.md 模板 + 对话历史拼接、模板渲染输出。",
+  "status": "ready",
+  "dependencies": [
+    "task-L3-AGENT-DESIGN-REF"
+  ],
+  "tags": [
+    "layer3"
+  ],
+  "created": "2025-05-12"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "task-L3-AGENT-HANDLERS",
+  "title": "Extension handlers（dom/spec/a2ui/proto）",
+  "description": "Extension 侧 JSON-RPC 方法实现：dom.edit/dom.query、a2ui.annotate/a2ui.suggest、spec.export/spec.schema.get、design.md.template、prototype.new/prototype.load。",
+  "status": "ready",
+  "dependencies": [
+    "task-L3-AGENT-JSONRPC"
+  ],
+  "tags": [
+    "layer3"
+  ],
+  "created": "2025-05-12"
+}

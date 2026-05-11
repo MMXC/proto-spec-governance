@@ -1,0 +1,17 @@
+{
+  "id": "task-000",
+  "title": "MVP Phase 1 根任务",
+  "description": "MVP Phase 1 根任务：Chrome 扩展插件 + Go Agent 实现 HTML 原型到分层 Spec 的自动化生成。包含 Layer 1 基础设施、Layer 2 核心交互、Layer 3 Agent、Layer 4 输出。",
+  "status": "ready",
+  "dependencies": [
+    "task-L1-INFRA",
+    "task-L2-CORE",
+    "task-L3-AGENT",
+    "task-L4-OUTPUT",
+    "task-TEST"
+  ],
+  "tags": [
+    "layer1"
+  ],
+  "created": "2025-05-12"
+}

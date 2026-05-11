@@ -1,0 +1,14 @@
+{
+  "id": "task-L1-INFRA-IDB",
+  "title": "IndexedDB 基础设施（openDB）",
+  "description": "使用 idb 或 Dexie 库封装 IndexedDB 初始化，定义 prototypes/domSnapshots/conversations/annotations/specs 等 ObjectStore 及索引。",
+  "status": "ready",
+  "dependencies": [
+    "task-L1-INFRA-SCAFFOLD",
+    "task-L1-INFRA-DIRS"
+  ],
+  "tags": [
+    "layer1"
+  ],
+  "created": "2025-05-12"
+}

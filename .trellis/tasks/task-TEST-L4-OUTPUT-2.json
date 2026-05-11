@@ -1,0 +1,14 @@
+{
+  "id": "task-TEST-L4-OUTPUT-2",
+  "title": "导出格式测试",
+  "description": "Layer 4 导出格式测试：YAML 导出（结构正确/可解析）、MD+frontmatter 导出（分离正确）、JSON 导出、格式验证（符合 Schema）。",
+  "status": "ready",
+  "dependencies": [
+    "task-L4-OUTPUT-EXPORT"
+  ],
+  "tags": [
+    "test",
+    "integration"
+  ],
+  "created": "2025-05-12"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "task-L4-OUTPUT-FILE",
+  "title": "文件系统操作",
+  "description": "文件系统操作：导出文件保存到本地、文件路径选择、chrome.downloads API 调用、文件落盘确认。",
+  "status": "ready",
+  "dependencies": [
+    "task-L4-OUTPUT-EXPORT"
+  ],
+  "tags": [
+    "layer4"
+  ],
+  "created": "2025-05-12"
+}

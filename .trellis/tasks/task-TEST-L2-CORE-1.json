@@ -1,0 +1,19 @@
+{
+  "id": "task-TEST-L2-CORE-1",
+  "title": "DOM 编辑测试",
+  "description": "Layer 2 DOM 编辑测试：DOM 树渲染（嵌套结构/折叠展开/搜索筛选/右键菜单）、属性面板（Tab 切换/Style 编辑/Attributes 编辑/Events 列表/颜色选择器）、撤销/重做栈（Ctrl+Z/Ctrl+Y）。",
+  "status": "ready",
+  "dependencies": [
+    "task-L2-CORE-DOMTREE",
+    "task-L2-CORE-PROPS",
+    "task-L2-CORE-DOM-HOOK",
+    "task-L2-CORE-DOM-HIGHLIGHT",
+    "task-L2-CORE-DOM-EDIT",
+    "task-L2-CORE-UNDO"
+  ],
+  "tags": [
+    "test",
+    "integration"
+  ],
+  "created": "2025-05-12"
+}

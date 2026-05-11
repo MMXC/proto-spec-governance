@@ -1,0 +1,17 @@
+{
+  "id": "task-TEST-L2-CORE-2",
+  "title": "A2UI 感知测试",
+  "description": "Layer 2 A2UI 感知测试：对话 → 标注流程（输入 → LLM → 解析标注）、点击 → 推荐流程（点击 → context → 推荐展示）、标注列表、对话历史、Spec 流式预览（SSE → 实时渲染）、分层导航。",
+  "status": "ready",
+  "dependencies": [
+    "task-L2-CORE-A2UI-CHAT",
+    "task-L2-CORE-A2UI-ANNOTATE",
+    "task-L2-CORE-A2UI-CLICK",
+    "task-L2-CORE-SPEC-PREVIEW"
+  ],
+  "tags": [
+    "test",
+    "integration"
+  ],
+  "created": "2025-05-12"
+}

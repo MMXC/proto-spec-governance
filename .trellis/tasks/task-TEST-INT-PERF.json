@@ -1,0 +1,16 @@
+{
+  "id": "task-TEST-INT-PERF",
+  "title": "性能测试",
+  "description": "性能测试：1000+ 节点 DOM 序列化 < 500ms、Spec 生成（100 节点）< 10s、IndexedDB 写入（100 条记录）< 1s、内存泄漏检测（1000 节点 DOM 操作）。",
+  "status": "ready",
+  "dependencies": [
+    "task-L1-INFRA-SNAPSHOT",
+    "task-L3-AGENT-PIPELINE",
+    "task-L4-OUTPUT-FILE"
+  ],
+  "tags": [
+    "test",
+    "integration"
+  ],
+  "created": "2025-05-12"
+}

@@ -1,0 +1,14 @@
+{
+  "id": "task-L1-INFRA-BUILD",
+  "title": "构建配置（wxt build + zip）",
+  "description": "wxt build 配置：TypeScript 编译、manifest 自动合并、多平台 zip 打包、source map 生成。",
+  "status": "ready",
+  "dependencies": [
+    "task-L1-INFRA-SCAFFOLD",
+    "task-L1-INFRA-SNAPSHOT"
+  ],
+  "tags": [
+    "layer1"
+  ],
+  "created": "2025-05-12"
+}

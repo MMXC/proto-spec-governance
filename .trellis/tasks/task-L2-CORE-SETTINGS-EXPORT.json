@@ -1,0 +1,13 @@
+{
+  "id": "task-L2-CORE-SETTINGS-EXPORT",
+  "title": "导出格式配置",
+  "description": "设置面板 — 导出格式：默认格式选择（YAML/MD+frontmatter/JSON）、快捷键配置、保存用户偏好到 localStorage。",
+  "status": "ready",
+  "dependencies": [
+    "task-L2-CORE-SETTINGS-TPL"
+  ],
+  "tags": [
+    "layer2"
+  ],
+  "created": "2025-05-12"
+}

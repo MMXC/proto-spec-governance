@@ -1,0 +1,21 @@
+{
+  "id": "task-L3-AGENT-LAUNCHER",
+  "title": "Go Agent launcher 脚本",
+  "description": "Go Agent launcher 脚本：进程参数组装（--mode stdio --workspace --design-md-ref）、启动/停止命令封装、集成到 Extension 设置面板的 Agent 配置中。",
+  "status": "ready",
+  "dependencies": [
+    "task-L3-AGENT-BRIDGE",
+    "task-L3-AGENT-JSONRPC",
+    "task-L3-AGENT-SSE",
+    "task-L3-AGENT-HANDLERS",
+    "task-L3-AGENT-EVENTS",
+    "task-L3-AGENT-DESIGN-REF",
+    "task-L3-AGENT-TEMPLATE",
+    "task-L3-AGENT-PIPELINE",
+    "task-L3-AGENT-READY"
+  ],
+  "tags": [
+    "layer3"
+  ],
+  "created": "2025-05-12"
+}

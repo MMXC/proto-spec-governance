@@ -1,0 +1,11 @@
+{
+  "id": "task-L3-AGENT-JSONRPC",
+  "title": "JSON-RPC 协议实现",
+  "description": "Extension ↔ Agent JSON-RPC 2.0 实现：请求序列化（id/method/params）、响应解析（result/error）、请求队列管理、超时重试（30s/最多2次）、并发路由。",
+  "status": "ready",
+  "dependencies": [],
+  "tags": [
+    "layer3"
+  ],
+  "created": "2025-05-12"
+}
