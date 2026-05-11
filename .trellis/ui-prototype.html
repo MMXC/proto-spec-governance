@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proto Spec Governance — UI Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;590;600&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    /* Chrome extension viewport — side panel */
+    --vp-w: 400px;
+    --vp-h: 700px;
+    /* Linear-inspired dark theme */
+    --bg:        #0f1011;
+    --bg-el:     #16171a;
+    --bg-hover:  rgba(255,255,255,0.04);
+    --bg-sel:    rgba(255,255,255,0.06);
+    --border:    rgba(255,255,255,0.06);
+    --border-md: rgba(255,255,255,0.09);
+    --text-1:    #f7f8f8;
+    --text-2:    #c8cdd6;
+    --text-3:    #8a8f98;
+    --text-4:    #62666d;
+    --accent:    #7170ff;
+    --accent-h:  #828fff;
+    --success:   #10b981;
+    --warn:      #f59e0b;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 10px;
+    /* Cursor-inspired warm chat */
+    --warm-bg:   #f5f4ed;
+    --warm-sur:  #ffffff;
+    --warm-bdr:  #e8e4d8;
+    --warm-text: #141413;
+    --warm-2:    #5e5d59;
+    /* Code */
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', sans-serif;
+    --serif: 'Playfair Display', serif;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text-1);
+    font-size: 13px;
+    height: var(--vp-h);
+    width: var(--vp-w);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+  }
+
+  /* ── Header ── */
+  .header {
+    height: 44px;
+    background: var(--bg-el);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .header-icon {
+    width: 22px; height: 22px;
+    background: var(--accent);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #fff; font-weight: 600;
+  }
+  .header-title {
+    font-size: 14px; font-weight: 590;
+    letter-spacing: 0.1px;
+    flex: 1;
+  }
+  .header-actions { display: flex; gap: 4px; }
+  .hdr-btn {
+    width: 28px; height: 28px;
+    border: none; background: transparent;
+    border-radius: var(--radius-sm);
+    color: var(--text-4);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .hdr-btn:hover { background: var(--bg-hover); color: var(--text-1); }
+
+  /* ── Body: tab bar + panels ── */
+  .body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Tab bar */
+  .tab-bar {
+    display: flex;
+    background: var(--bg-el);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .tab {
+    flex: 1;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-size: 12px; font-weight: 500;
+    color: var(--text-4);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+    user-select: none;
+  }
+  .tab:hover { color: var(--text-2); }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    font-weight: 590;
+  }
+  .tab svg { width: 14px; height: 14px; }
+
+  /* Panel container */
+  .panels {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+  .panel {
+    position: absolute; inset: 0;
+    overflow-y: auto;
+    display: none;
+  }
+  .panel.active { display: flex; flex-direction: column; }
+
+  /* Scrollbar */
+  .panel::-webkit-scrollbar { width: 4px; }
+  .panel::-webkit-scrollbar-track { background: transparent; }
+  .panel::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 2px; }
+  .panel::-webkit-scrollbar-thumb:hover { background: var(--text-4); }
+
+  /* ── Panel: DOM Tree ── */
+  .panel-dom {}
+  .search-row {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .search-input {
+    width: 100%;
+    background: var(--bg-el);
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-sm);
+    color: var(--text-1);
+    font-family: var(--sans);
+    font-size: 12px;
+    padding: 5px 8px 5px 28px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--text-4); }
+  .search-wrap { position: relative; }
+  .search-wrap svg {
+    position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+    width: 13px; height: 13px; color: var(--text-4); pointer-events: none;
+  }
+  .tree {
+    padding: 4px 0;
+    flex: 1;
+    overflow-y: auto;
+  }
+  .tree-node {
+    display: flex;
+    align-items: center;
+    height: 28px;
+    padding-right: 8px;
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: background 0.1s;
+    user-select: none;
+  }
+  .tree-node:hover { background: var(--bg-hover); }
+  .tree-node.selected {
+    background: var(--bg-sel);
+    border-left-color: var(--accent);
+  }
+  .tree-indent { flex-shrink: 0; }
+  .tree-chevron {
+    width: 18px; height: 18px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-4);
+    flex-shrink: 0;
+    transition: transform 0.15s;
+  }
+  .tree-chevron.open { transform: rotate(90deg); }
+  .tree-chevron.empty { visibility: hidden; }
+  .tree-icon {
+    width: 16px; height: 16px;
+    margin-right: 5px;
+    border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 600;
+    flex-shrink: 0;
+  }
+  .icon-tag    { background: #2a2b3d; color: #a5a8ff; }
+  .icon-attr   { background: #2d3025; color: #b5d98e; }
+  .icon-text   { background: #2d2a25; color: #d9b88e; }
+  .tree-label {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--text-2);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .tree-node.selected .tree-label { color: var(--text-1); font-weight: 500; }
+  .tree-badge {
+    font-size: 10px;
+    color: var(--text-4);
+    margin-left: 4px;
+    flex-shrink: 0;
+  }
+
+  /* ── Panel: Properties ── */
+  .panel-props {}
+  .prop-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    padding: 0 10px;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .prop-tab {
+    padding: 7px 10px;
+    font-size: 12px; font-weight: 500;
+    color: var(--text-4);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .prop-tab:hover { color: var(--text-2); }
+  .prop-tab.active { color: var(--text-1); border-bottom-color: var(--accent); }
+  .prop-content { padding: 8px 10px; flex: 1; overflow-y: auto; }
+  .prop-section-title {
+    font-size: 11px; font-weight: 590;
+    color: var(--text-4);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin: 10px 0 6px;
+  }
+  .prop-section-title:first-child { margin-top: 0; }
+  .prop-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 5px;
+  }
+  .prop-label {
+    font-size: 11.5px;
+    color: var(--text-3);
+    width: 56px;
+    flex-shrink: 0;
+    font-family: var(--mono);
+  }
+  .prop-input {
+    flex: 1;
+    background: var(--bg-el);
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-sm);
+    color: var(--text-1);
+    font-family: var(--mono);
+    font-size: 11.5px;
+    padding: 4px 7px;
+    outline: none;
+    transition: border-color 0.15s;
+    min-width: 0;
+  }
+  .prop-input:focus { border-color: var(--accent); }
+  .color-swatch {
+    width: 20px; height: 20px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-md);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+  }
+  .toggle-label { font-size: 12px; color: var(--text-2); }
+  .toggle {
+    width: 32px; height: 18px;
+    background: var(--bg-el);
+    border: 1px solid var(--border-md);
+    border-radius: 9px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .toggle.on { background: var(--accent); border-color: var(--accent); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 12px; height: 12px;
+    background: #fff;
+    border-radius: 50%;
+    top: 2px; left: 2px;
+    transition: transform 0.2s;
+  }
+  .toggle.on::after { transform: translateX(14px); }
+
+  /* ── Panel: A2UI Chat ── */
+  .panel-a2ui {
+    background: var(--warm-bg);
+  }
+  .chat-header {
+    padding: 10px 14px;
+    background: var(--warm-sur);
+    border-bottom: 1px solid var(--warm-bdr);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .chat-header-title {
+    font-family: var(--serif);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--warm-text);
+  }
+  .chat-header-badge {
+    font-size: 10px; font-weight: 590;
+    background: var(--accent);
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 10px;
+  }
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .chat-messages::-webkit-scrollbar-track { background: transparent; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--warm-bdr); border-radius: 2px; }
+  .msg {
+    max-width: 85%;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .msg.user { align-self: flex-end; align-items: flex-end; }
+  .msg.ai   { align-self: flex-start; align-items: flex-start; }
+  .msg-bubble {
+    padding: 8px 11px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .msg.user .msg-bubble {
+    background: var(--accent);
+    color: #fff;
+    border-bottom-right-radius: 3px;
+  }
+  .msg.ai .msg-bubble {
+    background: var(--warm-sur);
+    color: var(--warm-text);
+    border-bottom-left-radius: 3px;
+    border: 1px solid var(--warm-bdr);
+  }
+  .msg-meta {
+    font-size: 10px;
+    color: var(--warm-2);
+    padding: 0 4px;
+  }
+  .msg.user .msg-meta { text-align: right; }
+  .code-block {
+    background: #1a1a1a;
+    color: #e2e8f0;
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    line-height: 1.6;
+    overflow-x: auto;
+    margin-top: 4px;
+    border-left: 3px solid var(--accent);
+  }
+  .code-block .kw  { color: #c792ea; }
+  .code-block .str { color: #c3e88d; }
+  .code-block .cmt { color: #546e7a; }
+  .chat-input-area {
+    padding: 10px 14px;
+    background: var(--warm-sur);
+    border-top: 1px solid var(--warm-bdr);
+    flex-shrink: 0;
+  }
+  .chat-input-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .chat-textarea {
+    flex: 1;
+    background: var(--warm-bg);
+    border: 1px solid var(--warm-bdr);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--warm-text);
+    resize: none;
+    outline: none;
+    min-height: 36px;
+    max-height: 100px;
+    transition: border-color 0.15s;
+    line-height: 1.5;
+  }
+  .chat-textarea:focus { border-color: var(--accent); }
+  .chat-textarea::placeholder { color: var(--warm-2); }
+  .chat-send {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .chat-send:hover { background: var(--accent-h); }
+  .chat-send:active { transform: scale(0.94); }
+  .chat-send svg { width: 16px; height: 16px; }
+
+  /* ── Panel: Spec Preview ── */
+  .panel-spec {}
+  .spec-toolbar {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .spec-btn {
+    padding: 4px 10px;
+    background: transparent;
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-sm);
+    color: var(--text-3);
+    font-family: var(--sans);
+    font-size: 11px; font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .spec-btn:hover { border-color: var(--text-3); color: var(--text-1); }
+  .spec-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .spec-code {
+    flex: 1;
+    padding: 12px 14px;
+    overflow-y: auto;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--text-2);
+  }
+  .spec-code .key    { color: #7dd3fc; }
+  .spec-code .val    { color: #86efac; }
+  .spec-code .punct  { color: var(--text-4); }
+  .spec-code .cmt   { color: var(--text-4); font-style: italic; }
+  .spec-code .lay-h  { color: var(--accent); font-weight: 500; }
+  .cursor-blink {
+    display: inline-block;
+    width: 2px; height: 13px;
+    background: var(--accent);
+    vertical-align: middle;
+    animation: blink 1s step-end infinite;
+    margin-left: 1px;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .stream-indicator {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; color: var(--text-4);
+    margin-left: 8px;
+  }
+  .stream-dot {
+    width: 5px; height: 5px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+
+  /* ── Panel: Settings ── */
+  .panel-settings {}
+  .settings-section {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .settings-title {
+    font-size: 11px; font-weight: 590;
+    color: var(--text-4);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 10px;
+  }
+  .settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+  }
+  .settings-label {
+    font-size: 12.5px;
+    color: var(--text-2);
+    flex: 1;
+  }
+  .settings-desc {
+    font-size: 11px;
+    color: var(--text-4);
+    margin-top: 1px;
+  }
+  select.sett-select {
+    background: var(--bg-el);
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-sm);
+    color: var(--text-1);
+    font-family: var(--sans);
+    font-size: 12px;
+    padding: 4px 8px;
+    outline: none;
+    cursor: pointer;
+  }
+  select.sett-select:focus { border-color: var(--accent); }
+  .radio-group { display: flex; flex-direction: column; gap: 4px; }
+  .radio-item {
+    display: flex; align-items: center; gap: 7px;
+    cursor: pointer;
+    font-size: 12px; color: var(--text-2);
+  }
+  .radio-item input[type=radio] { accent-color: var(--accent); }
+  .shortcut-hint {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-4);
+    background: var(--bg-el);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-left: 4px;
+  }
+  .agent-status {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 10px;
+    background: var(--bg-el);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    margin-top: 8px;
+  }
+  .agent-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 6px var(--success);
+  }
+  .agent-dot.offline { background: var(--text-4); box-shadow: none; }
+  .agent-info { font-size: 11.5px; color: var(--text-2); }
+  .agent-sub  { font-size: 10px; color: var(--text-4); }
+  .kbd-hint {
+    display: flex; gap: 4px; align-items: center;
+    font-size: 11px; color: var(--text-4);
+    margin-top: 12px;
+    padding: 0 12px;
+  }
+  .kbd {
+    font-family: var(--mono);
+    font-size: 10px;
+    background: linear-gradient(to bottom, #1a1b1d, #121213);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-bottom-width: 2px;
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: var(--text-2);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  }
+  .kbd-hint span { flex: 1; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-icon">PS</div>
+  <div class="header-title">Proto Spec Governance</div>
+  <div class="header-actions">
+    <button class="hdr-btn" title="Settings">⚙</button>
+  </div>
+</div>
+
+<!-- Body -->
+<div class="body">
+
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <div class="tab active" data-panel="dom">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h4v4H3zM9 3h4v4H9zM3 9h4v4H3zM9 9h2v4h-2z"/></svg>
+      DOM 树
+    </div>
+    <div class="tab" data-panel="props">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="2"/><circle cx="11" cy="5" r="2"/><circle cx="5" cy="11" r="2"/><circle cx="11" cy="11" r="2"/><path d="M5 7v2M11 7v2M7 5h2M7 11h2"/></svg>
+      属性
+    </div>
+    <div class="tab" data-panel="a2ui">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><path d="M5 7h6M5 9h4"/></svg>
+      A2UI
+    </div>
+    <div class="tab" data-panel="spec">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h12M2 7h8M2 11h10M2 15h6"/></svg>
+      Spec
+    </div>
+    <div class="tab" data-panel="settings">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2M3.5 3.5l1.5 1.5M11 11l1.5 1.5M3.5 12.5l1.5-1.5M11 5l1.5-1.5"/></svg>
+      设置
+    </div>
+  </div>
+
+  <!-- Panels -->
+  <div class="panels">
+
+    <!-- ── DOM Tree Panel ── -->
+    <div class="panel panel-dom active" id="panel-dom">
+      <div class="search-row">
+        <div class="search-wrap">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4"/><path d="M10 10l3 3"/></svg>
+          <input class="search-input" placeholder="搜索元素…" />
+        </div>
+      </div>
+      <div class="tree" id="dom-tree"></div>
+    </div>
+
+    <!-- ── Properties Panel ── -->
+    <div class="panel panel-props" id="panel-props">
+      <div class="prop-tabs">
+        <div class="prop-tab active">样式</div>
+        <div class="prop-tab">属性</div>
+        <div class="prop-tab">事件</div>
+      </div>
+      <div class="prop-content">
+        <div class="prop-section-title">布局</div>
+        <div class="prop-row">
+          <span class="prop-label">display</span>
+          <input class="prop-input" value="flex" />
+        </div>
+        <div class="prop-row">
+          <span class="prop-label">position</span>
+          <input class="prop-input" value="relative" />
+        </div>
+        <div class="prop-row">
+          <span class="prop-label">top</span>
+          <input class="prop-input" value="0px" />
+        </div>
+        <div class="prop-row">
+          <span class="prop-label">z-index</span>
+          <input class="prop-input" value="10" />
+        </div>
+
+        <div class="prop-section-title">尺寸</div>
+        <div class="prop-row">
+          <span class="prop-label">width</span>
+          <input class="prop-input" value="100%" />
+        </div>
+        <div class="prop-row">
+          <span class="prop-label">height</span>
+          <input class="prop-input" value="auto" />
+        </div>
+
+        <div class="prop-section-title">背景</div>
+        <div class="prop-row">
+          <span class="prop-label">bg</span>
+          <input class="prop-input" value="transparent" />
+          <div class="color-swatch" style="background:#0f1011;"></div>
+        </div>
+        <div class="prop-row">
+          <span class="prop-label">border</span>
+          <input class="prop-input" value="1px solid rgba(255,255,255,0.06)" />
+        </div>
+
+        <div class="prop-section-title">状态</div>
+        <div class="toggle-row">
+          <span class="toggle-label">可见</span>
+          <div class="toggle on"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">可交互</span>
+          <div class="toggle on"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── A2UI Chat Panel ── -->
+    <div class="panel panel-a2ui" id="panel-a2ui">
+      <div class="chat-header">
+        <span class="chat-header-title">A2UI 对话</span>
+        <span class="chat-header-badge">v1</span>
+      </div>
+      <div class="chat-messages" id="chat-messages">
+        <div class="msg ai">
+          <div class="msg-bubble">这是一个 <code style="background:rgba(0,0,0,0.08);padding:1px 4px;border-radius:3px;font-size:11px;">div.container</code> 容器，我建议将其拆分为 header / main / footer 三个 section，符合单页应用的标准结构。</div>
+          <div class="msg-meta">A2UI · 2s</div>
+        </div>
+        <div class="msg user">
+          <div class="msg-bubble">帮我生成对应的 L3 Component spec</div>
+          <div class="msg-meta">刚刚</div>
+        </div>
+        <div class="msg ai">
+          <div class="msg-bubble">好的，正在根据当前标注生成 L3 Component Spec…</div>
+          <div class="msg-meta">A2UI · 正在输入<span class="cursor-blink"></span></div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <div class="chat-input-wrap">
+          <textarea class="chat-textarea" placeholder="输入指令或标注…" rows="1">帮我生成对应的 L3 Component spec</textarea>
+          <button class="chat-send">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2L2 7l5 2 2 5 5-12z" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Spec Preview Panel ── -->
+    <div class="panel panel-spec" id="panel-spec">
+      <div class="spec-toolbar">
+        <button class="spec-btn active">YAML</button>
+        <button class="spec-btn">MD</button>
+        <button class="spec-btn">JSON</button>
+        <div style="flex:1"></div>
+        <span class="stream-indicator"><span class="stream-dot"></span>流式生成中</span>
+      </div>
+      <div class="spec-code">
+<span class="lay-h">## L3 — Component Spec</span>
+<span class="punct">---</span>
+<span class="key">name</span><span class="punct">: </span><span class="val">"layout-container"</span>
+<span class="key">parent</span><span class="punct">: </span><span class="val">"layout-page"</span>
+<span class="key">type</span><span class="punct">: </span><span class="val">"container"</span>
+<span class="punct"></span>
+<span class="key">children</span><span class="punct">:</span>
+<span class="punct">  - </span><span class="val">"layout-header"</span>
+<span class="punct">  - </span><span class="val">"layout-main"</span>
+<span class="punct">  - </span><span class="val">"layout-footer"</span>
+<span class="punct"></span>
+<span class="key">io_contract</span><span class="punct">:</span>
+<span class="punct">  </span><span class="key">slots</span><span class="punct">:</span>
+<span class="punct">    </span><span class="key">header</span><span class="punct">:</span>
+<span class="punct">      </span><span class="key">type</span><span class="punct">: </span><span class="val">"element"</span>
+<span class="punct">      </span><span class="key">required</span><span class="punct">: </span><span class="val">true</span><span class="cursor-blink"></span>
+      </div>
+    </div>
+
+    <!-- ── Settings Panel ── -->
+    <div class="panel panel-settings" id="panel-settings">
+      <div class="settings-section">
+        <div class="settings-title">Agent 状态</div>
+        <div class="agent-status">
+          <div class="agent-dot"></div>
+          <div>
+            <div class="agent-info">nanoClaudeCode</div>
+            <div class="agent-sub">v0.1.0 · stdio · 已就绪</div>
+          </div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title">LLM 配置</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">模型</div>
+          </div>
+          <select class="sett-select">
+            <option>MiniMax-Text-01</option>
+            <option>Claude-3.5</option>
+            <option>GPT-4o</option>
+          </select>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title">模板</div>
+        <div class="settings-row">
+          <div class="settings-label">Design.md 模板</div>
+          <select class="sett-select">
+            <option>Vercel</option>
+            <option>Linear.app</option>
+            <option>Stripe</option>
+          </select>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title">导出格式</div>
+        <div class="radio-group" style="margin-top:4px;">
+          <label class="radio-item"><input type="radio" name="fmt" checked> YAML + frontmatter</label>
+          <label class="radio-item"><input type="radio" name="fmt"> Pure Markdown</label>
+          <label class="radio-item"><input type="radio" name="fmt"> JSON</label>
+        </div>
+      </div>
+      <div class="kbd-hint">
+        <span class="kbd">⌘</span><span class="kbd">K</span>
+        <span>命令面板</span>
+        <span class="kbd">⌘</span><span class="kbd">Z</span>
+        <span>撤销</span>
+      </div>
+    </div>
+
+  </div><!-- /panels -->
+</div><!-- /body -->
+
+<script>
+  /* ── Tab switching ── */
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+    });
+  });
+
+  /* ── Toggle ── */
+  document.querySelectorAll('.toggle').forEach(t => {
+    t.addEventListener('click', () => t.classList.toggle('on'));
+  });
+
+  /* ── DOM Tree ── */
+  const treeData = [
+    {
+      tag: 'html', children: [
+        {
+          tag: 'body', label: 'body.app', children: [
+            { tag: 'header', label: 'header#header', children: [
+              { tag: 'nav', label: 'nav.main-nav', children: [
+                { tag: 'a', label: 'a.logo', text: '"App"' },
+                { tag: 'ul', label: 'ul.nav-links', children: [
+                  { tag: 'li', label: 'li*3' },
+                ]},
+              ]},
+            ]},
+            { tag: 'main', label: 'main#content', children: [
+              { tag: 'h1', label: 'h1.heading', text: '"Welcome"' },
+              { tag: 'p', label: 'p.desc' },
+              { tag: 'button', label: 'button.btn-primary', text: '"Get Started"' },
+            ]},
+            { tag: 'footer', label: 'footer#footer', children: [
+              { tag: 'p', label: 'p.copyright', text: '"© 2025"' },
+            ]},
+          ]},
+        ]
+      }
+    }
+  ];
+
+  const ICON_COLORS = {
+    div: '#2a2b3d| #a5a8ff',
+    span: '#2d2a25| #d9b88e',
+    body: '#1e2a2b| #8ed9d9',
+    header: '#2a2b3d| #a5a8ff',
+    nav: '#252630| #c5a8ff',
+    ul: '#252630| #c5a8ff',
+    li: '#252630| #c5a8ff',
+    main: '#2a2b3d| #a5a8ff',
+    a: '#2d3025| #b5d98e',
+    h1: '#2d2a25| #d9b88e',
+    p: '#2d2a25| #d9b88e',
+    button: '#2d2a25| #d9b88e',
+    footer: '#2a2b3d| #a5a8ff',
+    html: '#2a2b3d| #a5a8ff',
+    section: '#2a2b3d| #a5a8ff',
+  };
+
+  function getIcon(tag) {
+    const pair = ICON_COLORS[tag] || '#1e1e2a| #8888ff';
+    const [bg, color] = pair.split('|');
+    return `<span class="tree-icon icon-tag" style="background:${bg.trim()};color:${color.trim()}">${tag.charAt(0).toUpperCase()}</span>`;
+  }
+
+  function buildNode(node, depth, isLast) {
+    const hasChildren = node.children && node.children.length > 0;
+    const indent = depth * 14 + 'px';
+    const sel = node.label === 'main#content' ? 'selected' : '';
+
+    let html = `<div class="tree-node ${sel}" style="padding-left:${indent}px" data-tag="${node.tag}">`;
+    html += `<div class="tree-chevron ${hasChildren ? 'open' : 'empty'}">▶</div>`;
+    html += getIcon(node.tag);
+    html += `<span class="tree-label">${node.label || node.tag}</span>`;
+    if (node.text) html += `<span class="tree-badge">"${node.text.replace(/"/g,'')}"</span>`;
+    html += '</div>';
+
+    if (hasChildren) {
+      node.children.forEach((child, i) => {
+        html += buildNode(child, depth + 1, i === node.children.length - 1);
+      });
+    }
+    return html;
+  }
+
+  document.getElementById('dom-tree').innerHTML = treeData.map(n => buildNode(n, 0, true)).join('');
+
+  /* ── Tree node click ── */
+  document.getElementById('dom-tree').addEventListener('click', e => {
+    const node = e.target.closest('.tree-node');
+    if (!node) return;
+    document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
+    node.classList.add('selected');
+  });
+
+  /* ── Chevron toggle ── */
+  document.getElementById('dom-tree').addEventListener('click', e => {
+    const chev = e.target.closest('.tree-chevron');
+    if (!chev || chev.classList.contains('empty')) return;
+    chev.classList.toggle('open');
+    const node = chev.closest('.tree-node');
+    const nextSiblings = [];
+    let sibling = node.nextElementSibling;
+    while (sibling && sibling.classList.contains('tree-node')) {
+      nextSiblings.push(sibling);
+      sibling = sibling.nextElementSibling;
+    }
+    const isOpen = chev.classList.contains('open');
+    nextSiblings.forEach(s => {
+      const nodeDepth = parseInt(s.style.paddingLeft) / 14;
+      const currentDepth = parseInt(node.style.paddingLeft) / 14 + 1;
+      if (isOpen) {
+        s.style.display = '';
+      } else {
+        if (nodeDepth === currentDepth) s.style.display = 'none';
+        else {
+          const sDepth = parseInt(s.style.paddingLeft) / 14;
+          if (sDepth > currentDepth) s.style.display = 'none';
+        }
+      }
+    });
+  });
+
+  /* ── Chat scroll to bottom ── */
+  const cm = document.getElementById('chat-messages');
+  cm.scrollTop = cm.scrollHeight;
+</script>
+</body>
+</html>
