@@ -1,139 +1,137 @@
 // content.ts — Proto Spec content script
 // 管理 4 侧栏 overlay，与 side panel 通信
-// Runtime 内联在 defineContentScript 内，wxt 处理 CSP 兼容
-
-const RUNTIME_SRC = `
-(function() {
-  'use strict';
-  var PREFIX = 'PS_EXT_MSG_';
-  var _listeners = {}, _pendingReplies = {}, _extSource = null;
-
-  var PostMessage = {
-    init: function() {
-      window.addEventListener('message', function(event) {
-        var msg = event.data;
-        if (!msg || typeof msg.type !== 'string' || !msg.type.startsWith(PREFIX)) return;
-        var type = msg.type.slice(PREFIX.length);
-        if (msg._from === 'extension' && event.source) _extSource = event.source;
-        (_listeners[type] || []).forEach(function(h) { try { h(msg.payload, { type: type, source: event.source }); } catch(e) {} });
-        if (msg._msgId && _pendingReplies[msg._msgId]) {
-          var p = _pendingReplies[msg._msgId];
-          clearTimeout(p.timer);
-          delete _pendingReplies[msg._msgId];
-          p.resolve(msg.payload);
-        }
-      });
-    },
-    send: function(type, payload) {
-      var msgId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-      window.postMessage({ type: PREFIX + type, payload: payload, _msgId: msgId, _from: 'extension' }, '*');
-    },
-    reply: function(type, payload) {
-      if (_extSource) _extSource.postMessage({ type: PREFIX + type, payload: payload, _from: 'page' }, '*');
-    },
-    on: function(type, handler) { (_listeners[type] = _listeners[type] || []).push(handler); }
-  };
-
-  var Runtime = {
-    _activeSpec: null,
-    init: function() {
-      PostMessage.init();
-      PostMessage.on('spec:select', this._onSpecSelect.bind(this));
-      PostMessage.on('spec:bind', this._onSpecBind.bind(this));
-      PostMessage.on('onboard:start', this._onOnboardStart.bind(this));
-      PostMessage.on('elem:highlight', this._onElemHighlight.bind(this));
-      PostMessage.on('annotation:show', this._onAnnotationShow.bind(this));
-      PostMessage.on('annotation:clear', this._onAnnotationClear.bind(this));
-      PostMessage.on('design:toggle', function(d) { document.documentElement.dataset.psTheme = d.theme || 'dark'; });
-      PostMessage.reply('runtime:ready', { version: '1.0.0', url: window.location.href });
-      this._initDOMListeners();
-      console.log('[Proto Spec] Runtime ready');
-    },
-    _onSpecSelect: function(data) {
-      var el = data.selector ? document.querySelector(data.selector) : null;
-      if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); this._flash(el, '#7170ff', 600); }
-      this._activeSpec = data;
-    },
-    _onSpecBind: function(data) {
-      var el = data.selector ? document.querySelector(data.selector) : null;
-      if (!el) return;
-      el.setAttribute('data-ps-spec', data.specName);
-      this._flash(el, '#10b981', 800);
-      PostMessage.reply('spec:bound', { specName: data.specName });
-    },
-    _onOnboardStart: function(data) {
-      var el = data.selector ? document.querySelector(data.selector) : null;
-      if (!el) return;
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      var self = this;
-      setTimeout(function() { self._flash(el, '#f59e0b', 1000); self._showTip(el, data.specName); }, 400);
-    },
-    _onElemHighlight: function(data) {
-      var el = data.selector ? document.querySelector(data.selector) : null;
-      if (el) this._flash(el, data.color || '#7170ff', 1000);
-    },
-    _onAnnotationShow: function(data) {
-      document.documentElement.dataset.psAnnotations = data.mode === 'show' ? 'show' : 'hide';
-    },
-    _onAnnotationClear: function() {
-      document.querySelectorAll('[data-ps-highlight]').forEach(function(el) { el.style.boxShadow = ''; el.removeAttribute('data-ps-highlight'); });
-      document.querySelectorAll('.ps-tooltip').forEach(function(el) { el.remove(); });
-    },
-    _initDOMListeners: function() {
-      var self = this;
-      document.addEventListener('click', function(e) {
-        PostMessage.reply('elem:click', { selector: self._sel(e.target), tag: e.target.tagName, text: e.target.innerText.slice(0, 40) });
-      }, true);
-    },
-    _flash: function(el, color, ms) {
-      el.setAttribute('data-ps-highlight', '1');
-      el.style.boxShadow = '0 0 0 3px ' + color + ', 0 0 20px ' + color + '44';
-      setTimeout(function() { el.style.boxShadow = '0 0 0 2px ' + color + '88'; }, ms);
-    },
-    _showTip: function(el, text) {
-      var old = document.querySelector('.ps-tooltip');
-      if (old) old.remove();
-      var tip = document.createElement('div');
-      tip.className = 'ps-tooltip';
-      tip.textContent = text;
-      tip.style.cssText = 'position:fixed;z-index:2147483647;background:#1a1b27;color:#f9fafb;padding:6px 12px;border-radius:6px;font-size:12px;font-family:system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.4);border:1px solid #2a2d3a;pointer-events:none;top:12px;left:50%;transform:translateX(-50%);white-space:nowrap';
-      document.body.appendChild(tip);
-      setTimeout(function() { tip.remove(); }, 4000);
-    },
-    _sel: function(el) {
-      if (el.id) return '#' + el.id;
-      var parts = [];
-      while (el && el.nodeType === 1 && parts.length < 4) {
-        var s = el.tagName.toLowerCase();
-        if (el.id) { parts.unshift('#' + el.id); return parts.join('>'); }
-        if (el.className && typeof el.className === 'string') { var c = el.className.trim().split(/\s+/)[0]; if (c) s += '.' + c; }
-        parts.unshift(s);
-        el = el.parentElement;
-      }
-      return parts.join(' > ');
-    }
-  };
-
-  window.ProtoSpec = { PostMessage: PostMessage, Runtime: Runtime };
-  Runtime.init();
-})();
-`;
+// Runtime 通过 chrome.scripting.executeScript 注入，绕过 CSP
 
 export default defineContentScript({
   matches: ['<all_urls>'],
   runAt: 'document_idle',
 
   async main(ctx) {
-    // ── 注入 Runtime（通过 blob URL 绕过 CSP）───────────────────
-    function injectRuntime() {
+    // ── Runtime 函数（必须自包含，chrome.scripting.executeScript 会序列化它）────
+    const runtimeCode = function() {
+      var PREFIX = 'PS_EXT_MSG_';
+      var _listeners = {}, _pendingReplies = {}, _extSource = null;
+
+      var PostMessage = {
+        init: function() {
+          window.addEventListener('message', function(event) {
+            var msg = event.data;
+            if (!msg || typeof msg.type !== 'string' || !msg.type.startsWith(PREFIX)) return;
+            var type = msg.type.slice(PREFIX.length);
+            if (msg._from === 'extension' && event.source) _extSource = event.source;
+            (_listeners[type] || []).forEach(function(h) { try { h(msg.payload, { type: type, source: event.source }); } catch(e) {} });
+            if (msg._msgId && _pendingReplies[msg._msgId]) {
+              var p = _pendingReplies[msg._msgId];
+              clearTimeout(p.timer);
+              delete _pendingReplies[msg._msgId];
+              p.resolve(msg.payload);
+            }
+          });
+        },
+        send: function(type, payload) {
+          var msgId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+          window.postMessage({ type: PREFIX + type, payload: payload, _msgId: msgId, _from: 'extension' }, '*');
+        },
+        reply: function(type, payload) {
+          if (_extSource) _extSource.postMessage({ type: PREFIX + type, payload: payload, _from: 'page' }, '*');
+        },
+        on: function(type, handler) { (_listeners[type] = _listeners[type] || []).push(handler); }
+      };
+
+      var Runtime = {
+        init: function() {
+          PostMessage.init();
+          PostMessage.on('spec:select', this._onSpecSelect.bind(this));
+          PostMessage.on('spec:bind', this._onSpecBind.bind(this));
+          PostMessage.on('onboard:start', this._onOnboardStart.bind(this));
+          PostMessage.on('elem:highlight', this._onElemHighlight.bind(this));
+          PostMessage.on('annotation:show', this._onAnnotationShow.bind(this));
+          PostMessage.on('annotation:clear', this._onAnnotationClear.bind(this));
+          PostMessage.on('design:toggle', function(d) { document.documentElement.dataset.psTheme = d.theme || 'dark'; });
+          PostMessage.reply('runtime:ready', { version: '1.0.0', url: window.location.href });
+          this._initDOMListeners();
+          console.log('[Proto Spec] Runtime ready');
+        },
+        _onSpecSelect: function(data) {
+          var el = data.selector ? document.querySelector(data.selector) : null;
+          if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); this._flash(el, '#7170ff', 600); }
+        },
+        _onSpecBind: function(data) {
+          var el = data.selector ? document.querySelector(data.selector) : null;
+          if (!el) return;
+          el.setAttribute('data-ps-spec', data.specName);
+          this._flash(el, '#10b981', 800);
+          PostMessage.reply('spec:bound', { specName: data.specName });
+        },
+        _onOnboardStart: function(data) {
+          var el = data.selector ? document.querySelector(data.selector) : null;
+          if (!el) return;
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          var self = this;
+          setTimeout(function() { self._flash(el, '#f59e0b', 1000); self._showTip(el, data.specName); }, 400);
+        },
+        _onElemHighlight: function(data) {
+          var el = data.selector ? document.querySelector(data.selector) : null;
+          if (el) this._flash(el, data.color || '#7170ff', 1000);
+        },
+        _onAnnotationShow: function(data) {
+          document.documentElement.dataset.psAnnotations = data.mode === 'show' ? 'show' : 'hide';
+        },
+        _onAnnotationClear: function() {
+          document.querySelectorAll('[data-ps-highlight]').forEach(function(el) { el.style.boxShadow = ''; el.removeAttribute('data-ps-highlight'); });
+          document.querySelectorAll('.ps-tooltip').forEach(function(el) { el.remove(); });
+        },
+        _initDOMListeners: function() {
+          var self = this;
+          document.addEventListener('click', function(e) {
+            PostMessage.reply('elem:click', { selector: self._sel(e.target), tag: e.target.tagName, text: e.target.innerText.slice(0, 40) });
+          }, true);
+        },
+        _flash: function(el, color, ms) {
+          el.setAttribute('data-ps-highlight', '1');
+          el.style.boxShadow = '0 0 0 3px ' + color + ', 0 0 20px ' + color + '44';
+          setTimeout(function() { el.style.boxShadow = '0 0 0 2px ' + color + '88'; }, ms);
+        },
+        _showTip: function(el, text) {
+          var old = document.querySelector('.ps-tooltip');
+          if (old) old.remove();
+          var tip = document.createElement('div');
+          tip.className = 'ps-tooltip';
+          tip.textContent = text;
+          tip.style.cssText = 'position:fixed;z-index:2147483647;background:#1a1b27;color:#f9fafb;padding:6px 12px;border-radius:6px;font-size:12px;font-family:system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.4);border:1px solid #2a2d3a;pointer-events:none;top:12px;left:50%;transform:translateX(-50%);white-space:nowrap';
+          document.body.appendChild(tip);
+          setTimeout(function() { tip.remove(); }, 4000);
+        },
+        _sel: function(el) {
+          if (el.id) return '#' + el.id;
+          var parts = [];
+          while (el && el.nodeType === 1 && parts.length < 4) {
+            var s = el.tagName.toLowerCase();
+            if (el.id) { parts.unshift('#' + el.id); return parts.join('>'); }
+            if (el.className && typeof el.className === 'string') { var c = el.className.trim().split(/\s+/)[0]; if (c) s += '.' + c; }
+            parts.unshift(s);
+            el = el.parentElement;
+          }
+          return parts.join(' > ');
+        }
+      };
+
+      window.ProtoSpec = { PostMessage: PostMessage, Runtime: Runtime };
+      Runtime.init();
+    };
+
+    // ── 注入 Runtime（chrome.scripting.executeScript，绕过 CSP）────
+    async function injectRuntime() {
       if (document.getElementById('ps-runtime')) return;
       try {
-        var blob = new Blob([RUNTIME_SRC], { type: 'text/javascript' });
-        var url = URL.createObjectURL(blob);
-        var script = document.createElement('script');
-        script.src = url;
-        script.id = 'ps-runtime';
-        (document.head || document.documentElement).appendChild(script);
+        await chrome.scripting.executeScript({
+          target: { tabId: ctx.tabId },
+          func: runtimeCode,
+        });
+        const marker = document.createElement('div');
+        marker.id = 'ps-runtime';
+        marker.style.cssText = 'display:none';
+        (document.head || document.documentElement).appendChild(marker);
       } catch (e) {
         console.error('[Proto Spec] Runtime injection failed:', e);
       }
@@ -142,106 +140,91 @@ export default defineContentScript({
     // ── 4 侧栏 Overlay 管理器 ──────────────────────────────
     const overlayId = 'ps-overlay-root';
 
-    // 监听 side panel / popup 发来的消息
     browser.runtime.onMessage.addListener((msg) => {
-      switch (msg?.type) {
-        case 'panel:ping':
-        case 'panel:toggle':
-        case 'panel:setCollapsed':
-        case 'panel:setMode':
-        case 'panel:reset':
-        case 'action:highlight':
-        case 'action:annotate':
-        case 'action:extract':
-          return Promise.resolve(handleMessage(msg));
-
-        default:
-          return Promise.resolve({ ok: true });
-      }
-    });
-
-    function handleMessage(msg: any) {
-      if (!msg) return { ok: true };
+      if (!msg) return Promise.resolve({ ok: true });
       switch (msg.type) {
-        case 'panel:ping': return { ok: true };
-        case 'panel:toggle': return toggleOverlay(msg.payload.active, msg.payload.collapsed);
-        case 'panel:setCollapsed': return setPanelCollapsed(msg.payload.panel, msg.payload.collapsed);
-        case 'panel:setMode': return setMode(msg.payload.mode);
-        case 'panel:reset': return resetOverlay();
+        case 'panel:ping': return Promise.resolve({ ok: true });
+        case 'panel:toggle': return Promise.resolve(toggleOverlay(msg.payload?.active, msg.payload?.collapsed));
+        case 'panel:setCollapsed': return Promise.resolve(setPanelCollapsed(msg.payload?.panel, msg.payload?.collapsed));
+        case 'panel:setMode': return Promise.resolve(setMode(msg.payload?.mode));
+        case 'panel:reset': return Promise.resolve(resetOverlay());
         case 'action:highlight':
           window.postMessage({ type: 'PS_EXT_MSG_elem:highlight', payload: { selector: 'body', color: '#7170ff' }, _from: 'extension' }, '*');
-          return { ok: true };
+          return Promise.resolve({ ok: true });
         case 'action:annotate':
           window.postMessage({ type: 'PS_EXT_MSG_annotation:show', payload: { mode: 'show' }, _from: 'extension' }, '*');
-          return { ok: true };
-        case 'action:extract':
-          return extractSpec();
-        default:
-          return { ok: true };
+          return Promise.resolve({ ok: true });
+        case 'action:extract': return Promise.resolve(extractSpec());
+        default: return Promise.resolve({ ok: true });
       }
-    }
+    });
 
     // ── Overlay DOM ──────────────────────────────
     function buildOverlayDOM() {
       const root = document.createElement('div');
       root.id = overlayId;
-      root.innerHTML = `
-      <div class="ps-ov-top" id="ps-ov-top"><div class="ps-ov-inner" id="ps-ov-top-inner"><div class="ps-ov-drag" data-panel="top"></div><div class="ps-ov-content ps-panel-top"></div><div class="ps-ov-collapse-btn" data-panel="top" title="折叠顶部">▬</div></div></div>
-      <div class="ps-ov-left" id="ps-ov-left"><div class="ps-ov-inner" id="ps-ov-left-inner"><div class="ps-ov-collapse-btn" data-panel="left" title="折叠左侧">◀</div><div class="ps-ov-content ps-panel-left"></div><div class="ps-ov-drag" data-panel="left"></div></div></div>
-      <div class="ps-ov-right" id="ps-ov-right"><div class="ps-ov-inner" id="ps-ov-right-inner"><div class="ps-ov-drag" data-panel="right"></div><div class="ps-ov-content ps-panel-right"></div><div class="ps-ov-collapse-btn" data-panel="right" title="折叠右侧">▶</div></div></div>
-      <div class="ps-ov-bottom" id="ps-ov-bottom"><div class="ps-ov-inner" id="ps-ov-bottom-inner"><div class="ps-ov-collapse-btn" data-panel="bottom" title="折叠底部">▬</div><div class="ps-ov-content ps-panel-bottom"></div><div class="ps-ov-drag" data-panel="bottom"></div></div></div>
-      <style id="ps-ov-style">
-        #ps-overlay-root{position:fixed;inset:0;z-index:2147483640;pointer-events:none;font-family:system-ui,sans-serif!important}
-        #ps-overlay-root.active{pointer-events:all}
-        .ps-ov-top,.ps-ov-bottom{position:absolute;left:0;right:0;background:#0d0e11;border-bottom:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;transition:height .3s cubic-bezier(.4,0,.2,1);overflow:hidden;z-index:1}
-        .ps-ov-top{top:0;border-bottom:1px solid rgba(255,255,255,.06)}.ps-ov-bottom{bottom:0;border-top:1px solid rgba(255,255,255,.06)}
-        .ps-ov-top.collapsed,.ps-ov-bottom.collapsed{height:28px!important}
-        .ps-ov-top.expanded{height:var(--ps-top-h,160px)}.ps-ov-bottom.expanded{height:var(--ps-bottom-h,140px)}
-        .ps-ov-left,.ps-ov-right{position:absolute;top:0;bottom:0;background:#0d0e11;display:flex;flex-direction:row;transition:width .3s cubic-bezier(.4,0,.2,1);overflow:hidden;z-index:1}
-        .ps-ov-left{left:0;border-right:1px solid rgba(255,255,255,.06)}.ps-ov-right{right:0;border-left:1px solid rgba(255,255,255,.06)}
-        .ps-ov-left.collapsed,.ps-ov-right.collapsed{width:28px!important}
-        .ps-ov-left.expanded{width:var(--ps-left-w,260px)}.ps-ov-right.expanded{width:var(--ps-right-w,280px)}
-        .ps-ov-inner{flex:1;display:flex;overflow:hidden}
-        .ps-ov-left-inner,.ps-ov-right-inner{flex-direction:column}
-        .ps-ov-top-inner,.ps-ov-bottom-inner{flex-direction:row}
-        .ps-ov-collapse-btn{width:28px;min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.04);border:none;color:#6b7280;font-size:10px;cursor:pointer;transition:all .15s;flex-shrink:0;z-index:2}
-        .ps-ov-collapse-btn:hover{background:rgba(255,255,255,.08);color:#f7f8f8}
-        .ps-ov-content{flex:1;overflow:auto;padding:10px 12px;min-width:0;min-height:0;display:flex;flex-direction:column;gap:2px}
-        .ps-panel-left .ps-ov-content,.ps-panel-right .ps-ov-content{padding:10px 0}
-        .ps-ov-drag{background:transparent;flex-shrink:0;transition:background .15s}
-        .ps-ov-drag[data-panel="top"],.ps-ov-drag[data-panel="bottom"]{height:4px;cursor:ns-resize;width:100%}
-        .ps-ov-drag[data-panel="left"],.ps-ov-drag[data-panel="right"]{width:4px;cursor:ew-resize;height:100%}
-        .ps-ov-drag:hover{background:rgba(113,112,255,.3)!important}
-        .ps-ov-top.collapsed .ps-ov-drag[data-panel="top"],.ps-ov-bottom.collapsed .ps-ov-drag[data-panel="bottom"],
-        .ps-ov-top.collapsed .ps-panel-top,.ps-ov-bottom.collapsed .ps-panel-bottom,
-        .ps-ov-left.collapsed .ps-panel-left,.ps-ov-right.collapsed .ps-panel-right,
-        .ps-ov-top.collapsed .ps-ov-content,.ps-ov-bottom.collapsed .ps-ov-content,
-        .ps-ov-left.collapsed .ps-ov-content,.ps-ov-right.collapsed .ps-ov-content{display:none!important}
-        .ps-panel-title{font-size:10px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.6px;padding:8px 12px 4px;border-bottom:1px solid rgba(255,255,255,.05);flex-shrink:0}
-        .ps-spec-item{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:12px;color:#c8cdd6;transition:all .12s;margin:1px 4px}
-        .ps-spec-item:hover{background:rgba(255,255,255,.05);color:#fff}
-        .ps-spec-item.active{background:rgba(113,112,255,.12);color:#818cff}
-        .ps-spec-tag{font-size:9px;font-weight:600;padding:1px 5px;border-radius:3px;background:rgba(113,112,255,.15);color:#818cff;flex-shrink:0}
-        .ps-action-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:4px;cursor:pointer;font-size:12px;color:#c8cdd6;transition:all .12s;margin:1px 4px}
-        .ps-action-item:hover{background:rgba(255,255,255,.05);color:#fff}
-        .ps-status{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#10b981;font-size:10px;padding:3px 10px;border-radius:10px;pointer-events:none;white-space:nowrap;z-index:10;transition:opacity .3s;opacity:0}
-        .ps-status.visible{opacity:1}
-      </style>
-      <div class="ps-status" id="ps-status"></div>`;
+      root.innerHTML =
+        '<div class="ps-ov-top" id="ps-ov-top"><div class="ps-ov-inner" id="ps-ov-top-inner"><div class="ps-ov-drag" data-panel="top"></div><div class="ps-ov-content ps-panel-top"></div><div class="ps-ov-collapse-btn" data-panel="top" title="折叠">▬</div></div></div>' +
+        '<div class="ps-ov-left" id="ps-ov-left"><div class="ps-ov-inner" id="ps-ov-left-inner"><div class="ps-ov-collapse-btn" data-panel="left" title="折叠">◀</div><div class="ps-ov-content ps-panel-left"></div><div class="ps-ov-drag" data-panel="left"></div></div></div>' +
+        '<div class="ps-ov-right" id="ps-ov-right"><div class="ps-ov-inner" id="ps-ov-right-inner"><div class="ps-ov-drag" data-panel="right"></div><div class="ps-ov-content ps-panel-right"></div><div class="ps-ov-collapse-btn" data-panel="right" title="折叠">▶</div></div></div>' +
+        '<div class="ps-ov-bottom" id="ps-ov-bottom"><div class="ps-ov-inner" id="ps-ov-bottom-inner"><div class="ps-ov-collapse-btn" data-panel="bottom" title="折叠">▬</div><div class="ps-ov-content ps-panel-bottom"></div><div class="ps-ov-drag" data-panel="bottom"></div></div></div>' +
+        '<style>' +
+        '#ps-overlay-root{position:fixed;inset:0;z-index:2147483640;pointer-events:none;font-family:system-ui,sans-serif!important}' +
+        '#ps-overlay-root.active{pointer-events:all}' +
+        '.ps-ov-top,.ps-ov-bottom{position:absolute;left:0;right:0;background:#0d0e11;display:flex;flex-direction:column;transition:height .3s cubic-bezier(.4,0,.2,1);overflow:hidden;z-index:1}' +
+        '.ps-ov-top{top:0;border-bottom:1px solid rgba(255,255,255,.06)}' +
+        '.ps-ov-bottom{bottom:0;border-top:1px solid rgba(255,255,255,.06)}' +
+        '.ps-ov-top.collapsed,.ps-ov-bottom.collapsed{height:28px!important}' +
+        '.ps-ov-top.expanded{height:var(--ps-top-h,160px)}' +
+        '.ps-ov-bottom.expanded{height:var(--ps-bottom-h,140px)}' +
+        '.ps-ov-left,.ps-ov-right{position:absolute;top:0;bottom:0;background:#0d0e11;display:flex;flex-direction:row;transition:width .3s cubic-bezier(.4,0,.2,1);overflow:hidden;z-index:1}' +
+        '.ps-ov-left{left:0;border-right:1px solid rgba(255,255,255,.06)}' +
+        '.ps-ov-right{right:0;border-left:1px solid rgba(255,255,255,.06)}' +
+        '.ps-ov-left.collapsed,.ps-ov-right.collapsed{width:28px!important}' +
+        '.ps-ov-left.expanded{width:var(--ps-left-w,260px)}' +
+        '.ps-ov-right.expanded{width:var(--ps-right-w,280px)}' +
+        '.ps-ov-inner{flex:1;display:flex;overflow:hidden}' +
+        '.ps-ov-left-inner,.ps-ov-right-inner{flex-direction:column}' +
+        '.ps-ov-top-inner,.ps-ov-bottom-inner{flex-direction:row}' +
+        '.ps-ov-collapse-btn{width:28px;min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.04);border:none;color:#6b7280;font-size:10px;cursor:pointer;transition:all .15s;flex-shrink:0;z-index:2}' +
+        '.ps-ov-collapse-btn:hover{background:rgba(255,255,255,.08);color:#f7f8f8}' +
+        '.ps-ov-content{flex:1;overflow:auto;padding:8px 0;min-width:0;min-height:0;display:flex;flex-direction:column;gap:1px}' +
+        '.ps-ov-drag{background:transparent;flex-shrink:0;transition:background .15s}' +
+        '.ps-ov-drag[data-panel="top"],.ps-ov-drag[data-panel="bottom"]{height:4px;cursor:ns-resize}' +
+        '.ps-ov-drag[data-panel="left"],.ps-ov-drag[data-panel="right"]{width:4px;cursor:ew-resize}' +
+        '.ps-ov-drag:hover{background:rgba(113,112,255,.3)!important}' +
+        '.ps-ov-top.collapsed .ps-ov-drag[data-panel="top"],.ps-ov-bottom.collapsed .ps-ov-drag[data-panel="bottom"],' +
+        '.ps-ov-top.collapsed .ps-panel-top,.ps-ov-bottom.collapsed .ps-panel-bottom,' +
+        '.ps-ov-left.collapsed .ps-panel-left,.ps-ov-right.collapsed .ps-panel-right,' +
+        '.ps-ov-top.collapsed .ps-ov-content,.ps-ov-bottom.collapsed .ps-ov-content,' +
+        '.ps-ov-left.collapsed .ps-ov-content,.ps-ov-right.collapsed .ps-ov-content{display:none!important}' +
+        '.ps-panel-title{font-size:10px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.6px;padding:6px 12px 3px;border-bottom:1px solid rgba(255,255,255,.05);flex-shrink:0}' +
+        '.ps-spec-item{display:flex;align-items:center;gap:6px;padding:5px 12px;cursor:pointer;font-size:12px;color:#c8cdd6;transition:all .12s;border-radius:4px;margin:1px 4px}' +
+        '.ps-spec-item:hover{background:rgba(255,255,255,.05);color:#fff}' +
+        '.ps-spec-item.active{background:rgba(113,112,255,.12);color:#818cff}' +
+        '.ps-spec-tag{font-size:9px;font-weight:600;padding:1px 5px;border-radius:3px;background:rgba(113,112,255,.15);color:#818cff;flex-shrink:0}' +
+        '.ps-action-item{display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;font-size:12px;color:#c8cdd6;transition:all .12s;border-radius:4px;margin:1px 4px}' +
+        '.ps-action-item:hover{background:rgba(255,255,255,.05);color:#fff}' +
+        '.ps-action-icon{width:16px;text-align:center;flex-shrink:0}' +
+        '.ps-status{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#10b981;font-size:10px;padding:3px 10px;border-radius:10px;pointer-events:none;white-space:nowrap;z-index:10;transition:opacity .3s;opacity:0}' +
+        '.ps-status.visible{opacity:1}' +
+        '.ps-divider{height:1px;background:rgba(255,255,255,.05);margin:4px 12px}' +
+        '</style>' +
+        '<div class="ps-status" id="ps-status"></div>';
       return root;
     }
 
     // ── Overlay 状态 ──────────────────────────────
     let active = false;
-    let mode = 'local';
+    let mode: 'local' | 'remote' = 'local';
     const collapsed: Record<string, boolean> = {};
     const sizes: Record<string, number> = { top: 160, bottom: 140, left: 260, right: 280 };
 
-    function toggleOverlay(show: boolean, initCollapsed?: string[]) {
+    async function toggleOverlay(show: boolean, initCollapsed?: string[]) {
       let root = document.getElementById(overlayId);
       if (show) {
         if (!root) {
-          injectRuntime();
+          await injectRuntime();
           document.body.appendChild(buildOverlayDOM());
           root = document.getElementById(overlayId)!;
           initDragResize();
@@ -264,7 +247,7 @@ export default defineContentScript({
       applyState();
     }
 
-    function setMode(m: string) {
+    function setMode(m: 'local' | 'remote') {
       mode = m;
       fillPanels();
     }
@@ -341,15 +324,16 @@ export default defineContentScript({
 
     // ── 操作按钮 ──────────────────────────────
     function initActionClicks() {
-      document.getElementById('ps-action-highlight')?.addEventListener('click', () => {
-        window.postMessage({ type: 'PS_EXT_MSG_elem:highlight', payload: { selector: 'body', color: '#7170ff' }, _from: 'extension' }, '*');
-      });
-      document.getElementById('ps-action-annotate')?.addEventListener('click', () => {
-        window.postMessage({ type: 'PS_EXT_MSG_annotation:show', payload: { mode: 'show' }, _from: 'extension' }, '*');
-      });
-      document.getElementById('ps-action-theme')?.addEventListener('click', () => {
-        window.postMessage({ type: 'PS_EXT_MSG_design:toggle', payload: { theme: 'light' }, _from: 'extension' }, '*');
-      });
+      const actions: Record<string, string> = {
+        'ps-action-highlight': 'elem:highlight',
+        'ps-action-annotate': 'annotation:show',
+        'ps-action-theme': 'design:toggle',
+      };
+      for (const [id, msgType] of Object.entries(actions)) {
+        document.getElementById(id)?.addEventListener('click', () => {
+          window.postMessage({ type: 'PS_EXT_MSG_' + msgType, payload: msgType === 'annotation:show' ? { mode: 'show' } : { theme: 'light' }, _from: 'extension' }, '*');
+        });
+      }
     }
 
     // ── 填充面板内容 ──────────────────────────────
@@ -358,16 +342,18 @@ export default defineContentScript({
 
       const topInner = document.getElementById('ps-ov-top-inner');
       if (topInner) {
-        topInner.innerHTML = '<div class="ps-ov-drag" data-panel="top"></div>' +
+        topInner.innerHTML =
+          '<div class="ps-ov-drag" data-panel="top"></div>' +
           '<div class="ps-ov-content ps-panel-top" style="display:flex;align-items:center;gap:12px;padding:0 12px;flex-direction:row">' +
-          '<div style="display:flex;align-items:center;gap:8px"><div style="width:24px;height:24px;background:#7170ff;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0">PS</div><span style="font-size:12px;font-weight:600;color:#f7f8f8">Proto Spec</span><span style="font-size:10px;padding:1px 6px;border-radius:3px;background:' + (isLocal ? 'rgba(16,185,129,.15);color:#10b981' : 'rgba(113,112,255,.15);color:#818cff') + '">' + (isLocal ? '本地' : '远程') + '</span></div>' +
-          '<div style="font-size:11px;color:#6b7280;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + window.location.href.slice(0, 60) + '</div>' +
-          '</div><div class="ps-ov-collapse-btn" data-panel="top" title="折叠顶部">▬</div>';
+          '<div style="display:flex;align-items:center;gap:8px"><div style="width:22px;height:22px;background:#7170ff;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0">PS</div><span style="font-size:12px;font-weight:600;color:#f7f8f8">Proto Spec</span><span style="font-size:10px;padding:1px 6px;border-radius:3px;background:' + (isLocal ? 'rgba(16,185,129,.15);color:#10b981' : 'rgba(113,112,255,.15);color:#818cff') + '">' + (isLocal ? '本地' : '远程') + '</span></div>' +
+          '<div style="font-size:11px;color:#6b7280;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:400px">' + window.location.href.slice(0, 80) + '</div>' +
+          '</div><div class="ps-ov-collapse-btn" data-panel="top" title="折叠">▬</div>';
       }
 
       const leftContent = document.querySelector('#ps-ov-left-inner .ps-ov-content') as HTMLElement;
       if (leftContent) {
-        leftContent.innerHTML = '<div class="ps-panel-title">Spec 树</div>' +
+        leftContent.innerHTML =
+          '<div class="ps-panel-title">Spec 树</div>' +
           '<div class="ps-spec-item active" data-spec="page-shell"><span class="ps-spec-tag">P</span> page-shell</div>' +
           '<div class="ps-spec-item" data-spec="sidebar-nav" style="padding-left:20px"><span class="ps-spec-tag">C</span> sidebar-nav</div>' +
           '<div class="ps-spec-item" data-spec="menu-item" style="padding-left:36px"><span class="ps-spec-tag">B</span> menu-item</div>' +
@@ -378,19 +364,23 @@ export default defineContentScript({
 
       const rightContent = document.querySelector('#ps-ov-right-inner .ps-ov-content') as HTMLElement;
       if (rightContent) {
-        rightContent.innerHTML = '<div class="ps-panel-title">治理操作</div>' +
-          '<div class="ps-action-item" id="ps-action-highlight">✦ 高亮选中元素</div>' +
-          '<div class="ps-action-item" id="ps-action-annotate">📍 显示标注</div>' +
-          '<div class="ps-action-item" id="ps-action-bind">⊕ 绑定 Spec</div>' +
-          '<div class="ps-action-item" id="ps-action-onboard">🎯 引导演示</div>' +
-          '<div class="ps-action-item" id="ps-action-theme">🌓 主题切换</div>' +
-          (!isLocal ? '<div style="padding:8px 12px;font-size:10.5px;color:#4b5563">远程页面仅支持样式提取</div>' : '');
+        rightContent.innerHTML =
+          '<div class="ps-panel-title">治理操作</div>' +
+          '<div class="ps-action-item" id="ps-action-highlight"><span class="ps-action-icon">✦</span>高亮元素</div>' +
+          '<div class="ps-action-item" id="ps-action-annotate"><span class="ps-action-icon">📍</span>显示标注</div>' +
+          '<div class="ps-action-item" id="ps-action-bind"><span class="ps-action-icon">⊕</span>绑定 Spec</div>' +
+          '<div class="ps-action-item" id="ps-action-onboard"><span class="ps-action-icon">🎯</span>引导演示</div>' +
+          '<div class="ps-action-item" id="ps-action-theme"><span class="ps-action-icon">🌓</span>主题切换</div>' +
+          '<div class="ps-divider"></div>' +
+          '<div class="ps-action-item" id="ps-action-extract"><span class="ps-action-icon">📋</span>提取 Spec</div>' +
+          (!isLocal ? '<div style="padding:8px 12px;font-size:10.5px;color:#4b5563;line-height:1.5">远程页面仅支持样式提取</div>' : '');
         initActionClicks();
+        document.getElementById('ps-action-extract')?.addEventListener('click', () => extractSpec());
       }
 
       const bottomContent = document.querySelector('#ps-ov-bottom-inner .ps-ov-content') as HTMLElement;
       if (bottomContent) {
-        bottomContent.innerHTML = '<div class="ps-panel-title">事件日志</div><div id="ps-event-list" style="padding:6px 12px;font-size:11px;color:#6b7280">等待事件…</div>';
+        bottomContent.innerHTML = '<div class="ps-panel-title">事件日志</div><div id="ps-event-list" style="padding:6px 12px;font-size:11px;color:#6b7280;line-height:1.8">等待交互…</div>';
       }
 
       initCollapseButtons();
