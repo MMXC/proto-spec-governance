@@ -1199,7 +1199,7 @@ function addLog(dir, event, data) {
   const log = document.getElementById('rt-log');
   const empty = document.getElementById('rt-log-empty');
   if (empty) empty.style.display = 'none';
-  const time = new Date().toLocaleTimeString('zh', {hour12:false,second:true});
+  const time = new Date().toLocaleTimeString('zh', {hour12:false,second:'2-digit'});
   const item = document.createElement('div');
   item.className = 'rt-log-item';
   item.innerHTML = `
