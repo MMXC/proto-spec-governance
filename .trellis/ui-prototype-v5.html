@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proto Spec — Initial Shell + Runtime Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;590;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --w:420px;--h:760px;
+  --bg:#08090c;--bg2:#12141a;--bg3:#1a1c24;
+  --bdr:rgba(255,255,255,0.06);--bdr2:rgba(255,255,255,0.10);--bdr3:rgba(255,255,255,0.15);
+  --t1:#f7f8f8;--t2:#c8cdd6;--t3:#8a8f98;--t4:#62666d;
+  --acc:#7170ff;--acc2:#828fff;--accb:rgba(113,112,255,0.12);
+  --ok:#10b981;--wr:#f59e0b;--er:#f87171;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
+  --r:5px;--r2:8px;--r3:12px;
+}
+body{
+  font-family:var(--sans);font-size:13px;
+  background:#08090c;color:var(--t1);
+  height:var(--h);width:var(--w);
+  display:flex;flex-direction:column;overflow:hidden;
+  border-radius:var(--r3);
+}
+
+/* ════════════════════════════════
+   HEADER
+═══════════════════════════════ */
+.hdr{
+  height:44px;background:var(--bg2);
+  border-bottom:1px solid var(--bdr);
+  display:flex;align-items:center;
+  padding:0 10px;gap:6px;flex-shrink:0;
+  position:relative;z-index:20;
+}
+.hdr-icon{width:24px;height:24px;background:var(--acc);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff}
+.hdr-title{font-size:13px;font-weight:590;flex:1}
+.hdr-pill{display:flex;align-items:center;gap:5px;padding:3px 10px;background:var(--bg3);border:1px solid var(--bdr);border-radius:20px;font-size:11px;color:var(--t3)}
+.hdr-pill-dot{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 5px var(--ok);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hdr-btn{width:28px;height:28px;border:none;background:transparent;border-radius:4px;color:var(--t4);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s}
+.hdr-btn:hover{background:var(--bg3);color:var(--t1)}
+.hdr-btn.active{color:var(--acc)}
+
+/* ════════════════════════════════
+   FLOW STEPS
+═══════════════════════════════ */
+.flow-steps{
+  display:flex;align-items:center;
+  background:var(--bg);border-bottom:1px solid var(--bdr);
+  padding:0 12px;flex-shrink:0;
+}
+.step{display:flex;align-items:center;gap:5px;padding:8px 0;font-size:12px;color:var(--t4);cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;white-space:nowrap}
+.step:hover{color:var(--t2)}
+.step.active{color:var(--acc);border-bottom-color:var(--acc);font-weight:590}
+.step.done{color:var(--ok)}
+.step-num{width:18px;height:18px;border-radius:50%;background:var(--bg3);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0}
+.step.active .step-num{background:var(--acc);border-color:var(--acc);color:#fff}
+.step.done .step-num{background:var(--ok);border-color:var(--ok);color:#fff}
+.step-sep{flex:1;height:1px;background:var(--bdr);margin:0 8px}
+
+/* ════════════════════════════════
+   BODY
+═══════════════════════════════ */
+.body{flex:1;overflow:hidden;display:flex;flex-direction:column;position:relative}
+
+/* Left drawer: Spec Tree */
+.left-drawer{position:absolute;left:0;top:0;bottom:0;width:170px;background:var(--bg2);border-right:1px solid var(--bdr2);display:flex;flex-direction:column;overflow:hidden;transform:translateX(-100%);transition:transform .3s cubic-bezier(0.4,0,0.2,1);z-index:15;box-shadow:4px 0 16px rgba(0,0,0,.3)}
+.left-drawer.open{transform:translateX(0)}
+.ld-hdr{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid var(--bdr);flex-shrink:0}
+.ld-title{font-size:11px;font-weight:590;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;flex:1}
+.ld-close{font-size:11px;color:var(--t4);cursor:pointer;padding:2px 6px;border-radius:3px;transition:all .15s}
+.ld-close:hover{color:var(--t1);background:var(--bg3)}
+.ld-search{padding:6px 8px;border-bottom:1px solid var(--bdr);flex-shrink:0}
+.ld-search input{width:100%;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);color:var(--t1);font-family:var(--sans);font-size:11.5px;padding:5px 8px;outline:none;transition:border-color .15s}
+.ld-search input:focus{border-color:var(--acc)}
+.ld-search input::placeholder{color:var(--t4)}
+.ld-body{flex:1;overflow-y:auto;padding:4px 0}
+.tree-item{display:flex;align-items:center;gap:5px;padding:5px 8px;cursor:pointer;border-left:2px solid transparent;transition:all .12s;user-select:none}
+.tree-item:hover{background:var(--bg3)}
+.tree-item.active{background:var(--accb);border-left-color:var(--acc)}
+.tree-item-expand{width:14px;height:14px;display:flex;align-items:center;justify-content:center;color:var(--t4);font-size:8px;flex-shrink:0;transition:transform .15s}
+.tree-item-expand.open{transform:rotate(90deg)}
+.tree-item-expand.empty{visibility:hidden}
+.tree-item-icon{width:14px;height:14px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex-shrink:0}
+.tree-children{padding-left:12px;display:none}
+.tree-children.open{display:block}
+.tree-item-name{font-size:11px;color:var(--t2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tree-item.active .tree-item-name{color:var(--acc);font-weight:500}
+.tree-count{font-size:9.5px;color:var(--t4)}
+
+/* Bottom drawer */
+.bottom-drawer{flex-shrink:0;background:var(--bg2);border-top:1px solid var(--bdr2);overflow:hidden;max-height:0;transition:max-height .3s cubic-bezier(0.4,0,0.2,1);z-index:15}
+.bottom-drawer.open{max-height:160px}
+.bd-inner{display:flex;flex-direction:column}
+.bd-row{display:flex;align-items:center;gap:6px;padding:7px 12px;border-bottom:1px solid var(--bdr)}
+.bd-row:last-child{border-bottom:none}
+.bd-label{font-size:10.5px;color:var(--t4);white-space:nowrap;flex-shrink:0}
+.bd-actions{display:flex;align-items:center;gap:3px;flex:1;flex-wrap:wrap}
+.bd-btn{display:flex;align-items:center;gap:4px;padding:4px 9px;background:transparent;border:1px solid var(--bdr);border-radius:20px;font-family:var(--sans);font-size:11px;font-weight:500;color:var(--t3);cursor:pointer;transition:all .12s;white-space:nowrap}
+.bd-btn:hover{color:var(--t2);border-color:var(--bdr2)}
+.bd-btn.active{color:var(--acc);border-color:var(--acc);background:var(--accb)}
+.bd-btn svg{width:12px;height:12px}
+.bd-sep{flex:1}
+.bd-toggle{width:28px;height:16px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.bd-toggle.on{background:var(--acc);border-color:var(--acc)}
+.bd-toggle::after{content:'';position:absolute;width:10px;height:10px;background:#fff;border-radius:50%;top:2px;left:2px;transition:transform .2s}
+.bd-toggle.on::after{transform:translateX(12px)}
+.split-row{display:flex;align-items:center;gap:3px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);padding:2px}
+.split-btn{width:26px;height:22px;border:none;background:transparent;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--t4);transition:all .12s;font-size:12px;font-weight:600}
+.split-btn:hover{color:var(--t2)}
+.split-btn.active{background:var(--acc);color:#fff}
+.sc-row{display:flex;align-items:center;gap:6px;padding:5px 12px;font-size:10.5px;color:var(--t4);overflow-x:auto;flex-wrap:nowrap}
+.sc-row::-webkit-scrollbar{height:2px}
+.sc-row::-webkit-scrollbar-thumb{background:var(--bdr)}
+.sc-chip{display:flex;align-items:center;gap:3px;white-space:nowrap}
+.sc-chip kbd{font-family:var(--mono);font-size:9px;background:var(--bg3);border:1px solid var(--bdr2);border-bottom-width:2px;border-radius:3px;padding:1px 4px;color:var(--t3)}
+
+/* Drawer toggles in header */
+.dr-btn{display:flex;align-items:center;gap:4px;padding:4px 10px;background:transparent;border:1px solid var(--bdr);border-radius:20px;font-family:var(--sans);font-size:11px;font-weight:500;color:var(--t3);cursor:pointer;transition:all .15s}
+.dr-btn:hover{color:var(--t2);border-color:var(--bdr2)}
+.dr-btn.active{color:var(--acc);border-color:var(--acc);background:var(--accb)}
+
+/* ════════════════════════════════
+   MAIN SCROLL
+═══════════════════════════════ */
+.main-scroll{flex:1;overflow-y:auto;overflow-x:hidden}
+.view{display:none;flex-direction:column;flex:1}
+.view.active{display:flex}
+
+/* ════════════════════════════════
+   VIEWS
+═══════════════════════════════ */
+
+/* ── V0: Start ── */
+.v-start{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:36px 28px;text-align:center}
+.v-start-icon{width:68px;height:68px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:var(--r3);display:flex;align-items:center;justify-content:center;font-size:30px}
+.v-start h2{font-size:17px;font-weight:590}
+.v-start p{font-size:12.5px;color:var(--t3);line-height:1.6;max-width:260px}
+.btn-primary{padding:10px 20px;background:var(--acc);border:none;border-radius:var(--r);color:#fff;font-family:var(--sans);font-size:13px;font-weight:590;cursor:pointer;transition:background .15s,transform .1s;width:100%}
+.btn-primary:hover{background:var(--acc2)}
+.btn-primary:active{transform:scale(.97)}
+.btn-ghost{padding:9px 20px;background:transparent;border:1px solid var(--bdr2);border-radius:var(--r);color:var(--t3);font-family:var(--sans);font-size:13px;cursor:pointer;transition:all .15s;width:100%}
+.btn-ghost:hover{border-color:var(--t4);color:var(--t2)}
+.v-start-cta{display:flex;flex-direction:column;gap:7px;width:100%;max-width:220px}
+.v-start-tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:4px}
+.v-start-tag{font-size:10.5px;color:var(--t4);background:var(--bg2);border:1px solid var(--bdr);padding:3px 9px;border-radius:20px;cursor:pointer;transition:all .15s}
+.v-start-tag:hover{color:var(--t2);border-color:var(--t4)}
+
+/* ── V1: Grill ── */
+.v-grill{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.gp{display:flex;align-items:center;gap:6px;padding:9px 14px;background:var(--bg);border-bottom:1px solid var(--bdr);flex-shrink:0}
+.gt{flex:1;height:3px;background:var(--bdr);border-radius:2px;overflow:hidden}
+.gf{height:100%;background:var(--acc);border-radius:2px;transition:width .4s ease}
+.gl{font-size:10.5px;color:var(--t4);white-space:nowrap}
+.gb{flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:12px}
+.gq{font-size:14px;font-weight:590;color:var(--t1);line-height:1.4}
+.gsub{font-size:12px;color:var(--t3);margin-top:3px;line-height:1.5}
+.gopts{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.gopt{display:flex;align-items:center;gap:9px;padding:10px 12px;background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r2);cursor:pointer;transition:all .15s;text-align:left;width:100%}
+.gopt:hover{background:var(--bg3);border-color:var(--acc);transform:translateX(2px)}
+.gopt.selected{background:var(--accb);border-color:var(--acc)}
+.gopt-icon{width:32px;height:32px;background:var(--bg);border:1px solid var(--bdr2);border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.gopt.selected .gopt-icon{border-color:var(--acc)}
+.gopt-t{font-size:12.5px;color:var(--t1);font-weight:500}
+.gopt-d{font-size:10.5px;color:var(--t3);margin-top:2px}
+.gopt-chk{width:17px;height:17px;border-radius:50%;border:2px solid var(--bdr2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.gopt.selected .gopt-chk{background:var(--acc);border-color:var(--acc)}
+.gopt.selected .gopt-chk::after{content:'✓';font-size:9px;color:#fff;font-weight:600}
+.gta-wrap{position:relative;margin-top:10px}
+.gta{width:100%;background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r2);color:var(--t1);font-family:var(--sans);font-size:13px;padding:10px 12px;resize:none;outline:none;min-height:64px;max-height:120px;line-height:1.5;transition:border-color .15s,box-shadow .15s}
+.gta:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(113,112,255,.1)}
+.gta::placeholder{color:var(--t4)}
+.gta-ctr{position:absolute;bottom:7px;right:9px;font-size:9.5px;color:var(--t4)}
+.gnav{display:flex;gap:7px;padding:9px 14px;border-top:1px solid var(--bdr);background:var(--bg);flex-shrink:0}
+.gnav .btn-ghost{flex:0 0 auto;width:auto;padding:7px 14px;font-size:12.5px}
+.gnav .btn-primary{flex:1;font-size:12.5px}
+
+/* ── V2: Runtime API ── */
+.v-runtime{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.rt-hdr{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg);border-bottom:1px solid var(--bdr);flex-shrink:0}
+.rt-hdr-title{font-size:12.5px;font-weight:590;flex:1}
+.rt-badge{display:flex;align-items:center;gap:4px;padding:2px 8px;background:var(--accb);border:1px solid rgba(113,112,255,.25);border-radius:20px;font-size:10px;color:var(--acc);cursor:pointer;transition:all .12s}
+.rt-badge:hover{background:var(--acc);color:#fff}
+.rt-body{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+
+/* Runtime tabs */
+.rt-tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--bdr);flex-shrink:0}
+.rt-tab{flex:1;padding:7px 0;display:flex;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:500;color:var(--t4);border-bottom:2px solid transparent;cursor:pointer;transition:all .15s}
+.rt-tab:hover{color:var(--t2)}
+.rt-tab.active{color:var(--acc);border-bottom-color:var(--acc);font-weight:590}
+
+/* API Reference */
+.rt-api{display:flex;flex-direction:column;padding:10px 12px;gap:6px;flex:1}
+.rt-api-section{display:flex;flex-direction:column;gap:4px}
+.rt-api-title{font-size:10px;font-weight:590;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;padding:4px 0 2px}
+.rt-api-item{
+  display:flex;align-items:flex-start;gap:8px;
+  padding:8px 10px;background:var(--bg2);
+  border:1px solid var(--bdr);border-radius:var(--r);
+  cursor:pointer;transition:all .15s;
+}
+.rt-api-item:hover{border-color:var(--acc);background:var(--accb)}
+.rt-event{font-family:var(--mono);font-size:11px;color:var(--acc);font-weight:500;flex-shrink:0}
+.rt-desc{font-size:11.5px;color:var(--t2);line-height:1.4}
+.rt-data{font-size:10px;color:var(--t4);font-family:var(--mono);margin-top:3px}
+
+/* Page Shell Preview */
+.rt-shell{flex:1;overflow:hidden;position:relative;background:#fff}
+.rt-shell-inner{position:absolute;inset:0;background:linear-gradient(135deg,#1a1a2e,#16213e);padding:14px;display:flex;flex-direction:column;gap:8px;overflow:hidden}
+.rt-shell-hdr{display:flex;gap:8px;align-items:center;padding-bottom:8px}
+.rt-shell-logo{width:28px;height:28px;background:rgba(255,255,255,.1);border-radius:6px}
+.rt-shell-nav{flex:1;display:flex;gap:6px}
+.rt-shell-nav-item{height:7px;background:rgba(255,255,255,.06);border-radius:2px;width:45px}
+.rt-shell-avatar{width:24px;height:24px;background:rgba(255,255,255,.08);border-radius:50%}
+.rt-shell-body{flex:1;display:grid;grid-template-columns:160px 1fr;gap:8px}
+.rt-shell-sidebar{background:rgba(255,255,255,.04);border-radius:5px;padding:8px;display:flex;flex-direction:column;gap:5px}
+.rt-shell-si{height:7px;background:rgba(255,255,255,.05);border-radius:2px}
+.rt-shell-si.h{height:24px;display:flex;align-items:center;gap:5px;padding:0 6px}
+.rt-shell-si-dot{width:9px;height:9px;background:rgba(255,255,255,.1);border-radius:2px;flex-shrink:0}
+.rt-shell-si-bar{flex:1;height:5px;background:rgba(255,255,255,.06);border-radius:2px}
+.rt-shell-main{background:rgba(255,255,255,.04);border-radius:5px;padding:10px;display:flex;flex-direction:column;gap:7px}
+.rt-shell-title{height:11px;background:rgba(255,255,255,.07);border-radius:2px;width:38%}
+.rt-shell-text{height:6px;background:rgba(255,255,255,.05);border-radius:2px}
+.rt-shell-card{height:48px;background:rgba(255,255,255,.05);border-radius:4px}
+.rt-shell-footer{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding-top:6px}
+.rt-shell-foot-item{height:34px;background:rgba(255,255,255,.04);border-radius:4px}
+
+/* Shell element highlights */
+.rt-tags-overlay{position:absolute;inset:0;pointer-events:none}
+.rt-tag{position:absolute;pointer-events:all;cursor:pointer;border:1.5px dashed transparent;border-radius:3px;transition:all .2s}
+.rt-tag:hover{border-color:var(--acc);background:rgba(113,112,255,.08)}
+.rt-tag.active{border:2px solid var(--acc);background:rgba(113,112,255,.12)}
+.rt-tag-label{position:absolute;top:-18px;left:0;background:var(--acc);color:#fff;font-size:8px;font-weight:600;padding:1px 5px;border-radius:3px 3px 0 0;white-space:nowrap}
+.rt-tag-badge{position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--bdr);border-radius:3px;padding:1px 5px;font-size:8px;color:var(--t3);white-space:nowrap}
+.rt-tag.active .rt-tag-badge{background:var(--accb);border-color:var(--acc);color:var(--acc)}
+
+/* Shell controls overlay */
+.rt-shell-ctrl{position:absolute;top:6px;right:6px;display:flex;flex-direction:column;gap:3px}
+.rt-shell-btn{width:24px;height:24px;background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.1);border-radius:4px;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;transition:all .15s}
+.rt-shell-btn:hover{background:rgba(0,0,0,.9);border-color:rgba(255,255,255,.3)}
+.rt-shell-btn.active{background:var(--acc);border-color:var(--acc)}
+.rt-shell-chain{position:absolute;bottom:6px;left:6px;display:flex;align-items:center;gap:3px;background:rgba(0,0,0,.6);border-radius:20px;padding:3px 10px}
+.rt-shell-chain-item{font-size:9px;color:var(--t3);cursor:pointer;transition:color .12s}
+.rt-shell-chain-item:hover{color:#fff}
+.rt-shell-chain-sep{color:var(--t4);font-size:8px}
+
+/* Event log */
+.rt-log{flex:1;overflow-y:auto;padding:8px 10px;display:flex;flex-direction:column;gap:4px}
+.rt-log-empty{padding:20px;text-align:center;color:var(--t4);font-size:12px}
+.rt-log-item{display:flex;align-items:flex-start;gap:7px;padding:7px 9px;background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);animation:slideIn .2s ease}
+@keyframes slideIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.rt-log-dir{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;flex-shrink:0}
+.rt-log-dir.in{background:rgba(16,185,129,.15);color:var(--ok)}
+.rt-log-dir.out{background:rgba(113,112,255,.15);color:var(--acc)}
+.rt-log-dir.sim{background:rgba(245,158,11,.15);color:var(--wr)}
+.rt-log-content{flex:1;min-width:0}
+.rt-log-event{font-family:var(--mono);font-size:10.5px;color:var(--t1);font-weight:500}
+.rt-log-data{font-family:var(--mono);font-size:9.5px;color:var(--t4);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rt-log-time{font-size:9px;color:var(--t4);flex-shrink:0;font-family:var(--mono)}
+
+/* Simulate controls */
+.rt-sim{flex-shrink:0;border-top:1px solid var(--bdr);padding:10px 12px;display:flex;flex-direction:column;gap:7px}
+.rt-sim-title{font-size:10px;font-weight:590;color:var(--t4);text-transform:uppercase;letter-spacing:.5px}
+.rt-sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.rt-sim-btn{padding:6px 10px;background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);font-family:var(--sans);font-size:11px;color:var(--t2);cursor:pointer;transition:all .12s;text-align:left}
+.rt-sim-btn:hover{background:var(--bg3);border-color:var(--t4);color:var(--t1)}
+.rt-sim-btn.desc{font-size:9.5px;color:var(--t4);grid-column:1/-1;padding:4px 10px;border-color:transparent}
+
+/* ── V3: Skeleton ── */
+.v-skel{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.skel-hdr{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg);border-bottom:1px solid var(--bdr);flex-shrink:0}
+.skel-hdr-title{font-size:13px;font-weight:590;flex:1}
+.skel-hdr-count{font-size:11px;color:var(--t3);padding:2px 8px;background:var(--bg2);border:1px solid var(--bdr);border-radius:20px}
+.skel-grid{flex:1;overflow-y:auto;padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:7px;align-content:start}
+.skel-card{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r2);overflow:hidden;cursor:pointer;transition:all .15s;display:flex;flex-direction:column}
+.skel-card:hover{border-color:var(--t4);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.skel-card.selected{border-color:var(--acc);box-shadow:0 0 0 2px rgba(113,112,255,.3)}
+.skel-preview{height:140px;background:var(--bg);position:relative;overflow:hidden}
+.skel-sel{position:absolute;top:7px;right:7px;width:20px;height:20px;background:var(--acc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:600;opacity:0;transition:opacity .15s}
+.skel-card.selected .skel-sel{opacity:1}
+.skel-page{position:absolute;inset:0;padding:8px;display:flex;flex-direction:column;gap:5px}
+.skel-page.tA{background:linear-gradient(135deg,#1a1a2e,#16213e)}
+.skel-page.tB{background:linear-gradient(135deg,#1e1e2a,#2a1a3a)}
+.skel-page.tC{background:linear-gradient(135deg,#1e2a1e,#1a3a2a)}
+.skel-page.tD{background:linear-gradient(135deg,#2a1a1a,#3a1a1a)}
+.si{position:absolute;inset:0;padding:6px;display:flex;flex-direction:column;gap:4px}
+.si-bar{height:6px;background:rgba(255,255,255,.06);border-radius:2px}
+.si-bar.w30{width:30%}.si-bar.w45{width:45%}.si-bar.w55{width:55%}.si-bar.w65{width:65%}.si-bar.w80{width:80%}
+.si-bar.h10{height:10px}.si-bar.h6{height:6px}
+.si-rect{background:rgba(255,255,255,.04);border-radius:3px}
+.si-rect.h{height:22px;display:flex;align-items:center;gap:4px;padding:0 5px}
+.si-dot{width:8px;height:8px;background:rgba(255,255,255,.1);border-radius:2px}
+.si-bar-line{flex:1;height:5px;background:rgba(255,255,255,.06);border-radius:2px}
+.si-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:3px;flex:1}
+.si-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px}
+.si-card{height:36px;background:rgba(255,255,255,.05);border-radius:3px}
+.skel-card-ft{padding:8px 10px;border-top:1px solid var(--bdr);display:flex;align-items:center;gap:5px}
+.skel-card-name{font-size:11.5px;color:var(--t2);flex:1;font-weight:500}
+.skel-card-tag{font-size:9.5px;color:var(--t4);padding:2px 6px;background:var(--bg);border-radius:10px}
+.skel-nav{display:flex;gap:7px;padding:8px 14px;border-top:1px solid var(--bdr);background:var(--bg);flex-shrink:0}
+.skel-regen{display:flex;align-items:center;justify-content:center;gap:4px;padding:6px;background:var(--bg2);border-radius:var(--r);color:var(--t3);font-size:11px;cursor:pointer;transition:color .15s}
+.skel-regen:hover{color:var(--t1)}
+.skel-regen svg{width:12px;height:12px}
+.skel-nav .btn-ghost{width:auto;flex:0 0 auto;padding:7px 14px;font-size:12px}
+.skel-nav .btn-primary{flex:1;font-size:12px}
+
+/* ════════════════════════════════
+   TOAST
+═══════════════════════════════ */
+#toasts{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:4px;z-index:9999;pointer-events:none}
+.toast{display:flex;align-items:center;gap:7px;padding:6px 13px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:var(--r);font-size:11.5px;color:var(--t1);box-shadow:0 4px 16px rgba(0,0,0,.5);animation:ti .2s ease,to .2s ease 2.2s forwards;white-space:nowrap}
+.toast.ok{border-color:rgba(16,185,129,.4)}.toast.ok .ti{color:var(--ok)}
+.toast.er{border-color:rgba(248,113,113,.4)}.toast.er .ti{color:var(--er)}
+@keyframes ti{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes to{from{opacity:1}to{opacity:0}}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div id="toasts"></div>
+
+<!-- ════════════════════════════════
+   HEADER
+═══════════════════════════════ -->
+<div class="hdr">
+  <div class="hdr-icon">PS</div>
+  <div class="hdr-title">Proto Spec</div>
+  <div class="hdr-pill"><div class="hdr-pill-dot"></div>Agent 就绪</div>
+  <div style="flex:1"></div>
+  <button class="dr-btn" id="btn-ld" onclick="toggleLD()">
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h4v4H3zM9 3h4v4H9zM3 9h4v4H3zM9 9h2v4H9z"/></svg>
+    Spec 树
+  </button>
+  <button class="dr-btn" id="btn-bd" onclick="toggleBD()">
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12h12M2 8h12M2 4h12"/></svg>
+    工具栏
+  </button>
+  <button class="hdr-btn" onclick="goStep(0)" title="新建">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M2 8h12"/></svg>
+  </button>
+</div>
+
+<!-- ════════════════════════════════
+   FLOW STEPS
+═══════════════════════════════ -->
+<div class="flow-steps">
+  <div class="step active" id="step-0" onclick="goStep(0)"><div class="step-num">1</div><span>开始</span></div>
+  <div class="step-sep"></div>
+  <div class="step" id="step-1" onclick="goStep(1)"><div class="step-num">2</div><span>澄清</span></div>
+  <div class="step-sep"></div>
+  <div class="step" id="step-2" onclick="goStep(2)"><div class="step-num">3</div><span>runtime</span></div>
+  <div class="step-sep"></div>
+  <div class="step" id="step-3" onclick="goStep(3)"><div class="step-num">4</div><span>骨架</span></div>
+  <div class="step-sep"></div>
+  <div class="step" id="step-4" onclick="goStep(4)"><div class="step-num">5</div><span>绑定</span></div>
+  <div class="step-sep"></div>
+  <div class="step" id="step-5" onclick="goStep(5)"><div class="step-num">6</div><span>Spec</span></div>
+  <div class="step-sep"></div>
+  <div class="step" id="step-6" onclick="goStep(6)"><div class="step-num">7</div><span>原型</span></div>
+</div>
+
+<!-- ════════════════════════════════
+   BODY
+═══════════════════════════════ -->
+<div class="body">
+
+  <!-- LEFT DRAWER: Spec Tree -->
+  <div class="left-drawer" id="left-drawer">
+    <div class="ld-hdr">
+      <span class="ld-title">Spec 树</span>
+      <span class="ld-close" onclick="toggleLD()">✕</span>
+    </div>
+    <div class="ld-search">
+      <input placeholder="搜索 Spec…" oninput="filterTree(this.value)" />
+    </div>
+    <div class="ld-body">
+      <div class="tree-item active" onclick="treeSelect(this,'page-shell')">
+        <div class="tree-item-expand open">▶</div>
+        <div class="tree-item-icon" style="background:#2a2b3d;color:#a5a8ff">P</div>
+        <span class="tree-item-name">page-shell</span>
+        <span class="tree-count">L2</span>
+      </div>
+      <div class="tree-children open" style="padding-left:12px">
+        <div class="tree-item" onclick="treeSelect(this,'sidebar-nav')">
+          <div class="tree-item-expand open">▶</div>
+          <div class="tree-item-icon" style="background:#2d3025;color:#b5d98e">C</div>
+          <span class="tree-item-name">sidebar-nav</span>
+        </div>
+        <div class="tree-children open" style="padding-left:12px">
+          <div class="tree-item" onclick="treeSelect(this,'menu-item')">
+            <div class="tree-item-expand empty">▶</div>
+            <div class="tree-item-icon" style="background:#2d2a25;color:#d9b88e">B</div>
+            <span class="tree-item-name">menu-item</span>
+          </div>
+          <div class="tree-item" onclick="treeSelect(this,'logo')">
+            <div class="tree-item-expand empty">▶</div>
+            <div class="tree-item-icon" style="background:#3d2525;color:#d98e8e">S</div>
+            <span class="tree-item-name">logo</span>
+          </div>
+        </div>
+        <div class="tree-item" onclick="treeSelect(this,'main-content')">
+          <div class="tree-item-expand open">▶</div>
+          <div class="tree-item-icon" style="background:#2d3025;color:#b5d98e">C</div>
+          <span class="tree-item-name">main-content</span>
+        </div>
+        <div class="tree-children open" style="padding-left:12px">
+          <div class="tree-item" onclick="treeSelect(this,'card-list')">
+            <div class="tree-item-expand empty">▶</div>
+            <div class="tree-item-icon" style="background:#2d2a25;color:#d9b88e">B</div>
+            <span class="tree-item-name">card-list</span>
+          </div>
+        </div>
+      </div>
+      <div class="tree-item" onclick="treeSelect(this,'page-login')">
+        <div class="tree-item-expand">▶</div>
+        <div class="tree-item-icon" style="background:#2a2b3d;color:#a5a8ff">P</div>
+        <span class="tree-item-name">page-login</span>
+        <span class="tree-count">L2</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM DRAWER: Toolbar -->
+  <div class="bottom-drawer" id="bottom-drawer">
+    <div class="bd-inner">
+      <div class="bd-row">
+        <span class="bd-label">操作</span>
+        <div class="bd-actions">
+          <button class="bd-btn active" id="btn-ann" onclick="toggleAnn()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M2 8h12"/></svg>
+            标注
+          </button>
+          <button class="bd-btn" onclick="goStep(4)">绑定</button>
+          <button class="bd-btn" onclick="genAll()">生成</button>
+        </div>
+        <div class="bd-sep"></div>
+        <span class="bd-label">分屏</span>
+        <div class="split-row">
+          <button class="split-btn active" onclick="setSplit(1,this)">1</button>
+          <button class="split-btn" onclick="setSplit(2,this)">2</button>
+          <button class="split-btn" onclick="setSplit(4,this)">4</button>
+        </div>
+      </div>
+      <div class="bd-row">
+        <span class="bd-label">模式</span>
+        <div class="bd-actions">
+          <button class="bd-btn active" id="btn-intent" onclick="setMode('intent',this)">🎯 意图</button>
+          <button class="bd-btn" id="btn-listen" onclick="setMode('listen',this)">👂 监听</button>
+        </div>
+        <div class="bd-sep"></div>
+        <span class="bd-label">Agent</span>
+        <div class="bd-toggle on" onclick="this.classList.toggle('on')"></div>
+        <span class="bd-label" style="margin-left:4px">流式</span>
+        <div class="bd-toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="sc-row">
+        <span style="color:var(--t3)">⌨</span>
+        <div class="sc-chip"><kbd>⌘K</kbd>命令</div>
+        <div class="sc-chip"><kbd>⌘Z</kbd>撤销</div>
+        <div class="sc-chip"><kbd>G</kbd>生成</div>
+        <div class="sc-chip"><kbd>A</kbd>标注</div>
+        <div class="sc-chip"><kbd>⌘B</kbd>绑定</div>
+        <div class="sc-chip"><kbd>⌘1-3</kbd>分屏</div>
+        <div class="sc-chip"><kbd>?</kbd>帮助</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN SCROLL -->
+  <div class="main-scroll">
+
+    <!-- V0: Start -->
+    <div class="view v-start active" id="view-0">
+      <div class="v-start-icon">✦</div>
+      <h2>你想做什么应用？</h2>
+      <p>描述你的想法，Agent 会引导你澄清，直到你确认满意的页面骨架和 Spec 体系。</p>
+      <div class="v-start-cta">
+        <button class="btn-primary" onclick="goStep(1)">开始描述 →</button>
+        <button class="btn-ghost" onclick="goStep(3)">从骨架模板开始</button>
+      </div>
+      <div class="v-start-tags">
+        <span class="v-start-tag" onclick="quickStart('dashboard')">📊 数据看板</span>
+        <span class="v-start-tag" onclick="quickStart('saas')">🚀 SaaS</span>
+        <span class="v-start-tag" onclick="quickStart('tool')">🛠 效率工具</span>
+      </div>
+    </div>
+
+    <!-- V1: Grill-Me -->
+    <div class="view v-grill" id="view-1">
+      <div class="gp">
+        <div class="gt"><div class="gf" id="gf" style="width:25%"></div></div>
+        <div class="gl" id="gl">第 1 步 / 共 4 步</div>
+      </div>
+      <div class="gb">
+        <div id="gq1">
+          <div class="gq">你想做什么类型的应用？</div>
+          <div class="gsub">比如：To-Do 工具、博客平台、数据看板、AI 助手…</div>
+          <div class="gopts">
+            <button class="gopt" onclick="selectOpt(this,'type','dashboard')">
+              <div class="gopt-icon">📊</div>
+              <div><div class="gopt-t">数据看板 / Dashboard</div><div class="gopt-d">数据可视化、指标监控、管理后台</div></div>
+              <div class="gopt-chk"></div>
+            </button>
+            <button class="gopt" onclick="selectOpt(this,'type','saas')">
+              <div class="gopt-icon">🚀</div>
+              <div><div class="gopt-t">SaaS 产品</div><div class="gopt-d">B2B/B2C 订阅服务、仪表盘、设置页</div></div>
+              <div class="gopt-chk"></div>
+            </button>
+            <button class="gopt" onclick="selectOpt(this,'type','social')">
+              <div class="gopt-icon">💬</div>
+              <div><div class="gopt-t">社交 / 内容平台</div><div class="gopt-d">信息流、社区、创作工具</div></div>
+              <div class="gopt-chk"></div>
+            </button>
+            <button class="gopt" onclick="selectOpt(this,'type','tool')">
+              <div class="gopt-icon">🛠</div>
+              <div><div class="gopt-t">效率工具</div><div class="gopt-d">编辑器、项目管理、笔记、代码工具</div></div>
+              <div class="gopt-chk"></div>
+            </button>
+          </div>
+          <div class="gta-wrap">
+            <textarea class="gta" id="gta" placeholder="或者直接描述你的想法…" rows="2" oninput="document.getElementById('gta-ctr').textContent=this.value.length"></textarea>
+            <div class="gta-ctr" id="gta-ctr">0</div>
+          </div>
+        </div>
+        <div id="gq2" style="display:none">
+          <div class="gq">有没有参考产品？</div>
+          <div class="gsub">挑 1-2 个你喜欢的，作为 UI 风格参照。</div>
+          <div class="gopts">
+            <button class="gopt" onclick="selectOpt(this,'ref','linear')">
+              <div class="gopt-icon" style="font-size:12px;background:#0f1011;border:none;color:#7170ff;font-weight:700">L</div>
+              <div><div class="gopt-t">Linear</div><div class="gopt-d">极简深色、快捷键驱动、速度感</div></div>
+              <div class="gopt-chk"></div>
+            </button>
+            <button class="gopt" onclick="selectOpt(this,'ref','notion')">
+              <div class="gopt-icon" style="font-size:12px;background:#fff;border:none;color:#000;font-weight:700">N</div>
+              <div><div class="gopt-t">Notion</div><div class="gopt-d">白底卡片、模块化、创作感</div></div>
+              <div class="gopt-chk"></div>
+            </button>
+            <button class="gopt" onclick="selectOpt(this,'ref','figma')">
+              <div class="gopt-icon" style="font-size:12px;background:#1e1e1e;border:none;color:#a259ff;font-weight:700">F</div>
+              <div><div class="gopt-t">Figma</div><div class="gopt-d">工具感、专业、功能密度高</div></div>
+              <div class="gopt-chk"></div>
+            </button>
+            <button class="gopt" onclick="selectOpt(this,'ref','none')">
+              <div class="gopt-icon">✦</div>
+              <div><div class="gopt-t">无，信任 Agent 的判断</div><div class="gopt-d">让 Agent 根据你的描述自行设计</div></div>
+              <div class="gopt-chk"></div>
+            </button>
+          </div>
+        </div>
+        <div id="gq3" style="display:none">
+          <div class="gq">你更看重什么？</div>
+          <div class="gsub">选出最重要的 1-2 个，指导整体设计方向。</div>
+          <div class="gopts">
+            <button class="gopt" onclick="selectOpt(this,'pref','speed','m')">
+              <div class="gopt-icon">⚡</div>
+              <div><div class="gopt-t">速度感</div><div class="gopt-d">快捷键、命令面板、零摩擦操作</div></div>
+              <div class="gopt-chk"></div>
+            </button>
+            <button class="gopt" onclick="selectOpt(this,'pref','clarity','m')">
+              <div class="gopt-icon">👁</div>
+              <div><div class="gopt-t">清晰直观</div><div class="gopt-d">一目了然、新手友好、信息不过载</div></div>
+              <div class="gopt-chk"></div>
+            </button>
+            <button class="gopt" onclick="selectOpt(this,'pref','beauty','m')">
+              <div class="gopt-icon">✨</div>
+              <div><div class="gopt-t">视觉精致</div><div class="gopt-d">动效、渐变、细节打磨、品牌感</div></div>
+              <div class="gopt-chk"></div>
+            </button>
+            <button class="gopt" onclick="selectOpt(this,'pref','density','m')">
+              <div class="gopt-icon">⊞</div>
+              <div><div class="gopt-t">信息密度</div><div class="gopt-d">专业工具感、数据丰富、面板多</div></div>
+              <div class="gopt-chk"></div>
+            </button>
+          </div>
+        </div>
+        <div id="gq4" style="display:none">
+          <div class="gq">确认你的需求</div>
+          <div class="gsub">基于你的选择，我来生成 4 种骨架方案。</div>
+          <div style="background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r2);padding:12px;display:flex;flex-direction:column;gap:6px;margin-top:12px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:11.5px;color:var(--t3)">应用类型</span>
+              <span style="font-size:11.5px;color:var(--t1);font-weight:500;margin-left:auto" id="s-type">—</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:11.5px;color:var(--t3)">UI 参照</span>
+              <span style="font-size:11.5px;color:var(--t1);font-weight:500;margin-left:auto" id="s-ref">—</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:11.5px;color:var(--t3)">设计偏好</span>
+              <span style="font-size:11.5px;color:var(--t1);font-weight:500;margin-left:auto" id="s-pref">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="gnav">
+        <button class="btn-ghost" id="gback" onclick="gBack()" style="visibility:hidden">← 上一步</button>
+        <button class="btn-primary" id="gnext" onclick="gNext()">下一步 →</button>
+      </div>
+    </div>
+
+    <!-- V2: Runtime API — THIS IS THE CORE DIFFERENCE FROM V4 -->
+    <div class="view v-runtime" id="view-2">
+      <div class="rt-hdr">
+        <span class="rt-hdr-title">runtime.js 能力演示</span>
+        <div class="rt-badge" onclick="toast('runtime.js 文档…', 'info')">📖 API 文档</div>
+      </div>
+      <div class="rt-tabs">
+        <div class="rt-tab active" onclick="switchRT(this,'api')">API 事件</div>
+        <div class="rt-tab" onclick="switchRT(this,'shell')">页面壳</div>
+        <div class="rt-tab" onclick="switchRT(this,'log')">事件日志</div>
+      </div>
+      <div class="rt-body">
+
+        <!-- API Reference Tab -->
+        <div id="rt-api" class="rt-api">
+          <div class="rt-api-section">
+            <div class="rt-api-title">Extension → HTML (onmessage)</div>
+            <div class="rt-api-item" onclick="simEvent('spec:select')">
+              <span class="rt-event">spec:select</span>
+              <div>
+                <div class="rt-desc">选中 Spec → 高亮对应元素</div>
+                <div class="rt-data">{specName, layer, selector}</div>
+              </div>
+            </div>
+            <div class="rt-api-item" onclick="simEvent('spec:bind')">
+              <span class="rt-event">spec:bind</span>
+              <div>
+                <div class="rt-desc">绑定新 Spec 到页面元素</div>
+                <div class="rt-data">{specName, selector}</div>
+              </div>
+            </div>
+            <div class="rt-api-item" onclick="simEvent('onboard:start')">
+              <span class="rt-event">onboard:start</span>
+              <div>
+                <div class="rt-desc">开启 onboard 展示模式</div>
+                <div class="rt-data">{specName, steps: [...]}</div>
+              </div>
+            </div>
+            <div class="rt-api-item" onclick="simEvent('onboard:step')">
+              <span class="rt-event">onboard:step</span>
+              <div>
+                <div class="rt-desc">前进 / 后退 onboard 步骤</div>
+                <div class="rt-data">{step: 0 | 1 | 2}</div>
+              </div>
+            </div>
+            <div class="rt-api-item" onclick="simEvent('design:toggle')">
+              <span class="rt-event">design:toggle</span>
+              <div>
+                <div class="rt-desc">切换深/浅色主题</div>
+                <div class="rt-data">{theme: 'dark' | 'light'}</div>
+              </div>
+            </div>
+            <div class="rt-api-item" onclick="simEvent('layout:split')">
+              <span class="rt-event">layout:split</span>
+              <div>
+                <div class="rt-desc">切换分屏布局</div>
+                <div class="rt-data">{mode: '1-split' | '2-split' | '4-split'}</div>
+              </div>
+            </div>
+            <div class="rt-api-item" onclick="simEvent('elem:highlight')">
+              <span class="rt-event">elem:highlight</span>
+              <div>
+                <div class="rt-desc">高亮指定元素（带颜色）</div>
+                <div class="rt-data">{selector, color}</div>
+              </div>
+            </div>
+            <div class="rt-api-item" onclick="simEvent('annotation:show')">
+              <span class="rt-event">annotation:show</span>
+              <div>
+                <div class="rt-desc">显示/隐藏标注覆盖层</div>
+                <div class="rt-data">{mode: 'show' | 'hide'}</div>
+              </div>
+            </div>
+          </div>
+          <div class="rt-api-section" style="margin-top:8px">
+            <div class="rt-api-title">HTML → Extension (postMessage)</div>
+            <div class="rt-api-item" onclick="toast('HTML 主动上报元素点击', 'info')">
+              <span class="rt-event">elem:click</span>
+              <div>
+                <div class="rt-desc">用户点击页面元素 → 上报给 Extension</div>
+                <div class="rt-data">{selector, rect, specBound?}</div>
+              </div>
+            </div>
+            <div class="rt-api-item" onclick="toast('HTML 上报 Spec 绑定完成', 'info')">
+              <span class="rt-event">spec:bound</span>
+              <div>
+                <div class="rt-desc">Spec 绑定完成后通知 Extension</div>
+                <div class="rt-data">{specName, selector}</div>
+              </div>
+            </div>
+            <div class="rt-api-item" onclick="toast('HTML 上报 onboard 完成', 'info')">
+              <span class="rt-event">onboard:done</span>
+              <div>
+                <div class="rt-desc">onboard 演示完成</div>
+                <div class="rt-data">{specName, stepsCompleted}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Simulate controls -->
+          <div class="rt-sim">
+            <div class="rt-sim-title">模拟 Extension → HTML</div>
+            <div class="rt-sim-grid">
+              <div class="rt-sim-btn desc">点击上方 API 事件，或使用右侧按钮</div>
+              <button class="rt-sim-btn" onclick="simOnboard()">🎯 onboard 演示</button>
+              <button class="rt-sim-btn" onclick="simHighlight()">🔵 高亮元素</button>
+              <button class="rt-sim-btn" onclick="simTheme()">🌓 切换主题</button>
+              <button class="rt-sim-btn" onclick="simSplit()">⊟ 分屏切换</button>
+              <button class="rt-sim-btn" onclick="simClearLog()">🗑 清空日志</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Page Shell Tab -->
+        <div id="rt-shell" class="rt-shell" style="display:none">
+          <div class="rt-shell-inner">
+            <div class="rt-shell-hdr">
+              <div class="rt-shell-logo">✦</div>
+              <div class="rt-shell-nav">
+                <div class="rt-shell-nav-item"></div>
+                <div class="rt-shell-nav-item" style="width:50px"></div>
+                <div class="rt-shell-nav-item" style="width:30px"></div>
+              </div>
+              <div class="rt-shell-avatar"></div>
+            </div>
+            <div class="rt-shell-body">
+              <div class="rt-shell-sidebar">
+                <div class="rt-shell-si" style="width:50%"></div>
+                <div class="rt-shell-si h">
+                  <div class="rt-shell-si-dot" style="background:rgba(113,112,255,.4)"></div>
+                  <div class="rt-shell-si-bar"></div>
+                </div>
+                <div class="rt-shell-si h">
+                  <div class="rt-shell-si-dot"></div>
+                  <div class="rt-shell-si-bar"></div>
+                </div>
+                <div class="rt-shell-si h">
+                  <div class="rt-shell-si-dot"></div>
+                  <div class="rt-shell-si-bar"></div>
+                </div>
+              </div>
+              <div class="rt-shell-main">
+                <div class="rt-shell-title"></div>
+                <div class="rt-shell-text" style="width:80%"></div>
+                <div class="rt-shell-text" style="width:65%"></div>
+                <div class="rt-shell-card"></div>
+              </div>
+            </div>
+            <div class="rt-shell-footer">
+              <div class="rt-shell-foot-item"></div>
+              <div class="rt-shell-foot-item"></div>
+              <div class="rt-shell-foot-item"></div>
+            </div>
+          </div>
+          <!-- Spec tag overlays -->
+          <div class="rt-tags-overlay" id="rt-tags-overlay">
+            <div class="rt-tag" id="rt-tag-0" style="left:14px;top:14px;width:calc(100% - 28px);height:42px" onclick="selectRTTag(0)">
+              <div class="rt-tag-label">L2-page-header</div>
+              <div class="rt-tag-badge">page</div>
+            </div>
+            <div class="rt-tag active" id="rt-tag-1" style="left:14px;top:64px;width:160px;height:calc(100% - 122px)" onclick="selectRTTag(1)">
+              <div class="rt-tag-label">L3-sidebar-nav</div>
+              <div class="rt-tag-badge">component</div>
+            </div>
+            <div class="rt-tag" id="rt-tag-2" style="left:182px;top:64px;width:calc(100% - 196px);height:80px" onclick="selectRTTag(2)">
+              <div class="rt-tag-label">L3-main-content</div>
+              <div class="rt-tag-badge">component</div>
+            </div>
+            <div class="rt-tag" id="rt-tag-3" style="left:182px;top:150px;width:calc(100% - 196px);height:calc(100% - 200px)" onclick="selectRTTag(3)">
+              <div class="rt-tag-label">L4-card-list</div>
+              <div class="rt-tag-badge">behavior</div>
+            </div>
+            <div class="rt-tag" id="rt-tag-4" style="left:14px;bottom:14px;width:calc(100% - 28px);height:42px" onclick="selectRTTag(4)">
+              <div class="rt-tag-label">L2-footer-nav</div>
+              <div class="rt-tag-badge">page</div>
+            </div>
+          </div>
+          <!-- Controls overlay -->
+          <div class="rt-shell-ctrl">
+            <div class="rt-shell-btn" id="rt-ann-btn" onclick="toggleRTTags()" title="标注显示">✦</div>
+            <div class="rt-shell-btn" onclick="toast('缩放: 100%', 'info')" title="缩放">🔍</div>
+            <div class="rt-shell-btn" onclick="toast('全屏预览…', 'info')" title="全屏">⛶</div>
+          </div>
+          <!-- Spec chain -->
+          <div class="rt-shell-chain">
+            <span class="rt-shell-chain-item" style="color:#fff">sidebar-nav</span>
+            <span class="rt-shell-chain-sep">›</span>
+            <span class="rt-shell-chain-item">menu-item</span>
+            <span class="rt-shell-chain-sep">›</span>
+            <span class="rt-shell-chain-item">icon-btn</span>
+          </div>
+        </div>
+
+        <!-- Event Log Tab -->
+        <div id="rt-log" class="rt-log" style="display:none">
+          <div class="rt-log-empty" id="rt-log-empty">点击左侧「API 事件」触发 postMessage，观察日志…</div>
+        </div>
+
+      </div><!-- /rt-body -->
+    </div><!-- /v-runtime -->
+
+    <!-- V3: Skeleton -->
+    <div class="view v-skel" id="view-3">
+      <div class="skel-hdr">
+        <span class="skel-hdr-title">骨架方案</span>
+        <span class="skel-hdr-count">4 种</span>
+      </div>
+      <div class="skel-grid">
+        <div class="skel-card selected" id="sc-0" onclick="selectSk(0)">
+          <div class="skel-preview">
+            <div class="skel-sel">✓</div>
+            <div class="skel-page tA">
+              <div class="si">
+                <div style="display:flex;gap:5px;align-items:center;margin-bottom:3px">
+                  <div style="width:22px;height:22px;background:rgba(255,255,255,.1);border-radius:4px"></div>
+                  <div class="si-bar h10 w55"></div>
+                  <div style="flex:1"></div>
+                  <div style="width:20px;height:20px;background:rgba(255,255,255,.08);border-radius:50%"></div>
+                </div>
+                <div style="flex:1;display:grid;grid-template-columns:1fr 2fr;gap:4px">
+                  <div style="background:rgba(255,255,255,.04);border-radius:3px;padding:5px">
+                    <div class="si-bar si-bar h6 w70"></div>
+                    <div class="si-bar si-bar h6 w50"></div>
+                  </div>
+                  <div style="background:rgba(255,255,255,.04);border-radius:3px;padding:5px">
+                    <div class="si-bar si-bar h6 w90"></div>
+                    <div class="si-bar si-bar h6 w70"></div>
+                  </div>
+                </div>
+                <div class="si-grid-3">
+                  <div class="si-card"></div>
+                  <div class="si-card"></div>
+                  <div class="si-card"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="skel-card-ft">
+            <span class="skel-card-name">Dashboard Pro</span>
+            <span class="skel-card-tag">侧边栏</span>
+          </div>
+        </div>
+        <div class="skel-card" id="sc-1" onclick="selectSk(1)">
+          <div class="skel-preview">
+            <div class="skel-sel">✓</div>
+            <div class="skel-page tB">
+              <div class="si">
+                <div style="height:36px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:5px;padding-bottom:5px">
+                  <div style="width:20px;height:20px;background:rgba(255,255,255,.1);border-radius:4px"></div>
+                  <div class="si-bar h6 w25"></div>
+                  <div style="flex:1"></div>
+                  <div class="si-bar h6 w20"></div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:3px">
+                  <div style="flex:1;background:rgba(255,255,255,.04);border-radius:3px"></div>
+                  <div class="si-grid-2">
+                    <div class="si-card"></div>
+                    <div class="si-card"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="skel-card-ft">
+            <span class="skel-card-name">Content Hub</span>
+            <span class="skel-card-tag">顶部导航</span>
+          </div>
+        </div>
+        <div class="skel-card" id="sc-2" onclick="selectSk(2)">
+          <div class="skel-preview">
+            <div class="skel-sel">✓</div>
+            <div class="skel-page tC">
+              <div class="si">
+                <div style="flex:1;background:rgba(255,255,255,.04);border-radius:5px;padding:8px;display:flex;flex-direction:column;gap:4px">
+                  <div style="display:flex;align-items:center;gap:5px">
+                    <div class="si-bar h10 w35"></div>
+                    <div style="flex:1"></div>
+                    <div style="width:48px;height:20px;background:rgba(255,255,255,.08);border-radius:4px"></div>
+                  </div>
+                  <div class="si-bar h6 w60"></div>
+                  <div class="si-bar h6 w45"></div>
+                  <div style="flex:1"></div>
+                  <div class="si-grid-3">
+                    <div class="si-card"></div>
+                    <div class="si-card"></div>
+                    <div class="si-card"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="skel-card-ft">
+            <span class="skel-card-name">Feed Focus</span>
+            <span class="skel-card-tag">居中内容</span>
+          </div>
+        </div>
+        <div class="skel-card" id="sc-3" onclick="selectSk(3)">
+          <div class="skel-preview">
+            <div class="skel-sel">✓</div>
+            <div class="skel-page tD">
+              <div class="si">
+                <div style="display:flex;height:100%;gap:4px">
+                  <div style="width:44px;background:rgba(255,255,255,.04);border-radius:4px;display:flex;flex-direction:column;gap:3px;padding:5px;align-items:center">
+                    <div style="width:26px;height:26px;background:rgba(255,255,255,.1);border-radius:4px"></div>
+                    <div class="si-bar h6 w80"></div>
+                    <div class="si-bar h6 w80"></div>
+                  </div>
+                  <div style="flex:1;display:flex;flex-direction:column;gap:3px">
+                    <div class="si-bar h10 w50"></div>
+                    <div class="si-grid-2">
+                      <div class="si-card"></div>
+                      <div class="si-card"></div>
+                    </div>
+                    <div class="si-grid-2">
+                      <div class="si-card"></div>
+                      <div class="si-card"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="skel-card-ft">
+            <span class="skel-card-name">Tool Grid</span>
+            <span class="skel-card-tag">图标导航</span>
+          </div>
+        </div>
+      </div>
+      <div class="skel-nav">
+        <div class="skel-regen" onclick="toast('重新生成骨架…', 'info')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8a6 6 0 1 0 1.5-3.9M2 4v4h4"/></svg>
+          重新生成
+        </div>
+        <button class="btn-ghost" onclick="goStep(1)">← 上一步</button>
+        <button class="btn-primary" onclick="confirmSk()">确认骨架 →</button>
+      </div>
+    </div>
+
+    <!-- V4-V6: Binding / Spec / Proto (placeholder, same structure as v2) -->
+    <div class="view v-skel" id="view-4" style="display:none">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;text-align:center">
+        <div style="font-size:40px">🔗</div>
+        <div>
+          <h3 style="font-size:16px;font-weight:590;margin-bottom:8px">Spec 绑定</h3>
+          <p style="font-size:12px;color:var(--t3);line-height:1.6">在页面骨架上绑定 L2/L3/L4 Spec，确立层级关系和父子依赖。</p>
+        </div>
+        <button class="btn-primary" onclick="goStep(5)" style="max-width:160px">继续 →</button>
+      </div>
+    </div>
+    <div class="view v-skel" id="view-5" style="display:none">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;text-align:center">
+        <div style="font-size:40px">📄</div>
+        <div>
+          <h3 style="font-size:16px;font-weight:590;margin-bottom:8px">Spec 编辑</h3>
+          <p style="font-size:12px;color:var(--t3);line-height:1.6">编辑 YAML Spec，查看层级关系和影响范围分析。</p>
+        </div>
+        <button class="btn-primary" onclick="goStep(6)" style="max-width:160px">继续 →</button>
+      </div>
+    </div>
+    <div class="view v-skel" id="view-6" style="display:none">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;text-align:center">
+        <div style="font-size:40px">🎯</div>
+        <div>
+          <h3 style="font-size:16px;font-weight:590;margin-bottom:8px">交互原型</h3>
+          <p style="font-size:12px;color:var(--t3);line-height:1.6">点击页面元素，探索 Spec 链，Agent 双向监听意图，onboard 演示行为。</p>
+        </div>
+        <button class="btn-primary" onclick="goStep(0)" style="max-width:160px">开始新项目</button>
+      </div>
+    </div>
+
+  </div><!-- /main-scroll -->
+</div><!-- /body -->
+
+<script>
+/* ════════════════════════════════
+   RUNTIME.JS EMULATION
+   (In production, this is in ./assets/runtime.js)
+═══════════════════════════════ */
+const Runtime = {
+  // ── Outbound: HTML → Extension ──
+  post(event, data) {
+    const msg = { type: event, payload: data, _from: 'html-prototype', _ts: Date.now() };
+    // In production: window.parent.postMessage(msg, '*');
+    addLog('out', event, data);
+    // Simulate extension response
+    setTimeout(() => {
+      if (event === 'elem:click') {
+        // Extension might respond with spec:select
+        if (data.specBound) {
+          addLog('in', 'spec:bound', { specName: data.specBound, selector: data.selector });
+        }
+      }
+    }, 400);
+  },
+
+  // ── Inbound: Extension → HTML ──
+  on(event, handler) {
+    this._handlers = this._handlers || {};
+    this._handlers[event] = handler;
+  },
+
+  // Simulate receiving event from extension (dev/demo mode)
+  receive(event, data) {
+    addLog('in', event, data);
+    if (this._handlers && this._handlers[event]) {
+      this._handlers[event](data);
+    }
+  },
+
+  _handlers: {}
+};
+
+// Listen for postMessage from extension
+window.addEventListener('message', e => {
+  if (e.data && e.data._from === 'extension') {
+    Runtime.receive(e.data.type, e.data.payload);
+  }
+});
+
+/* ─── Initialize runtime ─── */
+Runtime.on('spec:select', ({specName, layer, selector}) => {
+  // Highlight matching element
+  highlightBySelector(selector, specName, layer);
+  toast(`[runtime] spec:select → ${specName} (${selector})`, 'ok');
+});
+
+Runtime.on('spec:bind', ({specName, selector}) => {
+  toast(`[runtime] spec:bind → ${specName} @ ${selector}`, 'ok');
+  Runtime.post('spec:bound', { specName, selector });
+});
+
+Runtime.on('onboard:start', ({specName, steps}) => {
+  runOnboard(specName, steps);
+});
+
+Runtime.on('onboard:step', ({step}) => {
+  advanceOnboardStep(step);
+});
+
+Runtime.on('design:toggle', ({theme}) => {
+  document.body.dataset.theme = theme;
+  toast(`[runtime] design:toggle → ${theme}`, 'ok');
+});
+
+Runtime.on('layout:split', ({mode}) => {
+  toast(`[runtime] layout:split → ${mode}`, 'ok');
+});
+
+Runtime.on('elem:highlight', ({selector, color}) => {
+  highlightBySelector(selector, null, null, color);
+  toast(`[runtime] elem:highlight → ${selector}`, 'ok');
+});
+
+Runtime.on('annotation:show', ({mode}) => {
+  const overlay = document.getElementById('rt-tags-overlay');
+  if (overlay) {
+    overlay.querySelectorAll('.rt-tag').forEach(t => {
+      t.style.display = mode === 'show' ? '' : 'none';
+    });
+  }
+  toast(`[runtime] annotation:show → ${mode}`, 'info');
+});
+
+/* ─── Runtime helper functions ─── */
+function highlightBySelector(selector, specName, layer, color) {
+  // Find matching rt-tag
+  const tags = document.querySelectorAll('.rt-tag');
+  tags.forEach(t => {
+    const label = t.querySelector('.rt-tag-label')?.textContent || '';
+    const matches = selector && label.toLowerCase().includes(selector.replace(/[.#]/g,'').toLowerCase());
+    if (matches || !selector) {
+      t.classList.add('active');
+      if (color) t.style.borderColor = color;
+    } else {
+      t.classList.remove('active');
+      t.style.borderColor = '';
+    }
+  });
+}
+
+let onboardState = { specName: '', steps: [], current: 0, interval: null };
+function runOnboard(specName, steps) {
+  onboardState = { specName, steps: steps || ['点击图标', '输入关键词', '查看结果'], current: 0, interval: null };
+  // Highlight target element
+  highlightBySelector(null, specName, null, '#10b981');
+  toast(`[onboard] 开始演示: ${specName}`, 'ok');
+  // Auto-advance steps
+  onboardState.interval = setInterval(() => {
+    if (onboardState.current >= onboardState.steps.length) {
+      clearInterval(onboardState.interval);
+      Runtime.post('onboard:done', { specName, stepsCompleted: onboardState.steps.length });
+      toast(`[onboard] 演示完成 ✓`, 'ok');
+      document.querySelectorAll('.rt-tag').forEach(t => { t.classList.remove('active'); t.style.borderColor = ''; });
+    } else {
+      toast(`[step ${onboardState.current + 1}] ${onboardState.steps[onboardState.current]}`, 'info');
+      onboardState.current++;
+    }
+  }, 2000);
+}
+function advanceOnboardStep(step) {
+  if (onboardState.interval) clearInterval(onboardState.interval);
+  onboardState.current = step;
+  if (step >= onboardState.steps.length) {
+    Runtime.post('onboard:done', { specName: onboardState.specName, stepsCompleted: step });
+  }
+}
+
+/* ─── Event log ─── */
+function addLog(dir, event, data) {
+  const log = document.getElementById('rt-log');
+  const empty = document.getElementById('rt-log-empty');
+  if (empty) empty.style.display = 'none';
+  const time = new Date().toLocaleTimeString('zh', {hour12:false,second:true});
+  const item = document.createElement('div');
+  item.className = 'rt-log-item';
+  item.innerHTML = `
+    <span class="rt-log-dir ${dir}">${dir==='in'?'IN':dir==='out'?'OUT':'SIM'}</span>
+    <div class="rt-log-content">
+      <div class="rt-log-event">${event}</div>
+      <div class="rt-log-data">${JSON.stringify(data)}</div>
+    </div>
+    <span class="rt-log-time">${time}</span>
+  `;
+  log.insertBefore(item, log.firstChild);
+  // Keep last 50 entries
+  while (log.children.length > 50) log.removeChild(log.lastChild);
+}
+
+/* ════════════════════════════════
+   UI LOGIC
+═══════════════════════════════ */
+
+/* Toast */
+function toast(msg, type='ok') {
+  const c = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  const icons = {ok:'✓',er:'✕',info:'ℹ'};
+  t.innerHTML = `<span class="ti" style="font-size:12px">${icons[type]||'ℹ'}</span>${msg}`;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 2600);
+}
+
+/* Drawer toggles */
+let ldOpen=false, bdOpen=false;
+function toggleLD() {
+  ldOpen=!ldOpen;
+  document.getElementById('left-drawer').classList.toggle('open', ldOpen);
+  document.getElementById('btn-ld').classList.toggle('active', ldOpen);
+  toast(ldOpen?'Spec 树已展开':'Spec 树已收起', 'info');
+}
+function toggleBD() {
+  bdOpen=!bdOpen;
+  document.getElementById('bottom-drawer').classList.toggle('open', bdOpen);
+  document.getElementById('btn-bd').classList.toggle('active', bdOpen);
+  toast(bdOpen?'工具栏已展开':'工具栏已收起', 'info');
+}
+
+/* Flow steps */
+let currentStep = 0;
+const TOTAL_STEPS = 7;
+function goStep(n) {
+  if (n < 0 || n >= TOTAL_STEPS) return;
+  currentStep = n;
+  document.querySelectorAll('.view').forEach(v => v.style.display='none');
+  const v = document.getElementById('view-' + n);
+  if (v) { v.style.display='flex'; v.style.flexDirection='column'; v.style.flex='1'; }
+  document.querySelectorAll('.step').forEach((s,i) => {
+    const el = document.getElementById('step-' + i);
+    el.classList.remove('active','done');
+    const num = el.querySelector('.step-num');
+    if (i < n) { el.classList.add('done'); num.textContent='✓'; }
+    else if (i === n) { el.classList.add('active'); num.textContent=i+1; }
+    else num.textContent=i+1;
+  });
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* Grill-me */
+let grillStep=0;
+const GRILL_TOTAL=4;
+const grillAns={};
+function selectOpt(el, key, val, multi) {
+  if (multi==='m') {
+    el.classList.toggle('selected');
+    grillAns[key]=grillAns[key]||[];
+    const idx=grillAns[key].indexOf(val);
+    idx>=0?grillAns[key].splice(idx,1):grillAns[key].push(val);
+  } else {
+    el.parentElement.querySelectorAll('.gopt').forEach(o=>o.classList.remove('selected'));
+    el.classList.add('selected');
+    grillAns[key]=val;
+  }
+}
+function gNext() {
+  if (grillStep>=GRILL_TOTAL-1) { goStep(3); return; }
+  grillStep++;
+  document.querySelectorAll('[id^="gq"]').forEach(q=>q.style.display='none');
+  const q=document.getElementById('gq'+(grillStep+1));
+  if(q)q.style.display='';
+  document.getElementById('gf').style.width=((grillStep+1)/GRILL_TOTAL*100)+'%';
+  document.getElementById('gl').textContent=`第 ${grillStep+1} 步 / 共 ${GRILL_TOTAL} 步`;
+  document.getElementById('gback').style.visibility=grillStep===0?'hidden':'visible';
+  if(grillStep===GRILL_TOTAL-1){
+    const t={dashboard:'数据看板',saas:'SaaS 产品',social:'社交/内容',tool:'效率工具'};
+    const r={linear:'Linear',notion:'Notion',figma:'Figma',none:'无参照'};
+    document.getElementById('s-type').textContent=t[grillAns.type]||'—';
+    document.getElementById('s-ref').textContent=r[grillAns.ref]||'—';
+    document.getElementById('s-pref').textContent=(grillAns.pref||[]).join('、')||'—';
+    document.getElementById('gnext').textContent='生成骨架 →';
+    document.getElementById('gnext').onclick=()=>goStep(3);
+  }
+}
+function gBack() {
+  if(grillStep<=0)return;
+  grillStep--;
+  document.querySelectorAll('[id^="gq"]').forEach(q=>q.style.display='none');
+  const q=document.getElementById('gq'+(grillStep+1));
+  if(q)q.style.display='';
+  document.getElementById('gf').style.width=((grillStep+1)/GRILL_TOTAL*100)+'%';
+  document.getElementById('gl').textContent=`第 ${grillStep+1} 步 / 共 ${GRILL_TOTAL} 步`;
+  document.getElementById('gback').style.visibility=grillStep===0?'hidden':'visible';
+}
+
+/* Runtime tab switch */
+function switchRT(el, tab) {
+  el.parentElement.querySelectorAll('.rt-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['api','shell','log'].forEach(t => {
+    const el2 = document.getElementById('rt-'+t);
+    if(el2) el2.style.display = t===tab?'':'none';
+  });
+}
+
+/* Simulate runtime events */
+function simEvent(event) {
+  const dataMap = {
+    'spec:select': {specName:'sidebar-nav',layer:'L3',selector:'nav.sidebar'},
+    'spec:bind': {specName:'card-list',selector:'.main-content'},
+    'onboard:start': {specName:'menu-item',steps:['hover高亮','点击展开','选中态']},
+    'onboard:step': {step:0},
+    'design:toggle': {theme:'light'},
+    'layout:split': {mode:'2-split'},
+    'elem:highlight': {selector:'nav.sidebar',color:'#10b981'},
+    'annotation:show': {mode:'show'},
+  };
+  Runtime.receive(event, dataMap[event]||{});
+}
+function simOnboard() { simEvent('onboard:start'); }
+function simHighlight() {
+  document.querySelectorAll('.rt-tag').forEach(t=>t.classList.add('active'));
+  toast('[sim] elem:highlight → 高亮全部标签', 'info');
+}
+function simTheme() {
+  const cur = document.body.dataset.theme || 'dark';
+  simEvent('design:toggle');
+  document.body.dataset.theme = cur === 'dark' ? 'light' : 'dark';
+}
+function simSplit() { simEvent('layout:split'); }
+function simClearLog() {
+  const log = document.getElementById('rt-log');
+  log.innerHTML = '<div class="rt-log-empty" id="rt-log-empty">日志已清空。点击左侧「API 事件」触发 postMessage…</div>';
+}
+function selectRTTag(n) {
+  document.querySelectorAll('.rt-tag').forEach(t=>t.classList.remove('active'));
+  document.getElementById('rt-tag-'+n)?.classList.add('active');
+  const names=['L2-page-header','L3-sidebar-nav','L3-main-content','L4-card-list','L2-footer-nav'];
+  Runtime.post('elem:click', {selector:'.selector-'+n, rect:{x:0,y:0,w:0,h:0}, specBound:n===1?'sidebar-nav':null});
+}
+function toggleRTTags() {
+  const overlay = document.getElementById('rt-tags-overlay');
+  const btn = document.getElementById('rt-ann-btn');
+  const visible = overlay.querySelector('.rt-tag')?.style.display !== 'none';
+  overlay.querySelectorAll('.rt-tag').forEach(t => t.style.display = visible?'none':'');
+  btn.classList.toggle('active', !visible);
+}
+
+/* Skeleton */
+let selectedSk = 0;
+function selectSk(n) { selectedSk=n; document.querySelectorAll('.skel-card').forEach((c,i)=>c.classList.toggle('selected',i===n)); }
+function confirmSk() { toast('骨架已确认！开始绑定 Spec →', 'ok'); goStep(4); }
+
+/* Bottom drawer actions */
+let annVis=true;
+function toggleAnn() { annVis=!annVis; document.querySelectorAll('.rt-tag,.bind-tag').forEach(t=>t.style.display=annVis?'':'none'); document.getElementById('btn-ann')?.classList.toggle('active',annVis); toast(annVis?'标注已显示':'标注已隐藏','info'); }
+function setSplit(n,btn) { btn.parentElement.querySelectorAll('.split-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); toast(n===1?'单屏':n===2?'双屏':'四分屏','info'); }
+function setMode(mode,btn) { document.querySelectorAll('.bd-btn').forEach(b=>{if(b.textContent.includes('意图')||b.textContent.includes('监听'))b.classList.remove('active')}); btn.classList.add('active'); toast(mode==='intent'?'意图探索模式':'双向监听模式','info'); }
+function genAll() { toast('正在生成全部 Spec…','info'); setTimeout(()=>toast('Spec 生成完成 ✓','ok'),1800); }
+
+/* Tree */
+function treeSelect(el,name) { document.querySelectorAll('.tree-item').forEach(i=>i.classList.remove('active')); el.classList.add('active'); el.closest('.tree-children')?.classList.add('open'); el.querySelector('.tree-item-expand')?.classList.add('open'); Runtime.post('elem:click',{selector:'.'+name,rect:{x:0,y:0,w:0,h:0}}); toast('选中: '+name,'info'); }
+function filterTree(q) { document.querySelectorAll('.tree-item').forEach(i=>{i.style.display=!q||i.querySelector('.tree-item-name').textContent.toLowerCase().includes(q.toLowerCase())?'':'none'}); }
+
+/* Quick start */
+function quickStart(type) { const m={dashboard:'📊 数据看板',saas:'🚀 SaaS 产品',tool:'🛠 效率工具'}; toast('快速开始: '+(m[type]||type),'ok'); }
+
+/* Keyboard */
+document.addEventListener('keydown',e=>{
+  const cmd=e.metaKey||e.ctrlKey;
+  if(cmd&&e.key==='k'){e.preventDefault();toast('命令面板…','info')}
+  if(cmd&&e.key==='z'){e.preventDefault();toast('撤销','info')}
+  if(e.key==='?'&&!e.target.matches('input,textarea'))toast('⌘K 命令 ⌘Z 撤销 G 生成 A 标注 ⌘B 绑定 ⌘1-3 分屏','info');
+  if(e.key==='Escape'){document.getElementById('left-drawer').classList.remove('open');ldOpen=false;document.getElementById('btn-ld').classList.remove('active');}
+});
+
+/* Init */
+goStep(0);
+</script>
+</body>
+</html>
