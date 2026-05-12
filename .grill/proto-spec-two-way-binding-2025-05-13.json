@@ -1,0 +1,77 @@
+{
+  "session_id": "proto-spec-two-way-binding-2025-05-13",
+  "started_at": "2025-05-13T00:00:00Z",
+  "questions": [
+    {
+      "id": 1,
+      "question": "Spec 的编辑操作长什么样？",
+      "recommended_answer": "直接在侧栏属性面板改值，像 Figma",
+      "user_answer": "Agent 理解自然语言 → 生成多版本 JSON 改动 → 用户选方向",
+      "branch": "interaction"
+    },
+    {
+      "id": 2,
+      "question": "多版本选择后如何落到页面？",
+      "recommended_answer": "先预览 diff，用户确认后再 apply",
+      "user_answer": "A. 预览 diff，用户确认后才 apply",
+      "branch": "interaction"
+    },
+    {
+      "id": 3,
+      "question": "页面实时响应后撤销如何回滚？",
+      "recommended_answer": "操作栈记录，undo/redo 栈",
+      "user_answer": "A. 操作栈 undo/redo",
+      "branch": "interaction"
+    },
+    {
+      "id": 4,
+      "question": "Spec 改动与页面元素的绑定关系？",
+      "recommended_answer": "data 属性绑定 spec 路径",
+      "user_answer": "包裹貌似更好（Proxy 包裹）",
+      "branch": "architecture"
+    },
+    {
+      "id": 5,
+      "question": "页面刷新后 Proxy 包裹的改动如何保留？",
+      "recommended_answer": "Spec 是 source of truth，刷新后重新从 spec apply",
+      "user_answer": "A. Spec 是 source，刷新重建",
+      "branch": "architecture"
+    },
+    {
+      "id": 6,
+      "question": "多版本 diff 如何展示给用户？",
+      "recommended_answer": "侧栏内 inline diff",
+      "user_answer": "点击 diff 高亮原型页对应块，比 inline diff 更直观",
+      "branch": "interaction"
+    },
+    {
+      "id": 7,
+      "question": "Agent 生成多版本时方向差异的启发来源？",
+      "recommended_answer": "内置 Design.md 知识库 + few-shot",
+      "user_answer": "A. 内置 Design.md 知识库 + few-shot",
+      "branch": "ai"
+    },
+    {
+      "id": 8,
+      "question": "怎么算完成了？验收标准是什么？",
+      "recommended_answer": "空白页 + 自然语言 → 可交互原型",
+      "user_answer": "A. 空白页 + 自然语言 → 可交互原型（B+C 是过程，D 是周边能力）",
+      "branch": "acceptance"
+    }
+  ],
+  "consensus": {
+    "summary": "空白页 + 自然语言 → Agent 多版本 JSON diff → 点击高亮原型块 → 确认 apply → Proxy 拦截 + 操作栈 undo/redo → Spec 是 source of truth",
+    "key_decisions": [
+      "Agent 做翻译层：自然语言 → 多版本 JSON 改动",
+      "先预览 diff，点击 diff 高亮原型页对应块",
+      "确认后才 apply",
+      "Proxy 包裹元素，属性级别读写拦截",
+      "Spec 是 source of truth，刷新重建",
+      "操作栈 undo/redo",
+      "Design.md 知识库 + few-shot 启发变体方向",
+      "导入/导出 spec 是必要周边能力"
+    ]
+  },
+  "spec_draft_path": "specs/L2-spec-two-way-binding.md",
+  "l2_spec_path": "specs/L2-spec-two-way-binding.md"
+}
