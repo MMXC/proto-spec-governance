@@ -7,25 +7,29 @@
   1. 这是"用户描述的应用页面骨架"，不包含任何 Proto Spec 插件的 runtime.js
   2. 用户（或 Agent）只需编写 <header>、<aside>、<main> 等业务内容
   3. 插件通过 MutationObserver / CSS 类名 / getBoundingClientRect() 识别页面元素
-  4. 如果需要接入 Proto Spec 插件能力，将本文件改名为 index.html，
-     并在 </body> 前添加:
-       <script src="./assets/postMessage.js"></script>
-       <script src="./assets/runtime.js"></script>
-     然后重命名为 shell-with-runtime.html 即可
+  4. 与扩展联调（推荐）：
+     - 仓库根执行 npm run serve:assets，用浏览器打开 http://localhost:5199/page-prototype.html
+     - 安装并启用扩展，点击工具栏图标打开侧栏；本页勿设 data-ps-proto-runtime="embedded"，由扩展注入 proto-spec-runtime.js
+     - 侧栏 Spec 树与下方 DOM 的 data-ps-spec 名称一致（page-shell、sidebar-nav、menu-item、logo、main-content、card-list）
+     - 侧栏底部「数据」可向页面 ProtoSpecHub 下发 proto:data:set / proto:state:patch / proto:event:emit；事件 proto:toast 会更新页头提示
+
+  file:// 与控制台：
+  - 用资源管理器双击打开会出现 file:// URL；Chrome 将不同 frame 的本地文件视为不同安全源，
+    控制台可能出现 “Unsafe attempt to load URL file://… from frame…” — 属浏览器策略，页面脚本无法消除。
+  - 推荐：在仓库根目录执行 npm run serve:assets，用 http://localhost:5199/page-prototype.html 预览（与扩展联调也更一致）。
 
   文件结构:
     assets/
+      page-prototype.html — 本文件（纯 HTML 原型）
       postMessage.js   — 通信层（Chrome Extension ↔ Webpage）
-      runtime.js      — 插件↔页面运行时（依赖 postMessage.js）
-    page-prototype.html — 纯 HTML 原型（不含 runtime）
-    shell-with-runtime.html — page-prototype + runtime.js
+      runtime.js       — 插件↔页面运行时（依赖 postMessage.js）
+      shell-with-runtime.html — 内联 runtime 的示例页
 -->
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>应用原型 — 空白骨架</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;590;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- 不使用 Google Fonts：file:// 下外链样式/字体易触发额外控制台告警；正文使用系统字体栈 -->
 <style>
 /* ───────────────────────────────────────────────────────
    页面级 CSS 变量（可被插件的 data-ps-theme 覆盖）
@@ -40,8 +44,8 @@
   --page-radius: 8px;
   --page-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
   --page-shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
 }
 
 /* 深色主题切换（由 runtime.js 通过 document.documentElement.dataset.psTheme 触发） */
@@ -136,6 +140,15 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.page-header__runtime-hint {
+  font-size: 11px;
+  color: var(--page-text-muted);
+  max-width: 240px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .page-header__avatar {
@@ -393,17 +406,17 @@ body {
   color: var(--page-text-muted);
 }
 .page-empty__icon { font-size: 40px; opacity: 0.4; }
-.page-empty__title { font-size: 15px; font-weight: 590; color: var(--page-text); }
+.page-empty__title { font-size: 15px; font-weight: 600; color: var(--page-text); }
 .page-empty__desc { font-size: 13px; max-width: 280px; line-height: 1.6; }
 </style>
 </head>
 <body>
 
-<div class="page-container">
+<div class="page-container page-shell" data-ps-spec="page-shell">
 
   <!-- ══ Header ══ -->
   <header class="page-header">
-    <div class="page-header__logo">✦</div>
+    <div class="page-header__logo" data-ps-spec="logo">✦</div>
 
     <nav class="page-header__nav">
       <div class="page-header__nav-item page-header__nav-item--active">首页</div>
@@ -413,6 +426,7 @@ body {
     </nav>
 
     <div class="page-header__actions">
+      <span id="ps-runtime-hint" class="page-header__runtime-hint" aria-live="polite">检测扩展…</span>
       <div class="page-header__avatar"></div>
     </div>
   </header>
@@ -420,12 +434,12 @@ body {
   <!-- ══ Body ══ -->
   <div class="page-body">
 
-    <!-- Sidebar -->
-    <aside class="page-sidebar">
+    <!-- Sidebar（与侧栏 Spec「sidebar-nav / menu-item」对应） -->
+    <aside class="page-sidebar" data-ps-spec="sidebar-nav">
 
       <div class="sidebar-section">
         <div class="sidebar-section__title">导航</div>
-        <div class="sidebar-item sidebar-item--active">
+        <div class="sidebar-item sidebar-item--active" data-ps-spec="menu-item">
           <div class="sidebar-item__icon">📊</div>
           <span class="sidebar-item__label">仪表盘</span>
         </div>
@@ -463,8 +477,8 @@ body {
 
     </aside>
 
-    <!-- Main Content -->
-    <main class="page-main">
+    <!-- Main Content（与侧栏 Spec「main-content / card-list」对应） -->
+    <main class="page-main" data-ps-spec="main-content">
 
       <!-- 搜索栏 -->
       <div class="search-bar">
@@ -478,9 +492,9 @@ body {
       <p class="main-subtitle">这里是你今天的工作概览</p>
 
       <!-- 卡片网格 -->
-      <div class="card-grid">
+      <div class="card-grid" data-ps-spec="card-list">
 
-        <div class="card">
+        <div class="card" data-ps-annotation>
           <div class="card__img">
             <div class="card__img-placeholder">📈</div>
           </div>
@@ -556,11 +570,100 @@ body {
 
 <!--
   ══════════════════════════════════════════════════════
-  如需接入 Proto Spec 插件 runtime，请取消下面两行注释：
+  如需在无扩展环境下本地调试 postMessage，可取消下面两行注释（一般联调请用扩展注入即可）。
   ══════════════════════════════════════════════════════
 -->
-<!-- <script src="./assets/postMessage.js"></script> -->
-<!-- <script src="./assets/runtime.js"></script> -->
+<!-- <script src="./postMessage.js"></script> -->
+<!-- <script src="./runtime.js"></script> -->
+
+<script>
+(function () {
+  var el = document.getElementById('ps-runtime-hint');
+  if (!el) return;
+  function set(text, ok) {
+    el.textContent = text;
+    el.style.color = ok ? '#059669' : '#b45309';
+  }
+  function ready() {
+    return !!(window.ProtoSpec && window.ProtoSpec.Runtime);
+  }
+  if (ready()) {
+    set('扩展 runtime 已连接', true);
+    return;
+  }
+  if (location.protocol === 'file:') {
+    set('file:// 下扩展注入可能失败，请用 npm run serve:assets 后通过 http 打开', false);
+  } else {
+    set('等待 Proto Spec 扩展注入…', false);
+  }
+  var n = 0;
+  var id = setInterval(function () {
+    if (ready()) {
+      set('扩展 runtime 已连接', true);
+      clearInterval(id);
+    } else if (++n > 30) {
+      clearInterval(id);
+      if (!ready()) set('仍未检测到 runtime：请确认扩展已启用并刷新页面', false);
+    }
+  }, 200);
+})();
+</script>
+
+<script>
+(function () {
+  window.addEventListener('ps-extension-hub', function (e) {
+    var d = e.detail || {};
+    var hint = document.getElementById('ps-runtime-hint');
+    if (!hint) return;
+    if (d.name === 'proto:toast' && d.payload && d.payload.message != null) {
+      hint.textContent = String(d.payload.message);
+      hint.style.color = '#6366f1';
+    }
+  });
+})();
+</script>
+
+<script>
+(function () {
+  if (location.protocol !== 'file:') return;
+  try {
+    if (localStorage.getItem('ps-hide-file-origin-tip') === '1') return;
+  } catch (e) { /* file 部分环境限制 storage */ }
+
+  var tip = document.createElement('aside');
+  tip.id = 'ps-file-origin-tip';
+  tip.setAttribute('aria-label', 'file 协议预览说明');
+  tip.style.cssText = [
+    'position:fixed', 'bottom:0', 'left:0', 'right:0', 'z-index:2147483000',
+    'background:#111827', 'color:#e5e7eb', 'font:12px/1.5 system-ui,sans-serif',
+    'padding:10px 14px', 'border-top:1px solid #374151',
+    'display:flex', 'align-items:center', 'justify-content:space-between', 'gap:12px', 'flex-wrap:wrap'
+  ].join(';');
+
+  var msg = document.createElement('p');
+  msg.style.margin = '0';
+  msg.style.flex = '1';
+  msg.style.minWidth = '200px';
+  msg.textContent =
+    '当前为 file:// 打开：Chrome 对本地页与内嵌 frame 使用独立安全源，控制台可能出现 “Unsafe attempt to load URL file://…”。这不是本页业务脚本报错。若需干净控制台并与扩展联调，请在仓库根目录执行 npm run serve:assets，再打开 http://localhost:5199/page-prototype.html';
+
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = '知道了';
+  btn.style.cssText = [
+    'flex-shrink:0', 'background:#374151', 'color:#f9fafb', 'border:none',
+    'padding:6px 12px', 'border-radius:6px', 'cursor:pointer', 'font:inherit'
+  ].join(';');
+  btn.addEventListener('click', function () {
+    tip.remove();
+    try { localStorage.setItem('ps-hide-file-origin-tip', '1'); } catch (e2) {}
+  });
+
+  tip.appendChild(msg);
+  tip.appendChild(btn);
+  document.body.appendChild(tip);
+})();
+</script>
 
 </body>
 </html>

@@ -92,7 +92,37 @@
       </div>
       <div class="proto-dock-body">
         <div class="proto-dock-panel is-active" role="tabpanel" data-dock-panel="data" id="panel-data">
-          <p class="proto-muted">页面绑定数据、校验快照将在此聚合。</p>
+          <p class="proto-muted">扩展侧栏「数据 / 状态 / 事件」通过 <code class="proto-code">ext:send</code> 写入页面 <code class="proto-code">ProtoSpecHub</code>（与 <code class="proto-code">proto:data:set</code> 等协议对齐）。</p>
+          <div class="proto-hub-grid">
+            <div class="proto-hub-row">
+              <label class="proto-hub-label" for="hub-data-key">数据 key</label>
+              <input class="proto-hub-input" id="hub-data-key" type="text" value="fromExtension" autocomplete="off" />
+            </div>
+            <div class="proto-hub-row">
+              <label class="proto-hub-label" for="hub-data-value">数据 value（JSON 或纯文本）</label>
+              <input class="proto-hub-input" id="hub-data-value" type="text" value='"来自扩展数据中心"' spellcheck="false" />
+            </div>
+            <button type="button" class="proto-hub-btn" id="btn-hub-data-push">写入页面数据</button>
+            <div class="proto-hub-row proto-hub-row--split">
+              <button type="button" class="proto-hub-btn proto-hub-btn--ghost" id="btn-hub-state-light">状态：浅色</button>
+              <button type="button" class="proto-hub-btn proto-hub-btn--ghost" id="btn-hub-state-dark">状态：深色</button>
+            </div>
+            <div class="proto-hub-row">
+              <label class="proto-hub-label" for="hub-state-json">状态 patch（JSON 对象）</label>
+              <textarea class="proto-hub-textarea" id="hub-state-json" rows="2" spellcheck="false">{"phase":"governance-driven"}</textarea>
+            </div>
+            <button type="button" class="proto-hub-btn" id="btn-hub-state-json">应用状态 JSON</button>
+            <div class="proto-hub-row">
+              <label class="proto-hub-label" for="hub-event-name">事件 name</label>
+              <input class="proto-hub-input" id="hub-event-name" type="text" value="proto:toast" autocomplete="off" />
+            </div>
+            <div class="proto-hub-row">
+              <label class="proto-hub-label" for="hub-event-payload">事件 payload（JSON）</label>
+              <input class="proto-hub-input" id="hub-event-payload" type="text" value='{"message":"来自扩展事件中心"}' spellcheck="false" />
+            </div>
+            <button type="button" class="proto-hub-btn" id="btn-hub-event-push">触发页面事件</button>
+          </div>
+          <p class="proto-muted proto-hub-preview-hdr">聚合预览（当前 Spec + 最近一次页面 ack）</p>
           <pre class="proto-data-block" id="data-preview">暂无数据视图</pre>
         </div>
         <div class="proto-dock-panel" role="tabpanel" data-dock-panel="status" id="dock-panel-status">

@@ -1,0 +1,339 @@
+{
+  "manifestVersion": "1",
+  "title": "Proto Spec — 契约骨架（防实现漂移）",
+  "description": "与 assets/postMessage.js、assets/runtime.js、extension/entrypoints/content.ts 对齐；新增线协议须先改本文件再改代码。",
+  "wire": {
+    "pageToExtensionRelay": "页面主世界 postMessage（type=PREFIX+逻辑类型，_from=page）由 content 监听 → runtime.sendMessage({ type: popup:receive, payload:{ type, data } }) → background 广播 popup:receive（附带 tabId）→ 侧栏事件中心。reply() 在 event.source 为空时向本 window 广播回包，否则 content 收不到点击等上报。",
+    "messagePrefix": "PS_EXT_MSG_",
+    "envelope": {
+      "type": "string，线路上为 PREFIX + 逻辑类型，如 PS_EXT_MSG_spec:select",
+      "payload": "object | 省略",
+      "_from": "extension | page",
+      "_ts": "number，毫秒时间戳",
+      "_msgId": "string，可选，request/reply 关联"
+    }
+  },
+  "extensionContentScript": {
+    "description": "browser.runtime.onMessage；不向页面 postMessage 的类型仅作用于 overlay/UI。",
+    "internal": [
+      {
+        "type": "panel:ping",
+        "direction": "sidepanel_to_content",
+        "payload": {},
+        "result": "{ ok: true }"
+      },
+      {
+        "type": "panel:toggle",
+        "direction": "sidepanel_to_content",
+        "payload": {
+          "active": "boolean，是否显示 overlay",
+          "collapsed": "string[]，可选，初始折叠的面板 id：top|bottom|left|right"
+        }
+      },
+      {
+        "type": "panel:setCollapsed",
+        "direction": "sidepanel_to_content",
+        "payload": {
+          "panel": "top|bottom|left|right",
+          "collapsed": "boolean"
+        }
+      },
+      {
+        "type": "panel:setMode",
+        "direction": "sidepanel_to_content",
+        "payload": {
+          "mode": "local|remote"
+        }
+      },
+      {
+        "type": "panel:reset",
+        "direction": "sidepanel_to_content",
+        "payload": {}
+      },
+      {
+        "type": "action:highlight",
+        "direction": "sidepanel_to_content",
+        "mapsToPage": "PS_EXT_MSG_elem:highlight",
+        "pagePayload": { "selector": "body", "color": "#7170ff" }
+      },
+      {
+        "type": "action:annotate",
+        "direction": "sidepanel_to_content",
+        "mapsToPage": "PS_EXT_MSG_annotation:show",
+        "pagePayload": { "mode": "show" }
+      },
+      {
+        "type": "action:extract",
+        "direction": "sidepanel_to_content",
+        "description": "content 内 extractSpec()，不向页面转发"
+      }
+    ],
+    "relayToPage": {
+      "rule": "当 type 不以 panel:、action: 开头且消息含 payload 字段时，content 向页面 window.postMessage({ type: PREFIX+type, payload, _from: extension }, '*')",
+      "examples": [
+        "background/sidepanel 发 { type: 'spec:bind', payload: {...} } → 页面收到 PS_EXT_MSG_spec:bind"
+      ]
+    },
+    "contentToBackground": [
+      {
+        "type": "overlay:panelState",
+        "direction": "content_to_background",
+        "payload": {
+          "panel": "top|bottom|left|right",
+          "collapsed": "boolean"
+        },
+        "note": "折叠按钮点击时发送，供侧栏同步"
+      }
+    ]
+  },
+  "pageRuntime": {
+    "source": "assets/runtime.js",
+    "inboundFromExtension": [
+      {
+        "logicalType": "spec:select",
+        "payload": {
+          "specName": "string",
+          "layer": "string，可选",
+          "selector": "string，可选，CSS selector"
+        }
+      },
+      {
+        "logicalType": "spec:bind",
+        "payload": {
+          "specName": "string",
+          "selector": "string"
+        }
+      },
+      {
+        "logicalType": "onboard:start",
+        "payload": {
+          "specName": "string",
+          "steps": "string[]，可选"
+        }
+      },
+      {
+        "logicalType": "onboard:step",
+        "payload": {
+          "step": "number"
+        }
+      },
+      {
+        "logicalType": "design:toggle",
+        "payload": {
+          "theme": "dark|light"
+        }
+      },
+      {
+        "logicalType": "layout:split",
+        "payload": {
+          "mode": "1-split|2-split|4-split"
+        }
+      },
+      {
+        "logicalType": "elem:highlight",
+        "payload": {
+          "selector": "string",
+          "color": "string，可选，CSS 颜色"
+        }
+      },
+      {
+        "logicalType": "annotation:show",
+        "payload": {
+          "mode": "show|hide（实现以 mode===show 为显示）"
+        }
+      },
+      {
+        "logicalType": "annotation:clear",
+        "payload": {}
+      },
+      {
+        "logicalType": "proto:data:set",
+        "payload": {
+          "key": "string",
+          "value": "任意 JSON 可序列化值"
+        },
+        "note": "扩展数据中心 → 页面 ProtoSpecHub.data"
+      },
+      {
+        "logicalType": "proto:state:patch",
+        "payload": {
+          "theme": "dark|light，可选",
+          "splitMode": "1-split|2-split|4-split，可选",
+          "phase": "string，可选",
+          "其它": "与 hub.initialState 对齐的扁平字段"
+        },
+        "note": "扩展状态中心 → 页面 ProtoSpecHub.state + dataset.psTheme/psSplit"
+      },
+      {
+        "logicalType": "proto:event:emit",
+        "payload": {
+          "name": "string，hub 事件名",
+          "payload": "任意，可选"
+        },
+        "note": "扩展事件中心 → hub.events.emit + window 事件 ps-extension-hub"
+      }
+    ],
+    "outboundPageReplies": [
+      {
+        "logicalType": "runtime:ready",
+        "payload": {
+          "version": "string",
+          "pageURL": "string",
+          "documentTitle": "string",
+          "bodyChildren": "number"
+        }
+      },
+      {
+        "logicalType": "proto:hub:ack",
+        "payload": {
+          "op": "proto:data:set|proto:state:patch|proto:event:emit",
+          "key": "string，仅 data:set",
+          "value": "任意，仅 data:set",
+          "patch": "object，仅 state:patch",
+          "name": "string，仅 event:emit",
+          "payload": "任意，仅 event:emit"
+        },
+        "note": "页面确认扩展三中心指令已写入 ProtoSpecHub"
+      },
+      {
+        "logicalType": "spec:bound",
+        "payload": {
+          "specName": "string",
+          "selector": "string",
+          "timestamp": "number"
+        }
+      },
+      {
+        "logicalType": "onboard:done",
+        "payload": {
+          "specName": "string",
+          "stepsCompleted": "number",
+          "duration": "string，如 12.3s"
+        }
+      },
+      {
+        "logicalType": "onboard:step_done",
+        "payload": {
+          "specName": "string",
+          "step": "number",
+          "label": "string"
+        }
+      },
+      {
+        "logicalType": "design:toggled",
+        "payload": {
+          "theme": "dark|light",
+          "previousTheme": "dark|light"
+        }
+      },
+      {
+        "logicalType": "layout:splitted",
+        "payload": {
+          "mode": "1-split|2-split|4-split"
+        }
+      },
+      {
+        "logicalType": "elem:click",
+        "payload": {
+          "selector": "string",
+          "rect": {
+            "x": "number",
+            "y": "number",
+            "w": "number",
+            "h": "number",
+            "top": "number",
+            "left": "number"
+          },
+          "specBound": "string|null",
+          "tagName": "string",
+          "text": "string|null"
+        }
+      },
+      {
+        "logicalType": "elem:hover",
+        "payload": {
+          "selector": "string",
+          "specBound": "string"
+        }
+      },
+      {
+        "logicalType": "elem:contextmenu",
+        "payload": {
+          "selector": "string",
+          "specBound": "string",
+          "x": "number",
+          "y": "number"
+        }
+      },
+      {
+        "logicalType": "page:keydown",
+        "payload": {
+          "key": "string",
+          "combo": "string",
+          "meta": "boolean",
+          "ctrl": "boolean",
+          "shift": "boolean",
+          "alt": "boolean"
+        }
+      }
+    ]
+  },
+  "stateProjection": {
+    "description": "实现层状态，供后续三中心运行时对齐；非线协议。",
+    "runtimeDom": {
+      "_activeSpec": "{ specName, layer, selector } | null",
+      "_theme": "dark|light",
+      "_splitMode": "1-split|2-split|4-split",
+      "_onboardState": "object|null",
+      "_elementMap": "Record<specName, Element>",
+      "_annotationsVisible": "boolean"
+    },
+    "contentOverlay": {
+      "active": "boolean",
+      "mode": "local|remote",
+      "collapsed": "Record<panel, boolean>",
+      "sizes": "Record<panel, number> 像素"
+    }
+  },
+  "dataProjection": {
+    "description": "当前无独立 DataProvider；侧栏/overlay 填充数据在 content fillPanels 内联。后续三中心可把实体列于此并接 fixtures。"
+  },
+  "hub": {
+    "description": "proto-hub.js 可读段：初始数据/状态；lastInboundType、lastOutboundType、specBoundCount 由 postMessage/runtime 运行时写入。",
+    "initialData": {
+      "lastInboundType": null,
+      "lastOutboundType": null,
+      "specBoundCount": 0
+    },
+    "initialState": {
+      "phase": "idle",
+      "theme": "dark",
+      "splitMode": "1-split",
+      "activeSpecName": null,
+      "activeLayer": null,
+      "activeSelector": null
+    }
+  },
+  "changelog": [
+    {
+      "version": "1.1",
+      "date": "2026-05-12",
+      "note": "新增 hub 段与 proto-hub.js 三中心最小实现；线协议表不变"
+    },
+    {
+      "version": "1.2",
+      "date": "2026-05-12",
+      "note": "content 中继页面 _from:page 的 PS_EXT_MSG_* 至侧栏 popup:receive；background 广播并附 tabId"
+    },
+    {
+      "version": "1.3",
+      "date": "2026-05-12",
+      "note": "proto:data:set / proto:state:patch / proto:event:emit 与 proto:hub:ack；侧栏数据面板驱动页面 ProtoSpecHub"
+    },
+    {
+      "version": "1",
+      "date": "2026-05-12",
+      "note": "初版：自代码反查枚举消息与 payload 形状"
+    }
+  ]
+}

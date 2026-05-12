@@ -24,6 +24,9 @@ let logCount = 0;
 let pageTheme: 'dark' | 'light' = 'dark';
 let annotationsVisible = false;
 
+/** 最近一次页面 proto:hub:ack（扩展三中心写入 ProtoSpecHub 的确认） */
+let lastPageHubAck: unknown = null;
+
 function applyWorkMode(mode: WorkMode): void {
   const shell = document.getElementById('proto-shell');
   if (shell) shell.dataset.workMode = mode;
@@ -70,15 +73,13 @@ function setDockTab(tab: 'data' | 'status' | 'events'): void {
 function refreshDataPreview(): void {
   const pre = document.getElementById('data-preview');
   if (!pre) return;
-  if (!currentSpec) {
-    pre.textContent = '未选择 Spec';
-    return;
-  }
-  pre.textContent = JSON.stringify(
-    { id: currentSpec.id, name: currentSpec.name, layer: currentSpec.layer, type: currentSpec.type },
-    null,
-    2
-  );
+  const bundle = {
+    currentSpec: currentSpec
+      ? { id: currentSpec.id, name: currentSpec.name, layer: currentSpec.layer, type: currentSpec.type }
+      : null,
+    lastPageHubAck,
+  };
+  pre.textContent = JSON.stringify(bundle, null, 2);
 }
 
 function appendAgentBubble(role: 'user' | 'agent', text: string): void {
@@ -102,17 +103,33 @@ async function init() {
   if (thread && thread.childElementCount === 0) {
     appendAgentBubble(
       'agent',
-      '你好，我是 Proto Spec Agent（占位）。\n可在此记录与页面 runtime 的协同说明；发送内容会写入下方「事件中心」。'
+      '侧栏底部「数据」可向页面 ProtoSpecHub 推送 proto:data:set / proto:state:patch / proto:event:emit；事件中心会收到页面回执 proto:hub:ack。'
     );
   }
 
   browser.runtime.onMessage.addListener((msg) => {
     if (msg?.type === 'popup:receive') {
-      const { type, data } = msg.payload;
-      addLog('page', type, data);
+      const { type, data, tabId } = msg.payload as {
+        type: string;
+        data?: unknown;
+        tabId?: number;
+      };
+      const logData =
+        tabId != null && data != null && typeof data === 'object' && !Array.isArray(data)
+          ? { tabId, ...(data as Record<string, unknown>) }
+          : tabId != null
+            ? { tabId, data }
+            : data;
+      addLog('page', type, logData);
+      if (type === 'proto:hub:ack') {
+        lastPageHubAck = data;
+        refreshDataPreview();
+      }
       if (type === 'runtime:ready') {
         setStatus('ok', 'Runtime 就绪');
-        setStatusExtra('页面已上报 runtime:ready');
+        setStatusExtra(
+          tabId != null ? `页面已上报 runtime:ready · tab ${tabId}` : '页面已上报 runtime:ready'
+        );
       }
     }
   });
@@ -200,6 +217,8 @@ async function sendAction(type: string, data: any) {
   addLog('ext', type, data);
   if (resp?.error) {
     setStatus('err', resp.error);
+  } else if (type.startsWith('proto:')) {
+    setStatus('ok', '已下发 ' + type);
   }
 }
 
@@ -298,6 +317,66 @@ function bindEvents() {
         setDockTab(id);
       }
     });
+  });
+
+  document.getElementById('btn-hub-data-push')?.addEventListener('click', () => {
+    const keyEl = document.getElementById('hub-data-key') as HTMLInputElement | null;
+    const valEl = document.getElementById('hub-data-value') as HTMLInputElement | null;
+    const key = keyEl?.value.trim();
+    if (!key) {
+      setStatus('warn', '请填写数据 key');
+      return;
+    }
+    const raw = valEl?.value ?? '';
+    let value: unknown = raw;
+    try {
+      value = JSON.parse(raw);
+    } catch {
+      value = raw;
+    }
+    void sendAction('proto:data:set', { key, value });
+  });
+
+  document.getElementById('btn-hub-state-light')?.addEventListener('click', () => {
+    void sendAction('proto:state:patch', { theme: 'light' });
+  });
+  document.getElementById('btn-hub-state-dark')?.addEventListener('click', () => {
+    void sendAction('proto:state:patch', { theme: 'dark' });
+  });
+
+  document.getElementById('btn-hub-state-json')?.addEventListener('click', () => {
+    const ta = document.getElementById('hub-state-json') as HTMLTextAreaElement | null;
+    if (!ta) return;
+    let patch: Record<string, unknown>;
+    try {
+      patch = JSON.parse(ta.value) as Record<string, unknown>;
+    } catch {
+      setStatus('err', '状态 JSON 无法解析');
+      return;
+    }
+    if (!patch || typeof patch !== 'object' || Array.isArray(patch)) {
+      setStatus('err', '状态须为 JSON 对象');
+      return;
+    }
+    void sendAction('proto:state:patch', patch);
+  });
+
+  document.getElementById('btn-hub-event-push')?.addEventListener('click', () => {
+    const nameEl = document.getElementById('hub-event-name') as HTMLInputElement | null;
+    const payEl = document.getElementById('hub-event-payload') as HTMLInputElement | null;
+    const name = nameEl?.value.trim();
+    if (!name) {
+      setStatus('warn', '请填写事件 name');
+      return;
+    }
+    const raw = payEl?.value ?? '{}';
+    let inner: unknown = {};
+    try {
+      inner = JSON.parse(raw);
+    } catch {
+      inner = { raw };
+    }
+    void sendAction('proto:event:emit', { name, payload: inner });
   });
 
   const agentSend = () => {

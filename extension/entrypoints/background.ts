@@ -51,20 +51,25 @@ export default defineBackground(() => {
       case 'ext:getActiveTab':
         return { tabId: activeTabId };
 
-      // Runtime 就绪通知
-      case 'runtime:ready':
-        console.log('[Proto Spec BG] Runtime ready on tab', sender.tab?.id, payload);
+      /**
+       * Content（页面 postMessage 中继）或 overlay 内联逻辑 → 广播给侧栏等 extension pages。
+       * 页面 runtime 用户事件：elem:click、runtime:ready 等，payload 形状为 { type, data }。
+       */
+      case 'popup:receive': {
+        const forward = {
+          ...(payload && typeof payload === 'object' ? payload : { payload }),
+          tabId: sender.tab?.id,
+        };
+        try {
+          await browser.runtime.sendMessage({
+            type: 'popup:receive',
+            payload: forward,
+          });
+        } catch {
+          /* 侧栏未打开等场景下可无接收方 */
+        }
         return { ok: true };
-
-      // Spec 绑定完成
-      case 'spec:bound':
-        console.log('[Proto Spec BG] Spec bound:', payload);
-        return { ok: true };
-
-      // 元素点击上报
-      case 'elem:click':
-        console.log('[Proto Spec BG] elem:click:', payload);
-        return { ok: true };
+      }
 
       default:
         console.warn('[Proto Spec BG] Unknown message type:', type);

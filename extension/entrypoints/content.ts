@@ -8,6 +8,44 @@ export default defineContentScript({
   runAt: 'document_idle',
 
   async main(_ctx) {
+    const PAGE_MSG_PREFIX = 'PS_EXT_MSG_';
+
+    /**
+     * 页面主世界 runtime 通过 postMessage 上报（_from: page）→ 经 background 广播给侧栏「事件中心」。
+     * 与 assets/postMessage.js 中 reply 信封一致。
+     */
+    function installPageOutboundRelay() {
+      window.addEventListener('message', (ev: MessageEvent) => {
+        const d = ev.data;
+        if (!d || typeof d.type !== 'string') return;
+        if (!d.type.startsWith(PAGE_MSG_PREFIX)) return;
+        if (d._from !== 'page') return;
+
+        const logicalType = d.type.slice(PAGE_MSG_PREFIX.length);
+        const payload = d.payload;
+
+        void browser.runtime
+          .sendMessage({
+            type: 'popup:receive',
+            payload: { type: logicalType, data: payload },
+          })
+          .catch(() => {});
+
+        const list = document.getElementById('ps-event-list');
+        if (list) {
+          const line = document.createElement('div');
+          line.style.cssText = 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%';
+          line.textContent = '[page] ' + logicalType;
+          list.insertBefore(line, list.firstChild);
+          while (list.children.length > 40) {
+            list.removeChild(list.lastChild!);
+          }
+        }
+      });
+    }
+
+    installPageOutboundRelay();
+
     // ── 注入完整页面 runtime（与 assets/runtime.js 一致）────
     async function injectRuntime() {
       if (document.getElementById('ps-runtime')) return;

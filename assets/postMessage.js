@@ -27,6 +27,26 @@
 
   const PREFIX = 'PS_EXT_MSG_';  // 消息前缀，避免与其他 postMessage 混
 
+  function hubEmit(name, payload) {
+    try {
+      const hub = globalThis.__protoSpecHub;
+      if (hub && hub.events && typeof hub.events.emit === 'function') {
+        hub.events.emit(name, payload);
+      }
+    } catch (_e) {
+      /* 忽略，避免影响主协议 */
+    }
+  }
+
+  function hubDataSet(key, value) {
+    try {
+      const hub = globalThis.__protoSpecHub;
+      if (hub && hub.data && typeof hub.data.set === 'function') {
+        hub.data.set(key, value);
+      }
+    } catch (_e) {}
+  }
+
   const PostMessage = {
     // ── 内部状态 ──
     _listeners: {},        // type → [handler]
@@ -80,16 +100,24 @@
      * @param {object} msg - { type, payload }
      */
     reply(msg) {
+      hubEmit('page:outbound', { type: msg.type, payload: msg.payload });
+      hubDataSet('lastOutboundType', msg.type);
+
+      const out = {
+        type: PREFIX + msg.type,
+        payload: msg.payload,
+        _from: 'page',
+        _ts: Date.now()
+      };
+
       if (this._extensionSource) {
-        // 模拟真实环境：event.source.postMessage
-        this._extensionSource.postMessage({
-          type: PREFIX + msg.type,
-          payload: msg.payload,
-          _from: 'page',
-          _ts: Date.now()
-        }, '*');
+        // 典型：event.source 指向可回复的窗口（如 iframe 父级）
+        this._extensionSource.postMessage(out, '*');
+      } else if (typeof window !== 'undefined') {
+        // 扩展由 content 在同一 window 上 postMessage 投递时，event.source 常为空；
+        // 必须仍向本 window 广播，content script 才能中继到侧栏事件中心。
+        window.postMessage(out, '*');
       } else {
-        // 测试环境：直接触发 Extension 监听器
         const handlers = this._replyListeners[msg.type] || [];
         handlers.forEach(h => {
           try { h(msg.payload); } catch (e) { console.error('[PostMessage] reply handler error:', e); }
@@ -176,6 +204,14 @@
       const type = msg.type.slice(PREFIX.length);
       const data = msg.payload;
 
+      // reply() 向本 window 广播的回包（供 content 中继），勿当作 extension 下行再派发
+      if (msg._from === 'page') {
+        return;
+      }
+
+      hubEmit('extension:inbound', { type: type, payload: data, raw: msg });
+      hubDataSet('lastInboundType', type);
+
       // 记录 Extension source（用于 reply）
       if (msg._from === 'extension' && event.source) {
         this._extensionSource = event.source;
@@ -260,11 +296,11 @@
     PostMessage.init();
   }
 
-  // 导出
+  // 导出：始终挂到传入的 global（浏览器即 window），供页面 / 注入脚本使用。
+  // 打包器若同时提供 module.exports，也必须保留 global 挂载，否则 runtime 读不到 PostMessage。
+  global.PostMessage = PostMessage;
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = PostMessage;
-  } else {
-    global.PostMessage = PostMessage;
   }
 
 })(typeof window !== 'undefined' ? window : global);

@@ -60,3 +60,18 @@
 .proto-status-row{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500;color:#e5e7eb}
 
 .log-list--dock{max-height:none;padding:4px 0;background:transparent}
+
+/* 扩展三中心 → 页面 ProtoSpecHub（Dock 数据面板） */
+.proto-code{font-size:10px;font-family:ui-monospace,monospace;background:rgba(0,0,0,.35);padding:1px 5px;border-radius:4px;color:#c7d2fe}
+.proto-hub-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.proto-hub-row{display:flex;flex-direction:column;gap:4px}
+.proto-hub-row--split{flex-direction:row;gap:6px}
+.proto-hub-label{font-size:10px;font-weight:600;color:#8b92a8}
+.proto-hub-input,.proto-hub-textarea{width:100%;padding:6px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.12);background:#11131a;color:#e5e7eb;font-size:11px;font-family:inherit}
+.proto-hub-textarea{resize:vertical;min-height:44px}
+.proto-hub-input:focus,.proto-hub-textarea:focus{outline:none;border-color:rgba(113,112,255,.45)}
+.proto-hub-btn{padding:7px 10px;border-radius:6px;border:1px solid rgba(113,112,255,.4);background:rgba(113,112,255,.15);color:#e0e7ff;font-size:11px;font-weight:600;cursor:pointer;width:100%}
+.proto-hub-btn:hover{background:rgba(113,112,255,.25)}
+.proto-hub-btn--ghost{flex:1;background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12);color:#c8cdd6}
+.proto-hub-btn--ghost:hover{background:rgba(255,255,255,.08)}
+.proto-hub-preview-hdr{margin-top:4px}

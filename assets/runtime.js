@@ -18,6 +18,9 @@
  *   elem:highlight    高亮指定元素
  *   annotation:show   显示/隐藏标注覆盖层
  *   annotation:clear  清除所有标注
+ *   proto:data:set    扩展数据中心 → 页面 ProtoSpecHub.data（payload: { key, value }）
+ *   proto:state:patch 扩展状态中心 → 页面 ProtoSpecHub.state + DOM 主题/分屏（payload: 扁平 patch，如 theme、splitMode）
+ *   proto:event:emit  扩展事件中心 → 页面 ProtoSpecHub.events.emit + window 事件 ps-extension-hub
  *
  * HTML → Extension 事件:
  *   elem:click        用户点击页面元素（上报 selector + rect）
@@ -28,18 +31,22 @@
  *   onboard:done      onboard 演示完成
  *   runtime:ready     runtime.js 加载完成，可接收指令
  *   runtime:error     运行时错误
+ *
+ * 三中心（可选）: globalThis.ProtoSpecHub + __PROTO_SPEC_MANIFEST（由扩展注入 bundle 写入）
  */
 
 (function () {
   'use strict';
 
-  if (typeof PostMessage === 'undefined') {
+  const PM = globalThis.PostMessage;
+  if (PM == null) {
     console.error('[runtime] postMessage.js 未加载，请先引入 postMessage.js');
     return;
   }
 
   const Runtime = {
     // ── 状态 ──
+    _hub: null,
     _activeSpec: null,
     _annotationsVisible: true,
     _theme: 'dark',
@@ -51,20 +58,63 @@
     // ── 生命周期 ──
 
     /**
+     * 初始化 ProtoSpecHub（与 manifest.hub 对齐）；无 Hub 时跳过。
+     */
+    _initHub() {
+      const Hub = globalThis.ProtoSpecHub;
+      if (!Hub || typeof Hub.create !== 'function') return null;
+      try {
+        const contract = globalThis.__PROTO_SPEC_MANIFEST || null;
+        const hub = Hub.create({ contract: contract });
+        globalThis.__protoSpecHub = hub;
+        hub.events.emit('hub:ready', {
+          contractVersion: contract && contract.manifestVersion,
+          hubVersion: Hub.version
+        });
+        return hub;
+      } catch (e) {
+        console.error('[runtime] ProtoSpecHub init failed:', e);
+        return null;
+      }
+    },
+
+    /**
+     * 将 manifest / hub 初始状态同步到 DOM 与 runtime 字段
+     */
+    _syncDomFromHubState() {
+      if (!this._hub) return;
+      const s = this._hub.state.get();
+      if (s.theme && ['dark', 'light'].includes(s.theme)) {
+        this._theme = s.theme;
+        document.documentElement.dataset.psTheme = s.theme;
+      }
+      if (s.splitMode && ['1-split', '2-split', '4-split'].includes(s.splitMode)) {
+        this._splitMode = s.splitMode;
+        document.documentElement.dataset.psSplit = s.splitMode;
+      }
+    },
+
+    /**
      * 初始化 runtime
      * 注册所有 Extension → HTML 事件监听
      */
     init() {
+      this._hub = this._initHub();
+      this._syncDomFromHubState();
+
       // 注册 Extension → HTML 事件
-      PostMessage.on('spec:select',      this._onSpecSelect.bind(this));
-      PostMessage.on('spec:bind',        this._onSpecBind.bind(this));
-      PostMessage.on('onboard:start',    this._onOnboardStart.bind(this));
-      PostMessage.on('onboard:step',     this._onOnboardStep.bind(this));
-      PostMessage.on('design:toggle',    this._onDesignToggle.bind(this));
-      PostMessage.on('layout:split',     this._onLayoutSplit.bind(this));
-      PostMessage.on('elem:highlight',   this._onElemHighlight.bind(this));
-      PostMessage.on('annotation:show',  this._onAnnotationShow.bind(this));
-      PostMessage.on('annotation:clear', this._onAnnotationClear.bind(this));
+      PM.on('spec:select',      this._onSpecSelect.bind(this));
+      PM.on('spec:bind',        this._onSpecBind.bind(this));
+      PM.on('onboard:start',    this._onOnboardStart.bind(this));
+      PM.on('onboard:step',     this._onOnboardStep.bind(this));
+      PM.on('design:toggle',    this._onDesignToggle.bind(this));
+      PM.on('layout:split',     this._onLayoutSplit.bind(this));
+      PM.on('elem:highlight',   this._onElemHighlight.bind(this));
+      PM.on('annotation:show',  this._onAnnotationShow.bind(this));
+      PM.on('annotation:clear', this._onAnnotationClear.bind(this));
+      PM.on('proto:data:set',    this._onProtoDataSet.bind(this));
+      PM.on('proto:state:patch', this._onProtoStatePatch.bind(this));
+      PM.on('proto:event:emit', this._onProtoEventEmit.bind(this));
 
       // 初始化 DOM 监听（点击、悬停）
       this._initDOMListeners();
@@ -73,7 +123,7 @@
       this._createHighlightLayer();
 
       // 上报 runtime ready
-      PostMessage.reply({
+      PM.reply({
         type: 'runtime:ready',
         payload: {
           version: '1.0.0',
@@ -88,6 +138,15 @@
 
     _onSpecSelect({ specName, layer, selector }) {
       this._activeSpec = { specName, layer, selector };
+
+      if (this._hub) {
+        this._hub.state.set({
+          phase: 'selecting',
+          activeSpecName: specName || null,
+          activeLayer: layer || null,
+          activeSelector: selector || null
+        });
+      }
 
       if (selector) {
         const el = document.querySelector(selector);
@@ -120,8 +179,13 @@
       // 短暂高亮反馈
       this._flashHighlight(el, '#10b981', 600);
 
+      if (this._hub && this._hub.data) {
+        const n = Number(this._hub.data.get('specBoundCount')) || 0;
+        this._hub.data.set('specBoundCount', n + 1);
+      }
+
       // 上报绑定完成
-      PostMessage.reply({
+      PM.reply({
         type: 'spec:bound',
         payload: { specName, selector, timestamp: Date.now() }
       });
@@ -172,7 +236,7 @@
           clearInterval(this._onboardState.interval);
 
           // 演示完成
-          PostMessage.reply({
+          PM.reply({
             type: 'onboard:done',
             payload: {
               specName,
@@ -188,7 +252,7 @@
         this._onboardState.currentStep = nextStep;
         const stepLabel = this._onboardState.steps[nextStep];
 
-        PostMessage.reply({
+        PM.reply({
           type: 'onboard:step_done',
           payload: { specName, step: nextStep, label: stepLabel }
         });
@@ -220,7 +284,11 @@
       this._theme = theme;
       document.documentElement.dataset.psTheme = theme;
 
-      PostMessage.reply({
+      if (this._hub) {
+        this._hub.state.set({ theme: theme });
+      }
+
+      PM.reply({
         type: 'design:toggled',
         payload: { theme, previousTheme: theme === 'dark' ? 'light' : 'dark' }
       });
@@ -235,7 +303,11 @@
       this._splitMode = mode;
       document.documentElement.dataset.psSplit = mode;
 
-      PostMessage.reply({
+      if (this._hub) {
+        this._hub.state.set({ splitMode: mode });
+      }
+
+      PM.reply({
         type: 'layout:splitted',
         payload: { mode }
       });
@@ -272,6 +344,75 @@
       });
     },
 
+    /**
+     * 扩展「数据中心」→ 页面 ProtoSpecHub.data
+     */
+    _onProtoDataSet(payload) {
+      if (!this._hub || !this._hub.data) {
+        console.warn('[runtime] proto:data:set — ProtoSpecHub 未就绪');
+        return;
+      }
+      const key = payload && payload.key != null ? String(payload.key) : '';
+      if (!key) {
+        console.warn('[runtime] proto:data:set — 缺少 key');
+        return;
+      }
+      const value = payload && Object.prototype.hasOwnProperty.call(payload, 'value') ? payload.value : undefined;
+      this._hub.data.set(key, value);
+      PM.reply({
+        type: 'proto:hub:ack',
+        payload: { op: 'proto:data:set', key, value }
+      });
+    },
+
+    /**
+     * 扩展「状态中心」→ 页面 ProtoSpecHub.state，并同步主题/分屏到 DOM
+     */
+    _onProtoStatePatch(patch) {
+      if (!this._hub || !this._hub.state) {
+        console.warn('[runtime] proto:state:patch — ProtoSpecHub 未就绪');
+        return;
+      }
+      if (!patch || typeof patch !== 'object') {
+        console.warn('[runtime] proto:state:patch — payload 须为对象');
+        return;
+      }
+      this._hub.state.set(patch);
+      this._syncDomFromHubState();
+      if (patch.theme && ['dark', 'light'].includes(patch.theme)) {
+        this._theme = patch.theme;
+      }
+      if (patch.splitMode && ['1-split', '2-split', '4-split'].includes(patch.splitMode)) {
+        this._splitMode = patch.splitMode;
+      }
+      PM.reply({
+        type: 'proto:hub:ack',
+        payload: { op: 'proto:state:patch', patch }
+      });
+    },
+
+    /**
+     * 扩展「事件中心」→ 页面 hub 总线 + 文档级 CustomEvent ps-extension-hub（供原型订阅）
+     */
+    _onProtoEventEmit(payload) {
+      if (!this._hub || !this._hub.events) {
+        console.warn('[runtime] proto:event:emit — ProtoSpecHub 未就绪');
+        return;
+      }
+      const name = payload && payload.name != null ? String(payload.name) : '';
+      if (!name) {
+        console.warn('[runtime] proto:event:emit — 缺少 name');
+        return;
+      }
+      const inner = payload && Object.prototype.hasOwnProperty.call(payload, 'payload') ? payload.payload : undefined;
+      this._hub.events.emit(name, inner);
+      window.dispatchEvent(new CustomEvent('ps-extension-hub', { detail: { name, payload: inner } }));
+      PM.reply({
+        type: 'proto:hub:ack',
+        payload: { op: 'proto:event:emit', name, payload: inner }
+      });
+    },
+
     // ── DOM 事件监听 ──
 
     _initDOMListeners() {
@@ -282,7 +423,7 @@
         const rect = target.getBoundingClientRect();
         const specName = target.getAttribute('data-ps-spec');
 
-        PostMessage.reply({
+        PM.reply({
           type: 'elem:click',
           payload: {
             selector,
@@ -309,7 +450,7 @@
         hoverTimer = setTimeout(() => {
           const specName = target.getAttribute('data-ps-spec');
           if (specName) {
-            PostMessage.reply({
+            PM.reply({
               type: 'elem:hover',
               payload: { selector: this._getSelector(target), specBound: specName }
             });
@@ -322,7 +463,7 @@
         const target = e.target;
         const specName = target.getAttribute('data-ps-spec');
         if (specName) {
-          PostMessage.reply({
+          PM.reply({
             type: 'elem:contextmenu',
             payload: {
               selector: this._getSelector(target),
@@ -343,7 +484,7 @@
           e.key
         ].filter(Boolean).join('+');
 
-        PostMessage.reply({
+        PM.reply({
           type: 'page:keydown',
           payload: {
             key: e.key,
@@ -586,27 +727,49 @@
      * 销毁 runtime，清理所有副作用
      */
     destroy() {
+      if (this._hub) {
+        try {
+          this._hub.destroy();
+        } catch (_e) {}
+        if (globalThis.__protoSpecHub === this._hub) {
+          try {
+            delete globalThis.__protoSpecHub;
+          } catch (_e2) {
+            globalThis.__protoSpecHub = undefined;
+          }
+        }
+        this._hub = null;
+      }
+
       this._observer?.disconnect();
       this._highlightLayer?.remove();
       document.querySelectorAll('.ps-onboard-step-label, #ps-runtime-styles').forEach(el => el.remove());
-      PostMessage.off('spec:select');
-      PostMessage.off('spec:bind');
-      PostMessage.off('onboard:start');
-      PostMessage.off('onboard:step');
-      PostMessage.off('design:toggle');
-      PostMessage.off('layout:split');
-      PostMessage.off('elem:highlight');
-      PostMessage.off('annotation:show');
-      PostMessage.off('annotation:clear');
+      PM.off('spec:select');
+      PM.off('spec:bind');
+      PM.off('onboard:start');
+      PM.off('onboard:step');
+      PM.off('design:toggle');
+      PM.off('layout:split');
+      PM.off('elem:highlight');
+      PM.off('annotation:show');
+      PM.off('annotation:clear');
+      PM.off('proto:data:set');
+      PM.off('proto:state:patch');
+      PM.off('proto:event:emit');
     }
   };
 
-  // 自动初始化
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => Runtime.init());
-  } else {
-    Runtime.init();
+  // 自动初始化：延后到微任务，以便注入入口（proto-spec-runtime）先写入 __PROTO_SPEC_MANIFEST
+  function bootProtoRuntime() {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () {
+        Runtime.init();
+      });
+    } else {
+      Runtime.init();
+    }
   }
+  queueMicrotask(bootProtoRuntime);
 
   // 导出
   window.Runtime = Runtime;

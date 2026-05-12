@@ -1,0 +1,8 @@
+{
+  "name": "proto-spec-governance",
+  "private": true,
+  "description": "本地静态资源预览（避免 file:// 控制台安全提示）",
+  "scripts": {
+    "serve:assets": "npx --yes serve assets -l 5199 --cors"
+  }
+}
