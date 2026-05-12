@@ -1,0 +1,101 @@
+{
+  "session_id": "proto-spec-prototype-initialization-2025-05-13",
+  "started_at": "2025-05-13T00:00:00Z",
+  "parent_session": "proto-spec-two-way-binding-2025-05-13",
+  "questions": [
+    {
+      "id": 1,
+      "question": "解析策略从什么层级开始？",
+      "recommended_answer": "先 tag + class + id 结构",
+      "user_answer": "页面/区域/组件逐层解析，先出框架再补ID",
+      "branch": "parsing"
+    },
+    {
+      "id": 2,
+      "question": "页面分区域的方式？",
+      "recommended_answer": "视觉分块 + 语义标签双重启发",
+      "user_answer": "A. 视觉分块 + 语义标签双重启发（Agent 生成的 HTML 不一定用标准语义）",
+      "branch": "parsing"
+    },
+    {
+      "id": 3,
+      "question": "区域到组件的切分粒度？",
+      "recommended_answer": "交互边界 + 视觉间距",
+      "user_answer": "纵向分层 page/region/component，横向按复杂度提层",
+      "branch": "parsing"
+    },
+    {
+      "id": 4,
+      "question": "复杂度横向提层的标准？",
+      "recommended_answer": "交互复杂度 + 嵌套深度决定层级",
+      "user_answer": "固定三层（page/region/component），抽屉/弹窗/模态框提为 P-overlay 避免无限嵌套",
+      "branch": "parsing"
+    },
+    {
+      "id": 5,
+      "question": "组件点击后抽屉/弹窗提层到什么位置？",
+      "recommended_answer": "与 page 同级，P-overlay",
+      "user_answer": "A. 与 page 同级，P-overlay；但组件需增加 overlay 关联字段可跳转至该 page",
+      "branch": "parsing"
+    },
+    {
+      "id": 6,
+      "question": "组件跳转到 P-overlay 后，原型如何展示关系？",
+      "recommended_answer": "Spec 树中展示 → P-overlay-name 调用链",
+      "user_answer": "推荐答案就不错（Spec 树中展示 → P-overlay-name）",
+      "branch": "parsing"
+    },
+    {
+      "id": 7,
+      "question": "从空白页推理 Spec，初始状态是什么？",
+      "recommended_answer": "空白 canvas + 隐式 page",
+      "user_answer": "三种情况（本地原型/无原型/竞品参考）统一收敛到 Agent 生成初始区域样式默认骨架本地 HTML 原型",
+      "branch": "entry"
+    },
+    {
+      "id": 8,
+      "question": "三种入口统一输出什么格式？",
+      "recommended_answer": "生成可运行 HTML 片段",
+      "user_answer": "A. 生成可运行 HTML 片段",
+      "branch": "entry"
+    },
+    {
+      "id": 9,
+      "question": "HTML 解析器跑在哪里？",
+      "recommended_answer": "Extension 内本地 JS 解析",
+      "user_answer": "发给服务端解析，明确要求或造标准输出技能（竞品参考/需求描述发 Agent 本地 HTML/标准语义解析）",
+      "branch": "entry"
+    },
+    {
+      "id": 10,
+      "question": "服务端解析的输出格式？",
+      "recommended_answer": "标准化 JSON + 可预览 HTML 片段",
+      "user_answer": "A. 标准化 JSON + 可预览 HTML",
+      "branch": "entry"
+    },
+    {
+      "id": 11,
+      "question": "完整入口闭环？",
+      "recommended_answer": "三种入口 → 统一 Agent 服务端解析 → HTML + JSON → 用户确认 → 进入绑定流程",
+      "user_answer": "A. 完整闭环",
+      "branch": "entry"
+    }
+  ],
+  "consensus": {
+    "summary": "三种入口（本地HTML/需求描述/竞品参考）→ 统一收敛到 Agent 生成初始 HTML → 用户确认初版 → 进入 L2 Spec 树绑定流程；解析策略：page/region/component 三层 + P-overlay 提层 + overlay 关联字段",
+    "key_decisions": [
+      "解析策略：框架优先，逐层深入（纵向 page/region/component，横向按复杂度提层）",
+      "区域切分：视觉分块 + 语义标签双重启发",
+      "组件切分：交互边界 + 视觉间距",
+      "固定三层，避免无限嵌套",
+      "抽屉/弹窗/模态框 → P-overlay，与 page 同级",
+      "组件增加 overlay 关联字段，Spec 树展示 → P-overlay-name",
+      "三种入口统一收敛到 Agent 生成初始 HTML",
+      "本地 HTML：Extension 内 JS 解析",
+      "竞品/需求：发 Agent 服务端，输出 HTML + JSON",
+      "用户确认初版后进入 Spec 绑定流程"
+    ]
+  },
+  "spec_draft_path": "specs/L2-prototype-initialization.md",
+  "l2_spec_path": "specs/L2-prototype-initialization.md"
+}
