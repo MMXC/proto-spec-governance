@@ -67,3 +67,38 @@ html[data-host="sidepanel"] .log-list{max-height:none}
 ::-webkit-scrollbar{width:3px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+
+/* Entry Selector */
+.entry-selector{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;gap:8px}
+.entry-modes{display:flex;gap:6px}
+.entry-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border-radius:6px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:#8a8f98;font-size:10px;cursor:pointer;transition:all .15s}
+.entry-btn:hover{border-color:rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#c8cdd6}
+.entry-btn.active{border-color:rgba(113,112,255,.45);background:rgba(113,112,255,.12);color:#818cff}
+.entry-icon{font-size:14px}
+.entry-label{font-size:9.5px;font-weight:500}
+.entry-input-area{padding-top:4px}
+.entry-hint{font-size:10.5px;color:#62666d;text-align:center;padding:8px 0}
+.prompt-input,.url-input{width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:5px;color:#f7f8f8;font-size:11.5px;padding:8px;resize:none;font-family:inherit;outline:none}
+.prompt-input:focus,.url-input:focus{border-color:rgba(113,112,255,.45)}
+.url-input{height:30px}
+.action-btn{width:100%;margin-top:6px;padding:7px;border-radius:5px;border:none;background:#7170ff;color:#fff;font-size:11.5px;font-weight:600;cursor:pointer;transition:background .15s}
+.action-btn:hover{background:#6160f0}
+.action-btn.primary{background:#7170ff}
+.action-btn.primary:hover{background:#6160f0}
+
+/* Tree children (nested) */
+.tree-children{padding-left:10px}
+
+/* Tree divider */
+.tree-divider{font-size:9.5px;color:#4b5563;text-align:center;padding:6px 0;letter-spacing:.3px}
+
+/* Diff */
+.diff-list{max-height:180px;overflow-y:auto;padding:4px 8px}
+.diff-item{display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:4px;cursor:pointer;font-size:11px;transition:background .12s;margin:2px 0}
+.diff-item:hover{background:rgba(255,255,255,.05)}
+.diff-added{color:#10b981}
+.diff-removed{color:#f87171;opacity:.7}
+.diff-op{font-weight:700;font-size:12px;width:12px;text-align:center}
+.diff-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.diff-type{font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(113,112,255,.15);color:#818cff}
+.diff-empty{padding:16px;text-align:center;font-size:11px;color:#4b5563}

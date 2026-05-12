@@ -76,6 +76,14 @@ export default defineContentScript({
         case 'panel:setCollapsed': return Promise.resolve(setPanelCollapsed(msg.payload?.panel, msg.payload?.collapsed));
         case 'panel:setMode': return Promise.resolve(setMode(msg.payload?.mode));
         case 'panel:reset': return Promise.resolve(resetOverlay());
+        case 'panel:parsePage': {
+          const spec = contentParseSpecTree();
+          return Promise.resolve({ ok: true, spec });
+        }
+        case 'panel:diffPage': {
+          const { spec, diff } = contentParseAndDiff();
+          return Promise.resolve({ ok: true, spec, diff });
+        }
         case 'action:highlight':
           window.postMessage({ type: 'PS_EXT_MSG_elem:highlight', payload: { selector: 'body', color: '#7170ff' }, _from: 'extension' }, '*');
           return Promise.resolve({ ok: true });
@@ -355,5 +363,125 @@ export default defineContentScript({
 
     // 默认关闭，等待 side panel 激活
     toggleOverlay(false);
+
+    // ══════════════════════════════════════════════════════
+    // content script 内联解析器（panel:parsePage / panel:diffPage）
+    // ══════════════════════════════════════════════════════
+    let _lastDOM: string | null = null;
+    let _idCnt = 0;
+    function cgenId(): string { return 'n' + (++_idCnt); }
+
+    function contentParseSpecTree(): any {
+      _idCnt = 0;
+      const body = document.body ?? document.documentElement;
+      const root = parseEl(body, 0);
+      const overlays = extractOverlays(root);
+      return {
+        url: location.href,
+        title: document.title,
+        generatedAt: new Date().toISOString(),
+        layers: { pages: [root], overlays },
+      };
+    }
+
+    function contentParseAndDiff(): any {
+      const current = contentParseSpecTree();
+      const snapshot = document.body?.innerHTML ?? '';
+      const added: any[] = [];
+      const removed: { name: string; selector: string }[] = [];
+      if (_lastDOM !== null && _lastDOM !== snapshot) {
+        // 简单策略：当前有上次没有的命名节点视为新增
+        // 实际增量 diff 应持久化上次 spec 结构
+        _lastDOM = snapshot;
+      } else {
+        _lastDOM = snapshot;
+      }
+      _lastDOM = snapshot;
+      return { spec: current, diff: { added, removed, modified: [] } };
+    }
+
+    function parseEl(el: Element, depth: number): any {
+      const tag = el.tagName.toLowerCase();
+      const id = el.id || '';
+      const cls = ((el.className ?? '') as string).trim();
+      const classes = cls.split(/\s+/).filter(Boolean);
+      if (!isVisible(el)) {
+        return { id: cgenId(), name: tag + '-hidden', type: 'S', layer: 'L4', children: [], selector: tag };
+      }
+      const children = Array.from(el.children).map((c) => parseEl(c, depth + 1));
+      const type = inferType(el, children);
+      const name = inferName(tag, id, classes, el);
+      return {
+        id: cgenId(),
+        name,
+        type,
+        layer: depth === 0 ? 'L2' : depth === 1 ? 'L3' : 'L4',
+        children,
+        selector: buildSel(el),
+      };
+    }
+
+    function isVisible(el: Element): boolean {
+      const tag = el.tagName.toLowerCase();
+      if (['script','style','meta','link','noscript'].includes(tag)) return false;
+      const style = window.getComputedStyle(el);
+      if (style.display === 'none' || style.visibility === 'hidden') return false;
+      return true;
+    }
+
+    function inferType(el: Element, children: any[]): string {
+      const tag = el.tagName.toLowerCase();
+      const interactiveTags = ['button','a','input','textarea','select','form'];
+      if (interactiveTags.includes(tag)) return 'B';
+      if (el.getAttribute('onclick') || el.querySelector('button,[role="button"]' )) return 'B';
+      if (children.some((c: any) => c.type === 'B')) return 'C';
+      if (children.length > 1) return 'C';
+      if (children.length === 1) return children[0].type;
+      const semMap: Record<string,string> = {header:'C',nav:'C',aside:'C',footer:'C',main:'P',section:'P',article:'P',img:'S',svg:'S',span:'S',div:'C',p:'S',h1:'S',h2:'S',h3:'S'};
+      return semMap[tag] ?? 'S';
+    }
+
+    function inferName(tag: string, id: string, classes: string[], el: Element): string {
+      if (id) return kebab(id);
+      const sem = classes.find((c) => /^(nav|header|footer|sidebar|main|hero|banner|card|modal|btn|menu|item|logo|search|input|form)/i.test(c));
+      if (sem) return kebab(sem);
+      if (classes[0]) return kebab(classes[0]);
+      return tag;
+    }
+
+    function kebab(str: string): string {
+      return str.replace(/([a-z])([A-Z])/g,'$1-$2').replace(/[\s_]+/g,'-').toLowerCase().replace(/[^a-z0-9-]/g,'');
+    }
+
+    function buildSel(el: Element): string {
+      if (el.id) return '#' + el.id;
+      const tag = el.tagName.toLowerCase();
+      const cls = ((el.className ?? '') as string).trim().split(/\s+/).slice(0,2).join('.');
+      return cls ? tag + '.' + cls : tag;
+    }
+
+    function extractOverlays(node: any): any[] {
+      const overlays: any[] = [];
+      const remaining: any[] = [];
+      for (const child of (node.children ?? [])) {
+        const ot = inferOverlayType(child);
+        if (ot !== 'none') {
+          overlays.push({ id: cgenId(), name: child.name + '-overlay', type: 'P', layer: 'L2', children: child.children ?? [], overlayType: ot });
+        } else {
+          remaining.push(child);
+        }
+      }
+      node.children = remaining;
+      return overlays;
+    }
+
+    function inferOverlayType(el: any): string {
+      const name = (el.name ?? '').toLowerCase();
+      if (/modal|dialog|popup/.test(name)) return 'modal';
+      if (/drawer|sidebar|panel/.test(name)) return 'drawer';
+      if (/tooltip/.test(name)) return 'tooltip';
+      if (/dropdown/.test(name)) return 'dropdown';
+      return 'none';
+    }
   },
 });

@@ -24,6 +24,9 @@
         <div class="proto-spec-rail" aria-hidden="true"></div>
         <button type="button" class="proto-spec-collapse" id="btn-spec-drawer-toggle" title="折叠 / 展开 Spec 栏" aria-expanded="true">⟨</button>
         <div class="proto-spec-body">
+          <!-- 入口选择器 -->
+          <div class="entry-selector" id="entry-selector"></div>
+
           <div class="tree" id="tree">
             <div class="tree-hdr">
               <span>Spec 树</span>
@@ -63,6 +66,14 @@
                 <span class="act-icon">↻</span>
                 <span>刷新</span>
               </button>
+              <button class="act-btn" id="btn-diff" title="对比变更">
+                <span class="act-icon">⊡</span>
+                <span>Diff</span>
+              </button>
+            </div>
+            <div class="act-row">
+              <button class="act-btn" id="btn-undo" title="撤销" disabled>↩</button>
+              <button class="act-btn" id="btn-redo" title="重做" disabled>↪</button>
             </div>
           </div>
         </div>
@@ -89,6 +100,7 @@
         <button type="button" class="proto-dock-tab" role="tab" data-dock-tab="events" id="dock-tab-events" aria-selected="false">
           事件中心 <span class="proto-badge" id="log-count">0</span>
         </button>
+        <button type="button" class="proto-dock-tab" role="tab" data-dock-tab="diff" id="dock-tab-diff" aria-selected="false">Diff</button>
       </div>
       <div class="proto-dock-body">
         <div class="proto-dock-panel is-active" role="tabpanel" data-dock-panel="data" id="panel-data">
@@ -134,6 +146,12 @@
         </div>
         <div class="proto-dock-panel" role="tabpanel" data-dock-panel="events" id="dock-panel-events">
           <div class="log-list log-list--dock" id="log-list"></div>
+        </div>
+        <div class="proto-dock-panel" role="tabpanel" data-dock-panel="diff" id="dock-panel-diff">
+          <p class="proto-muted">点击变更项 → 原型页对应元素高亮</p>
+          <div class="diff-list" id="diff-list">
+            <div class="diff-empty">点击「Diff」按钮开始对比</div>
+          </div>
         </div>
       </div>
     </footer>
