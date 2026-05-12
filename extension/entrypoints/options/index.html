@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proto Spec — 扩展设置</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+    body { font-family: system-ui, sans-serif; font-size: 13px; padding: 20px; max-width: 480px; color: #111; background: #fafafa; }
+    h1 { font-size: 16px; margin-bottom: 16px; }
+    label { display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 12px; }
+    p.muted { color: #666; font-size: 12px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Proto Spec 扩展设置</h1>
+  <label>
+    <input type="checkbox" id="opt-debug" />
+    调试模式（侧栏「调试」工作流时显示更详细占位说明）
+  </label>
+  <p class="muted">工作模式（治理 / 浏览 / 调试）在侧栏顶栏切换，并会保存在本机。</p>
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>

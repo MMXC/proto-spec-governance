@@ -1,86 +1,113 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh" data-host="sidepanel">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Proto Spec</title>
-  <script type="module" src="./main.ts"></script>
+  <meta name="manifest.open_at_install" content="false" />
+  <title>Proto Spec 治理</title>
 </head>
-<body>
-  <div id="app">
-    <!-- Header -->
-    <div class="hdr">
-      <div class="hdr-icon">PS</div>
-      <span class="hdr-title">Proto Spec</span>
-      <div class="hdr-status">
-        <span class="dot" id="status-dot"></span>
-        <span id="status-text">初始化中…</span>
+<body class="proto-body">
+  <div class="proto-shell" id="proto-shell" data-work-mode="governance">
+    <!-- 顶层：工作模式 + 扩展设置 -->
+    <header class="proto-topbar">
+      <nav class="proto-modes" id="proto-modes" aria-label="工作模式">
+        <button type="button" class="proto-mode is-active" data-mode="governance" id="mode-governance">治理</button>
+        <button type="button" class="proto-mode" data-mode="browse" id="mode-browse">浏览</button>
+        <button type="button" class="proto-mode" data-mode="debug" id="mode-debug">调试</button>
+      </nav>
+      <button type="button" class="proto-settings-btn" id="btn-open-settings" title="扩展设置">⚙</button>
+    </header>
+
+    <!-- 中部：左 Spec 抽屉 | 右 Agent -->
+    <div class="proto-workspace">
+      <aside class="proto-spec-drawer" id="spec-drawer" aria-label="Spec 治理">
+        <div class="proto-spec-rail" aria-hidden="true"></div>
+        <button type="button" class="proto-spec-collapse" id="btn-spec-drawer-toggle" title="折叠 / 展开 Spec 栏" aria-expanded="true">⟨</button>
+        <div class="proto-spec-body">
+          <div class="tree" id="tree">
+            <div class="tree-hdr">
+              <span>Spec 树</span>
+              <button class="btn-icon" id="btn-add-spec" title="新建 Spec">+</button>
+            </div>
+            <div class="tree-list" id="tree-list"></div>
+          </div>
+          <div class="actions" id="actions">
+            <div class="act-spec" id="act-spec">
+              <span class="act-label">当前选中</span>
+              <span class="act-val" id="act-spec-name">—</span>
+            </div>
+            <div class="act-row">
+              <button class="act-btn" id="btn-highlight" title="高亮页面元素">
+                <span class="act-icon">✦</span>
+                <span>高亮</span>
+              </button>
+              <button class="act-btn" id="btn-annotate" title="显示/隐藏标注">
+                <span class="act-icon">📍</span>
+                <span>标注</span>
+              </button>
+              <button class="act-btn" id="btn-onboard" title="Onboard 演示">
+                <span class="act-icon">🎯</span>
+                <span>引导</span>
+              </button>
+            </div>
+            <div class="act-row">
+              <button class="act-btn" id="btn-bind" title="绑定当前 Spec 到元素">
+                <span class="act-icon">⊕</span>
+                <span>绑定</span>
+              </button>
+              <button class="act-btn" id="btn-theme" title="切换页面主题">
+                <span class="act-icon">🌓</span>
+                <span>主题</span>
+              </button>
+              <button class="act-btn" id="btn-refresh" title="刷新页面">
+                <span class="act-icon">↻</span>
+                <span>刷新</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <section class="proto-agent" aria-label="Agent 交互">
+        <div class="proto-agent-head">
+          <span class="proto-agent-title">Agent</span>
+          <span class="proto-agent-hint">与页面 runtime 协同（占位对接）</span>
+        </div>
+        <div class="proto-agent-thread" id="agent-thread"></div>
+        <div class="proto-agent-compose">
+          <textarea id="agent-input" rows="2" placeholder="输入指令或问题，Enter 发送…" spellcheck="false"></textarea>
+          <button type="button" class="proto-agent-send" id="agent-send">发送</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- 底部 Dock：数据 | 状态 | 事件中心 -->
+    <footer class="proto-dock" id="proto-dock">
+      <div class="proto-dock-tabs" role="tablist">
+        <button type="button" class="proto-dock-tab is-active" role="tab" data-dock-tab="data" id="dock-tab-data" aria-selected="true">数据</button>
+        <button type="button" class="proto-dock-tab" role="tab" data-dock-tab="status" id="dock-tab-status" aria-selected="false">状态</button>
+        <button type="button" class="proto-dock-tab" role="tab" data-dock-tab="events" id="dock-tab-events" aria-selected="false">
+          事件中心 <span class="proto-badge" id="log-count">0</span>
+        </button>
       </div>
-    </div>
-
-    <!-- Mode -->
-    <div class="section">
-      <div class="sec-label">模式</div>
-      <div class="mode-row">
-        <button class="mode-btn active" id="btn-local">本地 HTML</button>
-        <button class="mode-btn" id="btn-remote">远程页面</button>
+      <div class="proto-dock-body">
+        <div class="proto-dock-panel is-active" role="tabpanel" data-dock-panel="data" id="panel-data">
+          <p class="proto-muted">页面绑定数据、校验快照将在此聚合。</p>
+          <pre class="proto-data-block" id="data-preview">暂无数据视图</pre>
+        </div>
+        <div class="proto-dock-panel" role="tabpanel" data-dock-panel="status" id="dock-panel-status">
+          <div class="proto-status-row">
+            <span class="dot" id="status-dot"></span>
+            <span id="status-text">初始化中…</span>
+          </div>
+          <p class="proto-muted" id="status-extra">扩展 → Content → 页面 PostMessage / Runtime</p>
+        </div>
+        <div class="proto-dock-panel" role="tabpanel" data-dock-panel="events" id="dock-panel-events">
+          <div class="log-list log-list--dock" id="log-list"></div>
+        </div>
       </div>
-    </div>
-
-    <!-- Enter/Exit -->
-    <div class="section">
-      <button class="ctrl-btn" id="btn-toggle">进入治理</button>
-    </div>
-
-    <!-- Panel toggles -->
-    <div class="section">
-      <div class="sec-label">侧栏控制</div>
-      <div class="panel-grid">
-        <button class="panel-btn" id="btn-top">
-          <span class="dot-p"></span>顶部
-        </button>
-        <button class="panel-btn" id="btn-bottom">
-          <span class="dot-p"></span>底部
-        </button>
-        <button class="panel-btn" id="btn-left">
-          <span class="dot-p"></span>左侧
-        </button>
-        <button class="panel-btn" id="btn-right">
-          <span class="dot-p"></span>右侧
-        </button>
-      </div>
-    </div>
-
-    <!-- Quick actions -->
-    <div class="section">
-      <div class="sec-label">快捷操作</div>
-      <div class="action-grid">
-        <button class="action-btn" id="btn-highlight">
-          <span class="action-icon">✦</span>
-          高亮
-        </button>
-        <button class="action-btn" id="btn-annotate">
-          <span class="action-icon">📍</span>
-          标注
-        </button>
-        <button class="action-btn" id="btn-extract">
-          <span class="action-icon">⬇</span>
-          提取
-        </button>
-      </div>
-    </div>
-
-    <!-- Hint -->
-    <div class="hint">
-      点击「进入治理」后，页面将进入全治理模式，4 侧栏环绕预览区。<br><br>
-      <code>file://</code> 本地页面支持完整治理操作。<br>
-      远程页面仅支持样式 &amp; Spec 提取。
-    </div>
-
-    <!-- Reset -->
-    <div class="section">
-      <button class="reset-btn" id="btn-reset">↺ 重置布局</button>
-    </div>
+    </footer>
   </div>
+  <script type="module" src="./main.ts"></script>
 </body>
 </html>

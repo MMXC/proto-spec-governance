@@ -1,139 +1,29 @@
 // content.ts — Proto Spec content script
-// 管理 4 侧栏 overlay，与 side panel 通信
-// Runtime 通过 chrome.scripting.executeScript 注入，绕过 CSP
+// 四侧栏 overlay + side panel；页面 runtime 通过 injectScript 注入（兼容 CSP），并转发 background → 页面的 runtime 指令
+
+import { injectScript } from 'wxt/utils/inject-script';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
   runAt: 'document_idle',
 
-  async main(ctx) {
-    // ── Runtime 函数（必须自包含，chrome.scripting.executeScript 会序列化它）────
-    const runtimeCode = function() {
-      var PREFIX = 'PS_EXT_MSG_';
-      var _listeners = {}, _pendingReplies = {}, _extSource = null;
-
-      var PostMessage = {
-        init: function() {
-          window.addEventListener('message', function(event) {
-            var msg = event.data;
-            if (!msg || typeof msg.type !== 'string' || !msg.type.startsWith(PREFIX)) return;
-            var type = msg.type.slice(PREFIX.length);
-            if (msg._from === 'extension' && event.source) _extSource = event.source;
-            (_listeners[type] || []).forEach(function(h) { try { h(msg.payload, { type: type, source: event.source }); } catch(e) {} });
-            if (msg._msgId && _pendingReplies[msg._msgId]) {
-              var p = _pendingReplies[msg._msgId];
-              clearTimeout(p.timer);
-              delete _pendingReplies[msg._msgId];
-              p.resolve(msg.payload);
-            }
-          });
-        },
-        send: function(type, payload) {
-          var msgId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-          window.postMessage({ type: PREFIX + type, payload: payload, _msgId: msgId, _from: 'extension' }, '*');
-        },
-        reply: function(type, payload) {
-          if (_extSource) _extSource.postMessage({ type: PREFIX + type, payload: payload, _from: 'page' }, '*');
-        },
-        on: function(type, handler) { (_listeners[type] = _listeners[type] || []).push(handler); }
-      };
-
-      var Runtime = {
-        init: function() {
-          PostMessage.init();
-          PostMessage.on('spec:select', this._onSpecSelect.bind(this));
-          PostMessage.on('spec:bind', this._onSpecBind.bind(this));
-          PostMessage.on('onboard:start', this._onOnboardStart.bind(this));
-          PostMessage.on('elem:highlight', this._onElemHighlight.bind(this));
-          PostMessage.on('annotation:show', this._onAnnotationShow.bind(this));
-          PostMessage.on('annotation:clear', this._onAnnotationClear.bind(this));
-          PostMessage.on('design:toggle', function(d) { document.documentElement.dataset.psTheme = d.theme || 'dark'; });
-          PostMessage.reply('runtime:ready', { version: '1.0.0', url: window.location.href });
-          this._initDOMListeners();
-          console.log('[Proto Spec] Runtime ready');
-        },
-        _onSpecSelect: function(data) {
-          var el = data.selector ? document.querySelector(data.selector) : null;
-          if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); this._flash(el, '#7170ff', 600); }
-        },
-        _onSpecBind: function(data) {
-          var el = data.selector ? document.querySelector(data.selector) : null;
-          if (!el) return;
-          el.setAttribute('data-ps-spec', data.specName);
-          this._flash(el, '#10b981', 800);
-          PostMessage.reply('spec:bound', { specName: data.specName });
-        },
-        _onOnboardStart: function(data) {
-          var el = data.selector ? document.querySelector(data.selector) : null;
-          if (!el) return;
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          var self = this;
-          setTimeout(function() { self._flash(el, '#f59e0b', 1000); self._showTip(el, data.specName); }, 400);
-        },
-        _onElemHighlight: function(data) {
-          var el = data.selector ? document.querySelector(data.selector) : null;
-          if (el) this._flash(el, data.color || '#7170ff', 1000);
-        },
-        _onAnnotationShow: function(data) {
-          document.documentElement.dataset.psAnnotations = data.mode === 'show' ? 'show' : 'hide';
-        },
-        _onAnnotationClear: function() {
-          document.querySelectorAll('[data-ps-highlight]').forEach(function(el) { el.style.boxShadow = ''; el.removeAttribute('data-ps-highlight'); });
-          document.querySelectorAll('.ps-tooltip').forEach(function(el) { el.remove(); });
-        },
-        _initDOMListeners: function() {
-          var self = this;
-          document.addEventListener('click', function(e) {
-            PostMessage.reply('elem:click', { selector: self._sel(e.target), tag: e.target.tagName, text: e.target.innerText.slice(0, 40) });
-          }, true);
-        },
-        _flash: function(el, color, ms) {
-          el.setAttribute('data-ps-highlight', '1');
-          el.style.boxShadow = '0 0 0 3px ' + color + ', 0 0 20px ' + color + '44';
-          setTimeout(function() { el.style.boxShadow = '0 0 0 2px ' + color + '88'; }, ms);
-        },
-        _showTip: function(el, text) {
-          var old = document.querySelector('.ps-tooltip');
-          if (old) old.remove();
-          var tip = document.createElement('div');
-          tip.className = 'ps-tooltip';
-          tip.textContent = text;
-          tip.style.cssText = 'position:fixed;z-index:2147483647;background:#1a1b27;color:#f9fafb;padding:6px 12px;border-radius:6px;font-size:12px;font-family:system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.4);border:1px solid #2a2d3a;pointer-events:none;top:12px;left:50%;transform:translateX(-50%);white-space:nowrap';
-          document.body.appendChild(tip);
-          setTimeout(function() { tip.remove(); }, 4000);
-        },
-        _sel: function(el) {
-          if (el.id) return '#' + el.id;
-          var parts = [];
-          while (el && el.nodeType === 1 && parts.length < 4) {
-            var s = el.tagName.toLowerCase();
-            if (el.id) { parts.unshift('#' + el.id); return parts.join('>'); }
-            if (el.className && typeof el.className === 'string') { var c = el.className.trim().split(/\s+/)[0]; if (c) s += '.' + c; }
-            parts.unshift(s);
-            el = el.parentElement;
-          }
-          return parts.join(' > ');
-        }
-      };
-
-      window.ProtoSpec = { PostMessage: PostMessage, Runtime: Runtime };
-      Runtime.init();
-    };
-
-    // ── 注入 Runtime（chrome.scripting.executeScript，绕过 CSP）────
+  async main(_ctx) {
+    // ── 注入完整页面 runtime（与 assets/runtime.js 一致）────
     async function injectRuntime() {
       if (document.getElementById('ps-runtime')) return;
+      if (document.documentElement.getAttribute('data-ps-proto-runtime') === 'embedded') {
+        console.log('[Proto Spec] Page embeds runtime, skip inject');
+        return;
+      }
       try {
-        await chrome.scripting.executeScript({
-          target: { tabId: ctx.tabId },
-          func: runtimeCode,
+        await injectScript('/proto-spec-runtime.js', {
+          keepInDom: true,
+          modifyScript: (el) => {
+            el.id = 'ps-runtime';
+          },
         });
-        const marker = document.createElement('div');
-        marker.id = 'ps-runtime';
-        marker.style.cssText = 'display:none';
-        (document.head || document.documentElement).appendChild(marker);
       } catch (e) {
-        console.error('[Proto Spec] Runtime injection failed:', e);
+        console.error('[Proto Spec] Runtime injectScript failed:', e);
       }
     }
 
@@ -155,7 +45,25 @@ export default defineContentScript({
           window.postMessage({ type: 'PS_EXT_MSG_annotation:show', payload: { mode: 'show' }, _from: 'extension' }, '*');
           return Promise.resolve({ ok: true });
         case 'action:extract': return Promise.resolve(extractSpec());
-        default: return Promise.resolve({ ok: true });
+        default:
+          if (
+            msg &&
+            typeof msg.type === 'string' &&
+            !msg.type.startsWith('panel:') &&
+            !msg.type.startsWith('action:') &&
+            Object.prototype.hasOwnProperty.call(msg, 'payload')
+          ) {
+            window.postMessage(
+              {
+                type: 'PS_EXT_MSG_' + msg.type,
+                payload: msg.payload,
+                _from: 'extension',
+              },
+              '*'
+            );
+            return Promise.resolve({ ok: true });
+          }
+          return Promise.resolve({ ok: true });
       }
     });
 
@@ -389,8 +297,9 @@ export default defineContentScript({
     // ── Spec 提取 ──────────────────────────────
     function extractSpec(): { ok: boolean; spec: any } {
       const tags: any[] = [];
-      document.querySelectorAll('h1,h2,h3,h4,h5,h6,p,button,a,input,textarea,select,img,nav,header,footer,main,section,article,aside,div,span').forEach(el => {
-        tags.push({ tag: el.tagName.toLowerCase(), cls: el.className && typeof el.className === 'string' ? el.className.trim().split(/\s+/).slice(0, 2).join('.') : '', id: el.id || '', text: el.innerText?.trim().slice(0, 30) || '' });
+      document.querySelectorAll('h1,h2,h3,h4,h5,h6,p,button,a,input,textarea,select,img,nav,header,footer,main,section,article,aside,div,span').forEach((el) => {
+        const node = el as HTMLElement;
+        tags.push({ tag: node.tagName.toLowerCase(), cls: node.className && typeof node.className === 'string' ? node.className.trim().split(/\s+/).slice(0, 2).join('.') : '', id: node.id || '', text: node.innerText?.trim().slice(0, 30) || '' });
       });
       const spec = { url: window.location.href, title: document.title, tags: tags.slice(0, 50), layer: 'L3', generatedAt: new Date().toISOString() };
       browser.runtime.sendMessage({ type: 'popup:receive', payload: { type: 'spec:extracted', data: spec } });

@@ -1,11 +1,31 @@
 // background.ts — Proto Spec background service worker
-// 作为 popup ↔ content script 的消息 relay 中心
+// 作为侧边栏 / content script 的消息 relay 中心
+import type { Browser } from 'wxt/browser';
+
+type SidePanelApi = {
+  setPanelBehavior: (opts: { openPanelOnActionClick: boolean }) => Promise<void>;
+};
+
+type BrowserWithSidePanel = typeof browser & { sidePanel?: SidePanelApi };
+
 export default defineBackground(() => {
   let activeTabId: number | null = null;
 
-  // 安装时初始化
+  async function enableSidePanelOnToolbarClick() {
+    const sidePanel = (browser as BrowserWithSidePanel).sidePanel;
+    if (!sidePanel?.setPanelBehavior) return;
+    try {
+      await sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+    } catch (e) {
+      console.warn('[Proto Spec BG] sidePanel.setPanelBehavior failed', e);
+    }
+  }
+
+  void enableSidePanelOnToolbarClick();
+
   browser.runtime.onInstalled.addListener(() => {
     console.log('[Proto Spec BG] Extension installed');
+    void enableSidePanelOnToolbarClick();
   });
 
   // 监听 tab 激活
@@ -13,17 +33,17 @@ export default defineBackground(() => {
     activeTabId = info.tabId;
   });
 
-  // 监听来自 popup 的消息
+  // 监听来自侧边栏等 UI 的消息
   browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     handleMessage(msg, sender).then(sendResponse);
     return true;
   });
 
-  async function handleMessage(msg: any, sender: browser.runtime.MessageSender) {
+  async function handleMessage(msg: any, sender: Browser.runtime.MessageSender) {
     const { type, payload } = msg;
 
     switch (type) {
-      // Popup → Content: 转发 Extension → Page 指令
+      // 侧边栏 → Content: 转发 Extension → Page 指令
       case 'ext:send':
         return await sendToPage(payload);
 

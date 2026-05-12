@@ -1,19 +1,20 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh" data-ps-proto-runtime="embedded">
 <!--
   shell-with-runtime.html — page-prototype + Proto Spec runtime
 
   这是 Proto Spec 插件的宿主页面：
   = page-prototype.html（用户应用页面）
-  + assets/postMessage.js（Chrome 扩展通信层）
-  + assets/runtime.js（插件 ↔ 页面运行时）
+  + 内联 PostMessage + runtime（与 assets/*.js 行为一致，单文件即可调试）
 
   插件面板（Extension）通过 postMessage 与本页面通信：
   - Extension → HTML: runtime.js 接收并执行（高亮、标注、onboard 等）
   - HTML → Extension: runtime.js 上报（elem:click、spec:bound 等）
 
-  开发调试：直接用浏览器打开本文件即可测试插件能力
-  生产：打包为 Chrome/Firefox 插件，通过 content script 注入到用户网页
+  data-ps-proto-runtime="embedded"：告知扩展 content script 勿再注入 proto-spec-runtime.js，避免重复初始化。
+
+  开发调试：优先用本地 HTTP 打开（如 npx serve .），file:// 下部分浏览器对 iframe/模块限制更严。
+  生产：通过 content script 向目标页注入 /proto-spec-runtime.js（非内联，兼容严格 CSP）。
 -->
 <head>
 <meta charset="UTF-8">
