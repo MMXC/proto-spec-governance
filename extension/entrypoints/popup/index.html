@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proto Spec</title>
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <div class="hdr">
+      <div class="hdr-icon">PS</div>
+      <span class="hdr-title">Proto Spec</span>
+      <div class="hdr-status" id="status">
+        <span class="dot" id="status-dot"></span>
+        <span id="status-text">初始化中…</span>
+      </div>
+    </div>
+
+    <!-- Spec Tree -->
+    <div class="tree" id="tree">
+      <div class="tree-hdr">
+        <span>Spec 树</span>
+        <button class="btn-icon" id="btn-add-spec" title="新建 Spec">+</button>
+      </div>
+      <div class="tree-list" id="tree-list">
+        <!-- Dynamically populated -->
+      </div>
+    </div>
+
+    <!-- Action Panel -->
+    <div class="actions" id="actions">
+      <div class="act-spec" id="act-spec">
+        <span class="act-label">当前选中</span>
+        <span class="act-val" id="act-spec-name">—</span>
+      </div>
+      <div class="act-row">
+        <button class="act-btn" id="btn-highlight" title="高亮页面元素">
+          <span class="act-icon">✦</span>
+          <span>高亮</span>
+        </button>
+        <button class="act-btn" id="btn-annotate" title="显示/隐藏标注">
+          <span class="act-icon">📍</span>
+          <span>标注</span>
+        </button>
+        <button class="act-btn" id="btn-onboard" title="Onboard 演示">
+          <span class="act-icon">🎯</span>
+          <span>引导</span>
+        </button>
+      </div>
+      <div class="act-row">
+        <button class="act-btn" id="btn-bind" title="绑定当前 Spec 到元素">
+          <span class="act-icon">⊕</span>
+          <span>绑定</span>
+        </button>
+        <button class="act-btn" id="btn-theme" title="切换主题">
+          <span class="act-icon">🌓</span>
+          <span>主题</span>
+        </button>
+        <button class="act-btn" id="btn-refresh" title="刷新页面">
+          <span class="act-icon">↻</span>
+          <span>刷新</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Event Log (collapsed by default) -->
+    <div class="log" id="log">
+      <div class="log-hdr" id="log-toggle">
+        <span>事件日志</span>
+        <span class="log-count" id="log-count">0</span>
+      </div>
+      <div class="log-list" id="log-list" style="display:none"></div>
+    </div>
+  </div>
+</body>
+</html>
