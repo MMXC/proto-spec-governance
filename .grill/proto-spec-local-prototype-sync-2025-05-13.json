@@ -1,0 +1,70 @@
+{
+  "session_id": "proto-spec-local-prototype-sync-2025-05-13",
+  "started_at": "2025-05-13T00:00:00Z",
+  "parent_session": "proto-spec-two-way-binding-2025-05-13",
+  "questions": [
+    {
+      "id": 1,
+      "question": "本地原型 HTML 修改后，页面刷新方式？",
+      "recommended_answer": "文件监听自动刷新",
+      "user_answer": "B（刷新按钮已有），A 文件监听先不做",
+      "branch": "sync"
+    },
+    {
+      "id": 2,
+      "question": "HTML 修改后，Spec 绑定状态如何处理？",
+      "recommended_answer": "增量 diff，增量绑定",
+      "user_answer": "A. 增量 diff，增量绑定",
+      "branch": "sync"
+    },
+    {
+      "id": 3,
+      "question": "增量 diff 的触发时机？",
+      "recommended_answer": "刷新时自动 diff",
+      "user_answer": "A. 刷新时自动 diff",
+      "branch": "sync"
+    },
+    {
+      "id": 4,
+      "question": "HTML 修改后，扩展 UI 侧如何展示变更？",
+      "recommended_answer": "Side Panel 变更列表，点击跳转高亮",
+      "user_answer": "A. Side Panel 变更列表，点击跳转高亮",
+      "branch": "sync"
+    },
+    {
+      "id": 5,
+      "question": "变更确认后，新增/删除元素如何处理绑定？",
+      "recommended_answer": "新增自动生成 L3 Spec 草稿",
+      "user_answer": "A. 新增自动生成 L3 Spec 草稿 + 绑定确认；删除标记 inactive 保留历史",
+      "branch": "sync"
+    },
+    {
+      "id": 6,
+      "question": "打开本地原型后，第一步做什么？",
+      "recommended_answer": "自动解析 → L2 Spec 树",
+      "user_answer": "A. 自动解析 → L2 Spec 骨架 → 展示 Spec 树",
+      "branch": "sync"
+    },
+    {
+      "id": 7,
+      "question": "完整 session 标准流程？",
+      "recommended_answer": "打开 → 解析 → 交互 → 刷新同步 → 循环",
+      "user_answer": "A. 完整闭环",
+      "branch": "sync"
+    }
+  ],
+  "consensus": {
+    "summary": "打开本地 .html → 自动解析生成 L2 Spec 树 → 用户交互（双向绑定）→ 刷新触发增量 diff → Side Panel 变更列表 → 新增生成 L3 草稿，删除标记 inactive → 循环往复",
+    "key_decisions": [
+      "文件监听先不做，依赖手动刷新",
+      "刷新时自动增量 diff",
+      "Side Panel 变更列表，点击跳转原型高亮",
+      "新增元素自动生成 L3 Spec 草稿",
+      "删除元素绑定 inactive 但保留历史",
+      "打开即自动解析，无需用户手动触发",
+      "完整 session 闭环"
+    ]
+  },
+  "spec_draft_path": "specs/L2-local-prototype-sync.md",
+  "l2_spec_path": "specs/L2-local-prototype-sync.md"
+}
