@@ -721,85 +721,164 @@ body{
           </div>
         </div>
 
-        <!-- Page Shell Tab -->
-        <div id="rt-shell" class="rt-shell" style="display:none">
-          <div class="rt-shell-inner">
-            <div class="rt-shell-hdr">
-              <div class="rt-shell-logo">✦</div>
-              <div class="rt-shell-nav">
-                <div class="rt-shell-nav-item"></div>
-                <div class="rt-shell-nav-item" style="width:50px"></div>
-                <div class="rt-shell-nav-item" style="width:30px"></div>
+        <!-- Page Shell Tab — 完整运行时页面（内联，无外部依赖） -->
+        <div id="rt-shell" class="rt-shell" style="display:none;overflow:auto;background:#0f1117">
+
+          <!-- Proto Spec Runtime 状态栏 -->
+          <div style="position:sticky;top:0;height:26px;background:rgba(0,0,0,.88);border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;padding:0 10px;gap:8px;font-family:monospace;font-size:10px;color:rgba(255,255,255,.4);z-index:100;backdrop-filter:blur(8px)">
+            <span style="color:#10b981">●</span><span>Runtime v1.0</span>
+            <span style="color:rgba(255,255,255,.15)">|</span><span>postMessage.js ✓</span>
+            <span style="color:rgba(255,255,255,.15)">|</span><span>runtime.js ✓</span>
+            <span style="color:rgba(255,255,255,.15)">|</span><span id="ps-active-spec" style="color:rgba(129,140,248,.7)">等待 Extension 指令…</span>
+          </div>
+
+          <!-- 页面容器（与 shell-with-runtime.html 一致） -->
+          <div style="display:flex;flex-direction:column;min-height:calc(100% - 26px)">
+
+            <!-- Header -->
+            <header style="height:52px;background:#1a1d27;border-bottom:1px solid #2a2d3a;display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0">
+              <div style="width:30px;height:30px;background:#818cf8;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">✦</div>
+              <div style="display:flex;align-items:center;gap:2px;flex:1">
+                <div style="padding:5px 10px;border-radius:5px;font-size:12.5px;font-weight:500;color:#818cf8;background:rgba(129,140,248,.1)">首页</div>
+                <div style="padding:5px 10px;border-radius:5px;font-size:12.5px;font-weight:500;color:#9ca3af;cursor:pointer">项目</div>
+                <div style="padding:5px 10px;border-radius:5px;font-size:12.5px;font-weight:500;color:#9ca3af;cursor:pointer">任务</div>
+                <div style="padding:5px 10px;border-radius:5px;font-size:12.5px;font-weight:500;color:#9ca3af;cursor:pointer">分析</div>
               </div>
-              <div class="rt-shell-avatar"></div>
-            </div>
-            <div class="rt-shell-body">
-              <div class="rt-shell-sidebar">
-                <div class="rt-shell-si" style="width:50%"></div>
-                <div class="rt-shell-si h">
-                  <div class="rt-shell-si-dot" style="background:rgba(113,112,255,.4)"></div>
-                  <div class="rt-shell-si-bar"></div>
+              <div style="width:28px;height:28px;background:#2a2d3a;border-radius:50%;flex-shrink:0"></div>
+            </header>
+
+            <!-- Body -->
+            <div style="flex:1;display:flex;overflow:hidden">
+
+              <!-- Sidebar -->
+              <aside style="width:200px;background:#1a1d27;border-right:1px solid #2a2d3a;padding:10px 6px;display:flex;flex-direction:column;gap:1px;flex-shrink:0;overflow-y:auto">
+                <div style="margin-bottom:14px">
+                  <div style="font-size:10px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;padding:3px 8px;margin-bottom:3px">导航</div>
+                  <div style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:500;color:#818cf8;background:rgba(129,140,248,.12)">
+                    <div style="width:16px;height:16px;border-radius:3px;background:rgba(129,140,248,.2);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700">📊</div>
+                    <span style="flex:1">仪表盘</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:500;color:#9ca3af">
+                    <div style="width:16px;height:16px;border-radius:3px;background:#2a2d3a;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700">📁</div>
+                    <span style="flex:1">项目</span>
+                    <span style="font-size:9.5px;background:#2a2d3a;padding:1px 5px;border-radius:8px;color:#9ca3af">8</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:500;color:#9ca3af">
+                    <div style="width:16px;height:16px;border-radius:3px;background:#2a2d3a;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700">✅</div>
+                    <span style="flex:1">任务</span>
+                    <span style="font-size:9.5px;background:#2a2d3a;padding:1px 5px;border-radius:8px;color:#9ca3af">24</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:500;color:#9ca3af">
+                    <div style="width:16px;height:16px;border-radius:3px;background:#2a2d3a;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700">📅</div>
+                    <span style="flex:1">日历</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:500;color:#9ca3af">
+                    <div style="width:16px;height:16px;border-radius:3px;background:#2a2d3a;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700">⚙</div>
+                    <span style="flex:1">设置</span>
+                  </div>
                 </div>
-                <div class="rt-shell-si h">
-                  <div class="rt-shell-si-dot"></div>
-                  <div class="rt-shell-si-bar"></div>
+                <div>
+                  <div style="font-size:10px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;padding:3px 8px;margin-bottom:3px">最近</div>
+                  <div style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:500;color:#9ca3af">
+                    <div style="width:16px;height:16px;border-radius:3px;background:#2a2d3a;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700">P</div>
+                    <span style="flex:1">Proto Spec</span>
+                  </div>
                 </div>
-                <div class="rt-shell-si h">
-                  <div class="rt-shell-si-dot"></div>
-                  <div class="rt-shell-si-bar"></div>
+              </aside>
+
+              <!-- Main -->
+              <main style="flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:0">
+
+                <!-- 搜索栏 -->
+                <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:#1a1d27;border:1px solid #2a2d3a;border-radius:6px;margin-bottom:16px;cursor:text">
+                  <span style="font-size:13px;color:#6b7280">🔍</span>
+                  <input placeholder="搜索项目、任务…" style="flex:1;border:none;outline:none;background:transparent;font-family:inherit;font-size:12.5px;color:#f9fafb" />
+                  <span style="font-size:9.5px;font-family:monospace;background:#2a2d3a;border-radius:3px;padding:1px 4px;color:#6b7280">⌘K</span>
                 </div>
+
+                <!-- 标题 -->
+                <h1 style="font-size:16px;font-weight:600;color:#f9fafb;margin-bottom:4px">欢迎回来</h1>
+                <p style="font-size:12px;color:#6b7280;margin-bottom:16px">这里是你今天的工作概览</p>
+
+                <!-- 卡片网格 -->
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px">
+                  <div style="background:#1a1d27;border:1px solid #2a2d3a;border-radius:6px;padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:8px;transition:all .15s" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,.3)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                    <div style="height:80px;background:#2a2d3a;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#6b7280">📈</div>
+                    <div style="font-size:12.5px;font-weight:600;color:#f9fafb">数据看板</div>
+                    <div style="font-size:11px;color:#6b7280;line-height:1.5">实时监控关键指标</div>
+                    <div style="font-size:10.5px;color:#6b7280">🔵 3 个进行中</div>
+                  </div>
+                  <div style="background:#1a1d27;border:1px solid #2a2d3a;border-radius:6px;padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:8px;transition:all .15s" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,.3)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                    <div style="height:80px;background:#2a2d3a;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#6b7280">📋</div>
+                    <div style="font-size:12.5px;font-weight:600;color:#f9fafb">任务列表</div>
+                    <div style="font-size:11px;color:#6b7280;line-height:1.5">管理待办事项</div>
+                    <div style="font-size:10.5px;color:#6b7280">✅ 12 项已完成</div>
+                  </div>
+                  <div style="background:#1a1d27;border:1px solid #2a2d3a;border-radius:6px;padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:8px;transition:all .15s" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,.3)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                    <div style="height:80px;background:#2a2d3a;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#6b7280">📝</div>
+                    <div style="font-size:12.5px;font-weight:600;color:#f9fafb">文档中心</div>
+                    <div style="font-size:11px;color:#6b7280;line-height:1.5">团队知识库</div>
+                    <div style="font-size:10.5px;color:#6b7280">📚 28 篇</div>
+                  </div>
+                  <div style="background:#1a1d27;border:1px solid #2a2d3a;border-radius:6px;padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:8px;transition:all .15s" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,.3)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                    <div style="height:80px;background:#2a2d3a;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#6b7280">🔔</div>
+                    <div style="font-size:12.5px;font-weight:600;color:#f9fafb">通知中心</div>
+                    <div style="font-size:11px;color:#6b7280;line-height:1.5">团队动态提醒</div>
+                    <div style="font-size:10.5px;color:#6b7280">🔴 5 条待处理</div>
+                  </div>
+                </div>
+
+              </main>
+            </div><!-- /body -->
+
+            <!-- Footer -->
+            <footer style="height:42px;background:#1a1d27;border-top:1px solid #2a2d3a;display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0">
+              <div style="display:flex;align-items:center;gap:10px;flex:1">
+                <div style="font-size:12px;color:#6b7280;cursor:pointer">首页</div>
+                <div style="font-size:12px;color:#6b7280;cursor:pointer">文档</div>
+                <div style="font-size:12px;color:#6b7280;cursor:pointer">支持</div>
               </div>
-              <div class="rt-shell-main">
-                <div class="rt-shell-title"></div>
-                <div class="rt-shell-text" style="width:80%"></div>
-                <div class="rt-shell-text" style="width:65%"></div>
-                <div class="rt-shell-card"></div>
+              <div style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:#6b7280">
+                <div style="width:5px;height:5px;border-radius:50%;background:#10b981"></div>
+                所有系统正常
               </div>
+            </footer>
+
+          </div><!-- /page-container -->
+
+          <!-- Spec 标注层 -->
+          <div class="rt-tags-overlay" id="rt-tags-overlay" style="pointer-events:none;position:fixed;inset:0;z-index:50">
+            <div style="position:absolute;left:16px;top:26px;right:16px;height:52px;border:2px dashed #7170ff;pointer-events:all;cursor:pointer;border-radius:3px" onclick="selectRTTag(0,'header')">
+              <div style="position:absolute;top:-20px;left:0;background:#7170ff;color:#fff;font-size:9.5px;font-weight:600;padding:2px 7px;border-radius:3px 3px 0 0;white-space:nowrap">L2-header · page</div>
             </div>
-            <div class="rt-shell-footer">
-              <div class="rt-shell-foot-item"></div>
-              <div class="rt-shell-foot-item"></div>
-              <div class="rt-shell-foot-item"></div>
+            <div style="position:absolute;left:0;top:78px;bottom:42px;width:200px;border:2px dashed #10b981;pointer-events:all;cursor:pointer;border-radius:0 3px 3px 0;background:rgba(16,185,129,.06)" onclick="selectRTTag(1,'sidebar')">
+              <div style="position:absolute;top:-20px;left:0;background:#10b981;color:#fff;font-size:9.5px;font-weight:600;padding:2px 7px;border-radius:3px 3px 0 0;white-space:nowrap">L3-sidebar-nav · component</div>
             </div>
-          </div>
-          <!-- Spec tag overlays -->
-          <div class="rt-tags-overlay" id="rt-tags-overlay">
-            <div class="rt-tag" id="rt-tag-0" style="left:14px;top:14px;width:calc(100% - 28px);height:42px" onclick="selectRTTag(0)">
-              <div class="rt-tag-label">L2-page-header</div>
-              <div class="rt-tag-badge">page</div>
+            <div style="position:absolute;left:216px;top:78px;right:0;bottom:42px;border:2px dashed #818cf8;pointer-events:all;cursor:pointer;border-radius:3px 0 0 3px;background:rgba(129,140,248,.06)" onclick="selectRTTag(2,'main')">
+              <div style="position:absolute;top:-20px;left:0;background:#818cf8;color:#fff;font-size:9.5px;font-weight:600;padding:2px 7px;border-radius:3px 3px 0 0;white-space:nowrap">L3-main-content · component</div>
+              <div style="position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);background:#818cf8;color:#fff;font-size:9.5px;font-weight:600;padding:2px 7px;border-radius:0 0 3px 3px;white-space:nowrap">card-grid · behavior</div>
             </div>
-            <div class="rt-tag active" id="rt-tag-1" style="left:14px;top:64px;width:160px;height:calc(100% - 122px)" onclick="selectRTTag(1)">
-              <div class="rt-tag-label">L3-sidebar-nav</div>
-              <div class="rt-tag-badge">component</div>
-            </div>
-            <div class="rt-tag" id="rt-tag-2" style="left:182px;top:64px;width:calc(100% - 196px);height:80px" onclick="selectRTTag(2)">
-              <div class="rt-tag-label">L3-main-content</div>
-              <div class="rt-tag-badge">component</div>
-            </div>
-            <div class="rt-tag" id="rt-tag-3" style="left:182px;top:150px;width:calc(100% - 196px);height:calc(100% - 200px)" onclick="selectRTTag(3)">
-              <div class="rt-tag-label">L4-card-list</div>
-              <div class="rt-tag-badge">behavior</div>
-            </div>
-            <div class="rt-tag" id="rt-tag-4" style="left:14px;bottom:14px;width:calc(100% - 28px);height:42px" onclick="selectRTTag(4)">
-              <div class="rt-tag-label">L2-footer-nav</div>
-              <div class="rt-tag-badge">page</div>
+            <div style="position:absolute;left:16px;bottom:0;right:16px;height:42px;border:2px dashed #f59e0b;pointer-events:all;cursor:pointer;border-radius:3px" onclick="selectRTTag(3,'footer')">
+              <div style="position:absolute;top:-20px;left:0;background:#f59e0b;color:#000;font-size:9.5px;font-weight:600;padding:2px 7px;border-radius:3px 3px 0 0;white-space:nowrap">L2-footer · page</div>
             </div>
           </div>
-          <!-- Controls overlay -->
-          <div class="rt-shell-ctrl">
-            <div class="rt-shell-btn" id="rt-ann-btn" onclick="toggleRTTags()" title="标注显示">✦</div>
-            <div class="rt-shell-btn" onclick="toast('缩放: 100%', 'info')" title="缩放">🔍</div>
-            <div class="rt-shell-btn" onclick="toast('全屏预览…', 'info')" title="全屏">⛶</div>
+
+          <!-- 控制按钮 -->
+          <div style="position:fixed;top:36px;right:10px;display:flex;flex-direction:column;gap:3px;z-index:60">
+            <div style="width:22px;height:22px;background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.1);border-radius:4px;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px" onclick="toggleRTTags()" title="标注">✦</div>
+            <div style="width:22px;height:22px;background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.1);border-radius:4px;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px" onclick="simShellTheme()" title="切换主题">🌓</div>
           </div>
-          <!-- Spec chain -->
-          <div class="rt-shell-chain">
-            <span class="rt-shell-chain-item" style="color:#fff">sidebar-nav</span>
-            <span class="rt-shell-chain-sep">›</span>
-            <span class="rt-shell-chain-item">menu-item</span>
-            <span class="rt-shell-chain-sep">›</span>
-            <span class="rt-shell-chain-item">icon-btn</span>
+
+          <!-- 底部 Spec 链 -->
+          <div style="position:fixed;bottom:8px;left:10px;display:flex;align-items:center;gap:3px;background:rgba(0,0,0,.6);border-radius:16px;padding:3px 9px;z-index:60">
+            <span style="font-size:8.5px;color:#fff;cursor:pointer">sidebar-nav</span>
+            <span style="font-size:8px;color:#6b7280">›</span>
+            <span style="font-size:8.5px;color:#9ca3af;cursor:pointer">menu-item</span>
+            <span style="font-size:8px;color:#6b7280">›</span>
+            <span style="font-size:8.5px;color:#9ca3af;cursor:pointer">icon-btn</span>
           </div>
-        </div>
+
+        </div><!-- /rt-shell -->
 
         <!-- Event Log Tab -->
         <div id="rt-log" class="rt-log" style="display:none">
@@ -1271,11 +1350,31 @@ function simClearLog() {
   const log = document.getElementById('rt-log');
   log.innerHTML = '<div class="rt-log-empty" id="rt-log-empty">日志已清空。点击左侧「API 事件」触发 postMessage…</div>';
 }
-function selectRTTag(n) {
-  document.querySelectorAll('.rt-tag').forEach(t=>t.classList.remove('active'));
-  document.getElementById('rt-tag-'+n)?.classList.add('active');
-  const names=['L2-page-header','L3-sidebar-nav','L3-main-content','L4-card-list','L2-footer-nav'];
-  Runtime.post('elem:click', {selector:'.selector-'+n, rect:{x:0,y:0,w:0,h:0}, specBound:n===1?'sidebar-nav':null});
+function selectRTTag(n, name) {
+  document.querySelectorAll('[id^="rt-tag-"]').forEach(t=>t.style.opacity='0.4');
+  const el = document.getElementById('rt-tag-'+n);
+  if(el) el.style.opacity='1';
+  const names=['L2-header','L3-sidebar-nav','L3-main-content','L4-card-list','L2-footer'];
+  const shellNames=['header','sidebar','main','card-grid','footer'];
+  toast('选中: '+(name||shellNames[n]||names[n]),'info');
+}
+function simShellTheme() {
+  const shell = document.getElementById('rt-shell');
+  const isDark = shell.style.background !== 'rgb(255, 255, 255)' && shell.style.background !== '#ffffff';
+  if(isDark) {
+    shell.style.background = '#f8f9fa';
+    shell.querySelectorAll('[style*="background:#1a1d27"]').forEach(el => el.style.background = '#ffffff');
+    shell.querySelectorAll('[style*="color:#f9fafb"]').forEach(el => el.style.color = '#111827');
+    shell.querySelectorAll('[style*="color:#9ca3af"]').forEach(el => el.style.color = '#4b5563');
+  } else {
+    shell.style.background = '#0f1117';
+    shell.querySelectorAll('*').forEach(el => {
+      const s = el.style;
+      if(s.backgroundColor === 'rgb(255, 255, 255)') s.backgroundColor = '#1a1d27';
+      if(s.background === '#ffffff') s.background = '#1a1d27';
+    });
+  }
+  toast(isDark?'切换到浅色主题':'切换到深色主题','info');
 }
 function toggleRTTags() {
   const overlay = document.getElementById('rt-tags-overlay');
