@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proto Spec</title>
+  <script type="module" src="./main.ts"></script>
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <div class="hdr">
+      <div class="hdr-icon">PS</div>
+      <span class="hdr-title">Proto Spec</span>
+      <div class="hdr-status">
+        <span class="dot" id="status-dot"></span>
+        <span id="status-text">初始化中…</span>
+      </div>
+    </div>
+
+    <!-- Mode -->
+    <div class="section">
+      <div class="sec-label">模式</div>
+      <div class="mode-row">
+        <button class="mode-btn active" id="btn-local">本地 HTML</button>
+        <button class="mode-btn" id="btn-remote">远程页面</button>
+      </div>
+    </div>
+
+    <!-- Enter/Exit -->
+    <div class="section">
+      <button class="ctrl-btn" id="btn-toggle">进入治理</button>
+    </div>
+
+    <!-- Panel toggles -->
+    <div class="section">
+      <div class="sec-label">侧栏控制</div>
+      <div class="panel-grid">
+        <button class="panel-btn" id="btn-top">
+          <span class="dot-p"></span>顶部
+        </button>
+        <button class="panel-btn" id="btn-bottom">
+          <span class="dot-p"></span>底部
+        </button>
+        <button class="panel-btn" id="btn-left">
+          <span class="dot-p"></span>左侧
+        </button>
+        <button class="panel-btn" id="btn-right">
+          <span class="dot-p"></span>右侧
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="section">
+      <div class="sec-label">快捷操作</div>
+      <div class="action-grid">
+        <button class="action-btn" id="btn-highlight">
+          <span class="action-icon">✦</span>
+          高亮
+        </button>
+        <button class="action-btn" id="btn-annotate">
+          <span class="action-icon">📍</span>
+          标注
+        </button>
+        <button class="action-btn" id="btn-extract">
+          <span class="action-icon">⬇</span>
+          提取
+        </button>
+      </div>
+    </div>
+
+    <!-- Hint -->
+    <div class="hint">
+      点击「进入治理」后，页面将进入全治理模式，4 侧栏环绕预览区。<br><br>
+      <code>file://</code> 本地页面支持完整治理操作。<br>
+      远程页面仅支持样式 &amp; Spec 提取。
+    </div>
+
+    <!-- Reset -->
+    <div class="section">
+      <button class="reset-btn" id="btn-reset">↺ 重置布局</button>
+    </div>
+  </div>
+</body>
+</html>

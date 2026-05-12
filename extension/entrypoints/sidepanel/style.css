@@ -1,0 +1,54 @@
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#0d0e11}
+body{font-family:'Inter',system-ui,sans-serif;font-size:12px;color:#f7f8f8;width:320px}
+
+/* Header */
+.hdr{display:flex;align-items:center;gap:8px;padding:12px;border-bottom:1px solid rgba(255,255,255,.06)}
+.hdr-icon{width:28px;height:28px;background:linear-gradient(135deg,#7170ff,#4f46e5);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;box-shadow:0 2px 8px rgba(113,112,255,.3)}
+.hdr-title{font-size:13px;font-weight:600;flex:1}
+.hdr-status{display:flex;align-items:center;gap:5px;font-size:10.5px}
+.dot{width:7px;height:7px;border-radius:50%;background:#6b7280;transition:all .3s;flex-shrink:0}
+.dot.ok{background:#10b981;box-shadow:0 0 6px rgba(16,185,129,.5)}
+.dot.warn{background:#f59e0b}
+.dot.err{background:#f87171}
+
+/* Section */
+.section{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.05)}
+.sec-label{font-size:10px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+
+/* Mode buttons */
+.mode-row{display:flex;gap:6px}
+.mode-btn{flex:1;padding:7px 6px;border-radius:6px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:#9ca3af;font-size:11.5px;font-weight:500;cursor:pointer;transition:all .15s;text-align:center}
+.mode-btn:hover{border-color:rgba(255,255,255,.15);color:#f7f8f8}
+.mode-btn.active{background:rgba(113,112,255,.15);border-color:rgba(113,112,255,.4);color:#818cff}
+
+/* Toggle button */
+.ctrl-btn{width:100%;padding:9px;border-radius:7px;border:1px solid rgba(113,112,255,.3);background:rgba(113,112,255,.1);color:#818cff;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.3px}
+.ctrl-btn:hover{background:rgba(113,112,255,.2);border-color:rgba(113,112,255,.5)}
+.ctrl-btn.active{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.4);color:#f87171}
+
+/* Panel toggles */
+.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.panel-btn{padding:7px;border-radius:5px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.03);color:#9ca3af;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;text-align:center;display:flex;align-items:center;justify-content:center;gap:4px}
+.panel-btn:hover{border-color:rgba(255,255,255,.15);color:#f7f8f8}
+.panel-btn.collapsed{opacity:.45;background:rgba(255,255,255,.02)}
+.panel-btn .dot-p{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+/* Quick actions */
+.action-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}
+.action-btn{padding:8px 4px;border-radius:6px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.03);color:#c8cdd6;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;text-align:center;display:flex;flex-direction:column;align-items:center;gap:3px}
+.action-btn:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);color:#fff}
+.action-btn:active{transform:scale(.96)}
+.action-icon{font-size:14px}
+
+/* Reset */
+.reset-btn{width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,.06);background:transparent;color:#6b7280;font-size:11px;cursor:pointer;transition:all .15s;margin-top:4px}
+.reset-btn:hover{color:#f7f8f8;border-color:rgba(255,255,255,.1)}
+
+/* Hint */
+.hint{padding:10px 12px;font-size:10.5px;color:#4b5563;line-height:1.5}
+.hint code{background:rgba(255,255,255,.05);padding:1px 5px;border-radius:3px;font-size:10px}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
