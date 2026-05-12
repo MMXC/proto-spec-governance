@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh">
+<!--
+  page-prototype.html — 纯 HTML 原型（无 runtime.js）
+
+  使用说明：
+  1. 这是"用户描述的应用页面骨架"，不包含任何 Proto Spec 插件的 runtime.js
+  2. 用户（或 Agent）只需编写 <header>、<aside>、<main> 等业务内容
+  3. 插件通过 MutationObserver / CSS 类名 / getBoundingClientRect() 识别页面元素
+  4. 如果需要接入 Proto Spec 插件能力，将本文件改名为 index.html，
+     并在 </body> 前添加:
+       <script src="./assets/postMessage.js"></script>
+       <script src="./assets/runtime.js"></script>
+     然后重命名为 shell-with-runtime.html 即可
+
+  文件结构:
+    assets/
+      postMessage.js   — 通信层（Chrome Extension ↔ Webpage）
+      runtime.js      — 插件↔页面运行时（依赖 postMessage.js）
+    page-prototype.html — 纯 HTML 原型（不含 runtime）
+    shell-with-runtime.html — page-prototype + runtime.js
+-->
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>应用原型 — 空白骨架</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;590;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ───────────────────────────────────────────────────────
+   页面级 CSS 变量（可被插件的 data-ps-theme 覆盖）
+─────────────────────────────────────────────────────── */
+:root {
+  --page-bg: #ffffff;
+  --page-surface: #f8f9fa;
+  --page-border: #e5e7eb;
+  --page-text: #111827;
+  --page-text-muted: #6b7280;
+  --page-accent: #6366f1;
+  --page-radius: 8px;
+  --page-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --page-shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* 深色主题切换（由 runtime.js 通过 document.documentElement.dataset.psTheme 触发） */
+[data-ps-theme="dark"] {
+  --page-bg: #0f1117;
+  --page-surface: #1a1d27;
+  --page-border: #2a2d3a;
+  --page-text: #f9fafb;
+  --page-text-muted: #9ca3af;
+  --page-accent: #818cf8;
+}
+
+/* 分屏布局（由 runtime.js 通过 document.documentElement.dataset.psSplit 触发） */
+[data-ps-split="2-split"] { }
+[data-ps-split="4-split"] { }
+
+/* ───────────────────────────────────────────────────────
+   页面基础样式（可由用户自定义修改）
+─────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--page-bg);
+  color: var(--page-text);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* 页面布局容器（用户在此范围内编写业务代码） */
+.page-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── Header ── */
+.page-header {
+  height: 56px;
+  background: var(--page-surface);
+  border-bottom: 1px solid var(--page-border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.page-header__logo {
+  width: 32px;
+  height: 32px;
+  background: var(--page-accent);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: white;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.page-header__nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.page-header__nav-item {
+  padding: 6px 12px;
+  border-radius: var(--page-radius);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--page-text-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  user-select: none;
+}
+.page-header__nav-item:hover {
+  background: var(--page-border);
+  color: var(--page-text);
+}
+.page-header__nav-item--active {
+  color: var(--page-accent);
+  background: color-mix(in srgb, var(--page-accent) 10%, transparent);
+}
+
+.page-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-header__avatar {
+  width: 30px;
+  height: 30px;
+  background: var(--page-border);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* ── Body Layout ── */
+.page-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ── Sidebar ── */
+.page-sidebar {
+  width: 220px;
+  background: var(--page-surface);
+  border-right: 1px solid var(--page-border);
+  padding: 12px 8px;
+  overflow-y: auto;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-section {
+  margin-bottom: 16px;
+}
+
+.sidebar-section__title {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--page-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  margin-bottom: 4px;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--page-radius);
+  cursor: pointer;
+  transition: background 0.12s;
+  font-size: 13px;
+  color: var(--page-text-muted);
+  font-weight: 500;
+}
+.sidebar-item:hover {
+  background: var(--page-border);
+  color: var(--page-text);
+}
+.sidebar-item--active {
+  background: color-mix(in srgb, var(--page-accent) 12%, transparent);
+  color: var(--page-accent);
+}
+.sidebar-item__icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--page-border);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+}
+.sidebar-item--active .sidebar-item__icon {
+  background: color-mix(in srgb, var(--page-accent) 20%, transparent);
+  color: var(--page-accent);
+}
+.sidebar-item__label { flex: 1; }
+.sidebar-item__badge {
+  font-size: 10px;
+  background: var(--page-border);
+  padding: 1px 6px;
+  border-radius: 10px;
+  color: var(--page-text-muted);
+}
+
+/* ── Main Content ── */
+.page-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+/* 搜索栏 */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--page-surface);
+  border: 1px solid var(--page-border);
+  border-radius: var(--page-radius);
+  margin-bottom: 20px;
+  cursor: text;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.search-bar:focus-within {
+  border-color: var(--page-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--page-accent) 15%, transparent);
+}
+.search-bar__icon { color: var(--page-text-muted); font-size: 14px; }
+.search-bar__input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  color: var(--page-text);
+}
+.search-bar__input::placeholder { color: var(--page-text-muted); }
+.search-bar__kbd {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  background: var(--page-border);
+  border-radius: 3px;
+  padding: 2px 5px;
+  color: var(--page-text-muted);
+}
+
+/* 内容区标题 */
+.main-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--page-text);
+  margin-bottom: 6px;
+}
+.main-subtitle {
+  font-size: 13px;
+  color: var(--page-text-muted);
+  margin-bottom: 20px;
+}
+
+/* 卡片网格 */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.card {
+  background: var(--page-surface);
+  border: 1px solid var(--page-border);
+  border-radius: var(--page-radius);
+  padding: 16px;
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.card:hover {
+  box-shadow: var(--page-shadow-md);
+  transform: translateY(-1px);
+}
+.card__img {
+  height: 100px;
+  background: var(--page-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.card__img-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: var(--page-text-muted);
+  background: linear-gradient(135deg, var(--page-border), transparent);
+}
+.card__title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--page-text);
+}
+.card__desc {
+  font-size: 12px;
+  color: var(--page-text-muted);
+  line-height: 1.5;
+  flex: 1;
+}
+.card__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--page-text-muted);
+}
+
+/* ── Footer ── */
+.page-footer {
+  height: 48px;
+  background: var(--page-surface);
+  border-top: 1px solid var(--page-border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 16px;
+}
+
+.footer-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.footer-nav__item {
+  font-size: 12.5px;
+  color: var(--page-text-muted);
+  cursor: pointer;
+  transition: color 0.12s;
+  padding: 4px 0;
+}
+.footer-nav__item:hover { color: var(--page-text); }
+
+.footer-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--page-text-muted);
+}
+.footer-status__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+}
+
+/* ── 空状态（仅用于演示，可由用户自定义覆盖） ── */
+.page-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px;
+  text-align: center;
+  color: var(--page-text-muted);
+}
+.page-empty__icon { font-size: 40px; opacity: 0.4; }
+.page-empty__title { font-size: 15px; font-weight: 590; color: var(--page-text); }
+.page-empty__desc { font-size: 13px; max-width: 280px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="page-container">
+
+  <!-- ══ Header ══ -->
+  <header class="page-header">
+    <div class="page-header__logo">✦</div>
+
+    <nav class="page-header__nav">
+      <div class="page-header__nav-item page-header__nav-item--active">首页</div>
+      <div class="page-header__nav-item">项目</div>
+      <div class="page-header__nav-item">任务</div>
+      <div class="page-header__nav-item">分析</div>
+    </nav>
+
+    <div class="page-header__actions">
+      <div class="page-header__avatar"></div>
+    </div>
+  </header>
+
+  <!-- ══ Body ══ -->
+  <div class="page-body">
+
+    <!-- Sidebar -->
+    <aside class="page-sidebar">
+
+      <div class="sidebar-section">
+        <div class="sidebar-section__title">导航</div>
+        <div class="sidebar-item sidebar-item--active">
+          <div class="sidebar-item__icon">📊</div>
+          <span class="sidebar-item__label">仪表盘</span>
+        </div>
+        <div class="sidebar-item">
+          <div class="sidebar-item__icon">📁</div>
+          <span class="sidebar-item__label">项目</span>
+          <span class="sidebar-item__badge">8</span>
+        </div>
+        <div class="sidebar-item">
+          <div class="sidebar-item__icon">✅</div>
+          <span class="sidebar-item__label">任务</span>
+          <span class="sidebar-item__badge">24</span>
+        </div>
+        <div class="sidebar-item">
+          <div class="sidebar-item__icon">📅</div>
+          <span class="sidebar-item__label">日历</span>
+        </div>
+        <div class="sidebar-item">
+          <div class="sidebar-item__icon">⚙</div>
+          <span class="sidebar-item__label">设置</span>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section__title">最近</div>
+        <div class="sidebar-item">
+          <div class="sidebar-item__icon" style="font-size:8px">P</div>
+          <span class="sidebar-item__label">Proto Spec</span>
+        </div>
+        <div class="sidebar-item">
+          <div class="sidebar-item__icon" style="font-size:8px">D</div>
+          <span class="sidebar-item__label">Dashboard v2</span>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- Main Content -->
+    <main class="page-main">
+
+      <!-- 搜索栏 -->
+      <div class="search-bar">
+        <span class="search-bar__icon">🔍</span>
+        <input class="search-bar__input" placeholder="搜索项目、任务…" />
+        <span class="search-bar__kbd">⌘K</span>
+      </div>
+
+      <!-- 标题 -->
+      <h1 class="main-title">欢迎回来</h1>
+      <p class="main-subtitle">这里是你今天的工作概览</p>
+
+      <!-- 卡片网格 -->
+      <div class="card-grid">
+
+        <div class="card">
+          <div class="card__img">
+            <div class="card__img-placeholder">📈</div>
+          </div>
+          <div class="card__title">数据看板</div>
+          <div class="card__desc">实时监控关键指标，趋势可视化展示</div>
+          <div class="card__meta">
+            <span>🔵 活跃项目</span>
+            <span>·</span>
+            <span>3 个进行中</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card__img">
+            <div class="card__img-placeholder">📋</div>
+          </div>
+          <div class="card__title">任务列表</div>
+          <div class="card__desc">管理待办事项，追踪任务进度</div>
+          <div class="card__meta">
+            <span>✅ 已完成</span>
+            <span>·</span>
+            <span>12 项</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card__img">
+            <div class="card__img-placeholder">📝</div>
+          </div>
+          <div class="card__title">文档中心</div>
+          <div class="card__desc">团队知识库，协作编辑共享</div>
+          <div class="card__meta">
+            <span>📚 文档</span>
+            <span>·</span>
+            <span>28 篇</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card__img">
+            <div class="card__img-placeholder">🔔</div>
+          </div>
+          <div class="card__title">通知中心</div>
+          <div class="card__desc">团队动态，实时推送提醒</div>
+          <div class="card__meta">
+            <span>🔴 待处理</span>
+            <span>·</span>
+            <span>5 条</span>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+
+  </div><!-- /page-body -->
+
+  <!-- ══ Footer ══ -->
+  <footer class="page-footer">
+    <div class="footer-nav">
+      <div class="footer-nav__item">首页</div>
+      <div class="footer-nav__item">文档</div>
+      <div class="footer-nav__item">支持</div>
+      <div class="footer-nav__item">隐私</div>
+    </div>
+    <div class="footer-status">
+      <div class="footer-status__dot"></div>
+      所有系统正常
+    </div>
+  </footer>
+
+</div><!-- /page-container -->
+
+<!--
+  ══════════════════════════════════════════════════════
+  如需接入 Proto Spec 插件 runtime，请取消下面两行注释：
+  ══════════════════════════════════════════════════════
+-->
+<!-- <script src="./assets/postMessage.js"></script> -->
+<!-- <script src="./assets/runtime.js"></script> -->
+
+</body>
+</html>
